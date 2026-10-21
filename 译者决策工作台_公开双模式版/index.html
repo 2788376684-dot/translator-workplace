@@ -40,7 +40,7 @@ function renderChanges(){
   if(p.type==='same')return;
   const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice;
   const prev=ps.slice(0,i).reverse().find(x=>x.type==='same');const next=ps.slice(i+1).find(x=>x.type==='same');
-  const before=(prev?.text||'').replace(/\s+/g,' ').slice(-210);const after=(next?.text||'').replace(/\s+/g,' ').slice(0,210);
+  const before=(prev?.text||'').replace(/\s+/g,' ').slice(-320);const after=(next?.text||'').replace(/\s+/g,' ').slice(0,320);
   const title=document.createElement('div');title.className='change-title';const n=document.createElement('strong');n.textContent='修改 '+(index+1);title.appendChild(n);
   const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);card.appendChild(title);
   const pair=document.createElement('div');pair.className='pair';
@@ -63,7 +63,7 @@ function renderChanges(){
    const note=document.createElement('textarea');note.rows=1;note.className='compact-area';note.placeholder=p.choice==='custom'?'Learning moment / 改写依据（可选）':'本次决定的理由（可选）';note.value=p.reason||'';note.oninput=()=>{p.reason=note.value;grow(note);save()};card.appendChild(note);requestAnimationFrame(()=>grow(note));
   }
   const buttons=document.createElement('div');buttons.className='row reason-actions';
-  const ask=document.createElement('button');ask.textContent='向 AI 追问此处';ask.onclick=()=>{if(mode!=='ai')setMode('ai');$('assistant-drawer').open=true;$('question').value='请结合原文与全文语境解释这处修改，指出其准确性、搭配和风格依据。\n初译：'+p.before+'\nAI建议：'+p.after+'\n先前解释：'+(p.aiReason||'未生成');$('question').scrollIntoView({behavior:'smooth',block:'center'});$('question').focus()};buttons.appendChild(ask);
+  const ask=document.createElement('button');ask.textContent='向 AI 追问此处';ask.onclick=()=>{if(mode!=='ai')setMode('ai');$('assistant-drawer').open=true;$('question').value='请结合原文与全文语境解释这处修改，指出其准确性、搭配和风格依据。\n初译：'+p.before+'\nAI建议：'+p.after+'\n先前解释：'+(p.aiReason||'未生成');grow($('question'));$('question').scrollIntoView({behavior:'smooth',block:'center'});$('question').focus()};buttons.appendChild(ask);
   if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';p.aiReason=await explainChange(p);reason.textContent=p.aiReason;save()},'ai-status');buttons.appendChild(why)}
   card.appendChild(buttons);root.appendChild(card)
  });
@@ -82,7 +82,7 @@ async function explainAll(){
   renderChanges();save()
  }catch(e){$('ai-status').textContent='建议译文已生成；部分理由未能自动取得，可逐处点击生成理由。'}
 }
-function updateFinal(){$('final').value=compose();db[current].data.final=$('final').value}
+function updateFinal(){$('final').value=compose();db[current].data.final=$('final').value;requestAnimationFrame(()=>grow($('final')))}
 function renderChat(){const log=$('chat-log');log.replaceChildren();for(const m of db[current].data.history||[]){const div=document.createElement('div');div.className='msg '+m.role;div.textContent=(m.role==='user'?'我：':'AI：')+'\n'+m.content;log.appendChild(div)}log.scrollTop=log.scrollHeight}
 function context(){const d=collect();return '你是严谨的双向翻译导师（中文到英文或英文到中文，依据原文和初译判断方向）。先依据原文判断，按原文顺序分析；区分错误和文体偏好，不编造依据。\n【文本用途】'+d.purpose+'\n【固定要求】'+(d.useRules?d.rules:'（未启用）')+'\n【原文】'+d.source+'\n【初译】'+d.draft+'\n【建议稿】'+d.suggestion+'\n【当前定稿】'+d.final}
 async function api(messages){
@@ -114,11 +114,11 @@ async function checkConnection(){
 
 async function run(button,fn,status){if(busy)return;busy=true;button.disabled=true;try{await fn()}catch(e){$(status).textContent='失败：'+e.message}finally{busy=false;button.disabled=false}}
 function auditPrompt(){const d=collect();return '请根据原文审校我的初译。可能是中译英，也可能是英译中，请根据文本判断方向；建议译文必须与初译使用相同的目标语言。只返回一份完整、可比较的建议译文（保留段落，不要说明或 Markdown）。保持准确、自然及风格一致；没有明确改进价值时保留原译；不得添加原文没有的信息。\n【用途】'+d.purpose+'\n【固定要求】'+(d.useRules?d.rules:'（未启用）')+'\n【原文】\n'+d.source+'\n【我的初译】\n'+d.draft}
-$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成建议稿…';const answer=await api([{role:'system',content:'你是严谨的双向翻译审校员，支持中译英和英译中；依据初译判断目标语言，输出同一语言的完整建议译文，不要评论。'},{role:'user',content:auditPrompt()}]);$('suggestion').value=answer.trim();compare();$('ai-status').textContent='建议稿已生成，正在整理修改理由…';await explainAll();if(!$('ai-status').textContent.includes('部分理由'))$('ai-status').textContent='建议稿与理由已生成，请逐处核查。';save()},'ai-status');
+$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成建议稿…';const answer=await api([{role:'system',content:'你是严谨的双向翻译审校员，支持中译英和英译中；依据初译判断目标语言，输出同一语言的完整建议译文，不要评论。'},{role:'user',content:auditPrompt()}]);$('suggestion').value=answer.trim();grow($('suggestion'));compare();$('ai-status').textContent='建议稿已生成，正在整理修改理由…';await explainAll();if(!$('ai-status').textContent.includes('部分理由'))$('ai-status').textContent='建议稿与理由已生成，请逐处核查。';save()},'ai-status');
 function compare(){const d=collect();if(!d.draft.trim()||!d.suggestion.trim())throw Error('需要初译和完整建议稿');d.decisions=diff(d.draft,d.suggestion);updateFinal();renderChanges();save()}
 $('compare').onclick=()=>{try{compare()}catch(e){$('diff-status').textContent=e.message}};
 $('test').onclick=()=>run($('test'),async()=>{$('chat-status').textContent='测试中…';const answer=await api([{role:'user',content:'请只回答“连接成功”。'}]);$('chat-status').textContent='聊天接口响应：'+answer.slice(0,100)},'chat-status');
-$('ask').onclick=()=>run($('ask'),async()=>{const q=$('question').value.trim();if(!q)throw Error('请先填写问题');$('chat-status').textContent='正在等待回复…';const d=collect();const history=d.history||[];const result=await api([{role:'system',content:context()},...history.slice(-12),{role:'user',content:q}]);history.push({role:'user',content:q},{role:'assistant',content:result});d.history=history;$('question').value='';renderChat();save();$('chat-status').textContent='已回复，对话保存在当前项目。'},'chat-status');
+$('ask').onclick=()=>run($('ask'),async()=>{const q=$('question').value.trim();if(!q)throw Error('请先填写问题');$('chat-status').textContent='正在等待回复…';const d=collect();const history=d.history||[];const result=await api([{role:'system',content:context()},...history.slice(-12),{role:'user',content:q}]);history.push({role:'user',content:q},{role:'assistant',content:result});d.history=history;$('question').value='';grow($('question'));renderChat();save();$('chat-status').textContent='已回复，对话保存在当前项目。'},'chat-status');
 $('clear-chat').onclick=()=>{if(confirm('确认清空当前项目的 AI 对话记录？')){db[current].data.history=[];save();renderChat()}};
 $('copy-prompt').onclick=async()=>{const t=auditPrompt();try{await navigator.clipboard.writeText(t);$('ai-status').textContent='已复制审校提示词'}catch(e){$('ai-status').textContent='复制失败，请使用 HTTPS 或从本地服务打开'}};
 $('new').onclick=()=>{const name=prompt('新项目名称');if(name===null)return;save();current='p'+Date.now();db[current]={name:name.trim()||'未命名项目',data:empty()};bind();save()};
