@@ -6,6 +6,7 @@
 .widegrid{display:block}.widegrid>div{width:100%}#ai-panel{margin:0 0 18px}.ai-drawer{margin:0 0 18px}.ai-drawer>summary{cursor:pointer;padding:13px 18px;background:#fff;border:1px solid var(--border);border-radius:9px;font-weight:700;color:var(--blue)}.ai-drawer[open]>summary{border-radius:9px 9px 0 0}.ai-drawer #ai-panel{border-radius:0 0 9px 9px;margin:0}.ai-drawer.mode-hidden{display:none!important}.context-line{font-size:15px}.context-line .context-side{color:#33485e}.compact-area{min-height:42px!important}.reason-box{background:#f7f9fc}
 .review-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 14px;margin-bottom:15px;border:1px solid var(--border);border-radius:9px;background:#fffffffa;box-shadow:0 3px 12px #183c6218}.review-bar select{width:auto;min-width:125px;padding:6px}.review-bar button{padding:6px 10px}.progress-track{width:110px;height:7px;border-radius:7px;background:#dbe5ec;overflow:hidden}#progress-fill{width:0;height:100%;background:#276b53}.category-select{width:auto;max-width:165px;padding:5px;font-size:13px}.source-box{background:#fff9e9;border-left:3px solid #d8ae60;padding:10px;white-space:pre-wrap;margin:10px 0}.source-edit{font-size:12px}.linked-chat{font-size:13px;background:#f6f8fa;padding:8px;margin-top:10px}.linked-chat p{white-space:pre-wrap}.change[hidden]{display:none}
 .profile-module{margin:14px 0 0;padding:12px;border:1px solid var(--border);border-radius:9px;background:#fbfdff}.profile-module .row{margin:8px 0}.profile-module select{flex:1;min-width:175px}.profile-test{padding:13px;margin-top:10px;background:white;border:1px solid var(--border);border-radius:8px}.profile-test .test-choice{font-weight:400;display:block;padding:5px 0}.profile-test .test-choice input{width:auto;margin-right:8px}
+.diagnosis-report{white-space:pre-wrap;max-height:300px;overflow:auto;background:#f5f7fa;border-radius:7px;padding:12px;font-size:13px}.profile-test textarea{margin-bottom:7px}
 </style></head><body><header><h1>译者决策工作台</h1><p>双向翻译 · 自主决策 · 任选离线编辑或在线 AI 协作</p></header><main>
 <section class="panel" id="mode-section"><h2>选择工作模式</h2><div class="mode-switch"><button type="button" id="mode-offline" class="mode-card selected" aria-pressed="true"><strong>离线编辑</strong><span>无需账号或 API Key；手动粘贴建议稿、比较差异、逐处决定和保存项目。</span></button><button type="button" id="mode-ai" class="mode-card" aria-pressed="false"><strong>在线 AI 辅助</strong><span>由网站连接 Agnes；访客无需配置密钥。可自动审校、连续对话与追问，请仅在可信范围分享网址。</span></button></div><div class="mode-detail" id="mode-description" role="status">当前：离线编辑。网页不会发送原文或译文到 AI 服务。</div><p class="hint">可随时切换，两种模式共用本浏览器的翻译项目。切换为在线 AI 后，只有主动点击 AI 功能才会传输项目内容。</p></section>
 <div class="review-bar"><strong>已处理 <span id="progress-count">0/0</span></strong><div class="progress-track"><div id="progress-fill"></div></div><select id="review-filter"><option value="all">全部修改</option><option value="pending">待处理</option><option value="error">明确错误</option><option value="optimize">建议优化</option><option value="optional">可选调整</option></select><button id="undo-decision" disabled>撤销</button><button id="redo-decision" disabled>恢复</button><button id="next-pending">下一处待处理</button></div><section class="panel"><div class="row"><strong>翻译项目</strong><select id="projects" aria-label="选择项目"></select><button id="new">新建</button><button id="rename">重命名</button><button id="remove">删除</button><button id="backup">导出全部项目 JSON</button><button id="restore">导入备份</button><input id="file" type="file" accept=".json" hidden></div><p class="hint" id="save-status">项目仅自动保存在当前浏览器；请定期导出 JSON 备份，避免清除浏览器数据造成丢失。</p></section>
@@ -28,17 +29,90 @@ function storeProfiles(){try{localStorage.setItem(PROFILE_STORE,JSON.stringify(p
 function renderProfiles(d){const sel=$('profile-select');sel.replaceChildren();const o=document.createElement('option');o.value='';o.textContent='当前项目独立要求';sel.appendChild(o);for(const p of profiles){const x=document.createElement('option');x.value=p.id;x.textContent=p.name;sel.appendChild(x)}sel.value=profiles.some(p=>p.id===d.profileId)?d.profileId:'';$('rules').value=profiles.find(p=>p.id===sel.value)?.rules||d.rules||''}
 function activeRules(){const id=$('profile-select').value;return profiles.find(p=>p.id===id)?.rules||$('rules').value}
 function profileMessage(x){$('profile-status').textContent=x}
-const diagnostic=[
- {type:'学术社科',source:'The evidence suggests a possible association.',a:['证据表明两者存在关联。','证据提示两者可能存在关联。'],pref:['表达简练','保留限定语']},
- {type:'学术社科',source:'The findings were mixed.',a:['研究结果不一致。','研究结果呈现出一定的复杂性。'],pref:['直接清晰','适度显化']},
- {type:'文学',source:'He had never quite belonged there.',a:['他始终有些格格不入。','他从未完全属于那个地方。'],pref:['目标语自然','保留形式']},
- {type:'文学',source:'The room fell silent.',a:['屋里安静了下来。','房间陷入一片沉默。'],pref:['平实叙述','修辞色彩']},
- {type:'新闻政经',source:'The two sides held productive talks.',a:['双方举行了富有成效的会谈。','双方进行了积极、务实而富有建设性的交流。'],pref:['简洁准确','表达铺陈']},
- {type:'新闻政经',source:'The plan is expected to reduce costs.',a:['该计划预计将降低成本。','该计划将有效降低成本。'],pref:['保留不确定性','肯定表达']}
-];
-function testStep(n){const root=$('profile-diagnostic');root.hidden=false;root.replaceChildren();const h=document.createElement('strong');h.textContent='情境测试 · '+(n+1)+' / '+diagnostic.length;root.appendChild(h);const q=diagnostic[n],p=document.createElement('p');p.textContent=q.type+'｜'+q.source;root.appendChild(p);q.a.forEach((answer,i)=>{const lab=document.createElement('label');lab.className='test-choice';const r=document.createElement('input');r.type='radio';r.name='profile-choice';r.checked=diagnosticAnswers[n]===i;r.onchange=()=>diagnosticAnswers[n]=i;lab.append(r,document.createTextNode(answer));root.appendChild(lab)});const controls=document.createElement('div');controls.className='row';const back=document.createElement('button');back.textContent='上一题';back.disabled=n===0;back.onclick=()=>testStep(n-1);const next=document.createElement('button');next.textContent=n===diagnostic.length-1?'生成可编辑草案':'下一题';next.onclick=()=>{if(diagnosticAnswers[n]===undefined){profileMessage('请先选择一种译法。');return}if(n<diagnostic.length-1)testStep(n+1);else finishTest()};const close=document.createElement('button');close.textContent='关闭';close.onclick=()=>root.hidden=true;controls.append(back,next,close);root.appendChild(controls)}
-function createProfile(name,rules){const id='profile-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);profiles.push({id,name,rules});storeProfiles();db[current].data.profileId=id;renderProfiles(db[current].data);$('use-rules').checked=true;$('rules-wrap').hidden=false;save();requestAnimationFrame(growAll)}
-function finishTest(){const prefs={};for(let i=0;i<diagnostic.length;i++){if(diagnosticAnswers[i]===undefined)return;const q=diagnostic[i];(prefs[q.type]??=[]).push(q.pref[diagnosticAnswers[i]])}const name=prompt('这套取向叫什么？','我的翻译取向');if(name===null)return;const rules='通用原则：准确忠实原文，保留限定条件，避免无依据的改写。\n'+Object.entries(prefs).map(([k,v])=>k+'：示例偏好为'+v.join('、')+'。具体翻译时请结合语境判断。').join('\n');createProfile(name.trim()||'测试取向',rules);$('profile-diagnostic').hidden=true;profileMessage('已生成测试草案，请检查并编辑后点击「保存修改」。')}
+
+const DIAG_TASKS={
+'学术社科':[
+['choose','EN→ZH','论文摘要；强调关联而非因果','The results point to an association between the two variables.',['结果提示两个变量之间存在关联。','结果显示这两个变量有所关联。'],'学术语体与谨慎措辞'],
+['choose','ZH→EN','研究方法；陈述研究对象','本研究以三个城市的教师为研究对象。',['This study examines teachers in three cities.','The participants in this study are teachers from three cities.'],'信息组织'],
+['choose','EN→ZH','理论综述；描述学术争论','The question remains contested in the literature.',['这一问题在相关研究中仍有争议。','学界对这一问题仍未形成共识。'],'学术习惯与概念界限'],
+['choose','ZH→EN','讨论部分；限制结论范围','这一解释仍有待进一步验证。',['This interpretation requires further validation.','Further research is needed to test this interpretation.'],'显化程度'],
+['revise','EN→ZH','发现部分；有限证据','These findings may help explain the observed pattern.','这些发现或许可以解释观察到的模式。','情态与句法'],
+['revise','ZH→EN','结论；慎用因果语言','这一趋势可能与制度环境的变化有关。','This trend may be related to changes in the institutional environment.','术语与逻辑'],
+['revise','EN→ZH','术语界定；概念边界','The term is used here in a relatively narrow sense.','这里对该术语的使用具有相对狭窄的含义。','术语与自然度'],
+['revise','ZH→EN','文献综述；强调分歧','已有研究对此问题的解释并不一致。','Existing studies offer different explanations of this issue.','概念精确性']
+],
+'文学':[
+['choose','EN→ZH','小说；人物有所回避','She looked away before he could see her face.',['他还没来得及看清她的脸，她便移开了目光。','她转过脸去，没让他看清自己的神情。'],'人物视角'],
+['choose','ZH→EN','散文；回忆熟悉的地方','那条路我走了很多年，直到有一天才觉得陌生。',['I had walked that road for years, until one day it felt unfamiliar.','For years I had known that road, until one day it seemed strange to me.'],'节奏与句法'],
+['choose','EN→ZH','戏剧；讽刺对白','How very thoughtful of you.',['您可真是考虑周到。','你想得可真周全。'],'人物语气'],
+['choose','ZH→EN','小说；动作结尾','他没有回答，只把窗户关上了。',['He said nothing and simply closed the window.','He did not answer; he just shut the window.'],'叙事节奏'],
+['revise','EN→ZH','小说；贴近人物感受','It was strange how quiet the house had become.','房子变得如此安静，真是奇怪。','叙述声音'],
+['revise','ZH→EN','散文；平静语调','雨停了，院子里还留着水声。','The rain stopped, but the sound of water remained in the courtyard.','意象表达'],
+['revise','EN→ZH','戏剧；简短反问','You knew, didn’t you?','你知道这件事，不是吗？','对白自然度'],
+['revise','ZH→EN','小说；含蓄的心理描写','她笑了一下，像是想起了什么。','She smiled a little, as if she had remembered something.','含蓄与节奏']
+],
+'新闻政经':[
+['choose','EN→ZH','新闻；新规生效','Officials said the measure would take effect next month.',['官员表示，该措施将于下月生效。','有关官员称，这项措施将在下个月开始实施。'],'新闻文体'],
+['choose','ZH→EN','经济报道；企业规划','该公司计划在未来两年扩大海外业务。',['The company plans to expand its overseas operations over the next two years.','Over the next two years, the company intends to grow its business abroad.'],'信息顺序'],
+['choose','EN→ZH','政策分析；可能的成本','The proposal could raise costs for smaller firms.',['这项提案可能增加小企业的成本。','该提议或将使规模较小的企业承担更高成本。'],'准确与凝练'],
+['choose','ZH→EN','经济指标；近期变化','这一指标连续三个月小幅回升。',['The indicator has edged up for three consecutive months.','This measure has shown a modest recovery over the past three months.'],'数据措辞'],
+['revise','EN→ZH','政策新闻；明确消息来源','According to the ministry, the new rules are expected to ease delays.','根据该部消息，新规则预计将缓解延误。','消息归属'],
+['revise','ZH→EN','经贸报道；保留可能性','有关措施可能对短期需求产生影响。','The measures may affect demand in the short term.','情态与术语'],
+['revise','EN→ZH','国际报道；避免增补评价','The parties agreed to continue consultations.','各方同意继续开展磋商。','术语与语体'],
+['revise','ZH→EN','政策评论；转折关系','尽管取得一定进展，实施过程仍面临挑战。','Despite some progress, implementation still faces challenges.','衔接与表达']
+]};
+let diagnosticSession={genre:'学术社科',step:-1,answers:[],proposal:null};
+function diagBtn(label,fn,disabled=false){const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=disabled;b.onclick=fn;return b}
+function diagText(parent,label,value,onValue,rows=2){const l=document.createElement('label');l.textContent=label;parent.appendChild(l);const t=document.createElement('textarea');t.rows=rows;t.value=value||'';t.oninput=()=>{onValue(t.value);grow(t)};parent.appendChild(t);requestAnimationFrame(()=>grow(t))}
+function startDiagnosis(){diagnosticSession={genre:'学术社科',step:-1,answers:[],proposal:null};renderDiagnosis()}
+function renderDiagnosis(){
+ const root=$('profile-diagnostic');root.hidden=false;root.replaceChildren();
+ const title=document.createElement('strong');title.textContent='翻译决策诊断';root.appendChild(title);
+ const session=diagnosticSession;
+ if(session.step===-1){
+  const p=document.createElement('p');p.textContent='选择文本类型，完成8项有语境的中英互译任务：4项译法比较及4项自主改写。每题需解释判断依据。';root.appendChild(p);
+  const sel=document.createElement('select');Object.keys(DIAG_TASKS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o)});sel.value=session.genre;sel.onchange=()=>session.genre=sel.value;root.appendChild(sel);
+  root.append(diagBtn('开始诊断',()=>{session.step=0;renderDiagnosis()}),diagBtn('关闭',()=>root.hidden=true));return
+ }
+ const tasks=DIAG_TASKS[session.genre],i=session.step,q=tasks[i];
+ const a=session.answers[i]||(session.answers[i]={choice:'',edit:q[4] instanceof Array?'':q[4],reason:''});
+ const meta=document.createElement('p');meta.textContent=session.genre+' · '+(i+1)+'/8 · '+q[1]+' · '+(q[0]==='choose'?'译法比较':'自主改写');root.appendChild(meta);
+ const ctxt=document.createElement('p');ctxt.textContent='情境：'+q[2];root.appendChild(ctxt);
+ const src=document.createElement('div');src.className='source-box';src.textContent='原文：'+q[3];root.appendChild(src);
+ if(q[0]==='choose'){
+  q[4].forEach((t,j)=>{const l=document.createElement('label');l.className='test-choice';const r=document.createElement('input');r.type='radio';r.name='diagnostic-choice';r.checked=a.choice===String(j);r.onchange=()=>a.choice=String(j);l.append(r,document.createTextNode(t));root.appendChild(l)})
+ }else diagText(root,'参考译文（可以改写或保留）',a.edit,v=>a.edit=v);
+ diagText(root,'说明你选择或改写的理由（必填）',a.reason,v=>a.reason=v);
+ const row=document.createElement('div');row.className='row';
+ row.append(diagBtn('上一题',()=>{session.step--;renderDiagnosis()},i===0),diagBtn(i===tasks.length-1?'生成诊断报告':'下一题',()=>{
+  if(q[0]==='choose'&&a.choice===''){profileMessage('请先选择一种译法');return}
+  if(q[0]==='revise'&&!a.edit.trim()){profileMessage('请填写或保留参考译文');return}
+  if(!a.reason.trim()){profileMessage('请写出判断理由');return}
+  if(i===tasks.length-1)completeDiagnosis();else{session.step++;renderDiagnosis()}
+ }),diagBtn('取消',()=>root.hidden=true));root.appendChild(row)
+}
+function completeDiagnosis(){
+ const s=diagnosticSession;const tasks=DIAG_TASKS[s.genre];
+ const rows=tasks.map((q,i)=>({number:i+1,kind:q[0],direction:q[1],context:q[2],source:q[3],dimension:q[5],answer:q[0]==='choose'?q[4][Number(s.answers[i].choice)]:s.answers[i].edit,reason:s.answers[i].reason}));
+ const report='文本类型：'+s.genre+'\n任务数：8（中英双向）\n注意：一次测试只能提供初步证据，不能确定稳定翻译风格。\n\n'+rows.map(x=>'题'+x.number+' / '+x.dimension+' / '+x.direction+'\n原文：'+x.source+'\n译法：'+x.answer+'\n本人理由：'+x.reason).join('\n\n');
+ const draft='适用文本：'+s.genre+'\n以原文准确性、信息完整性和语体要求为前提，不把错误当成偏好。\n'+rows.map(x=>'关于'+x.dimension+'，我在诊断中给出的依据：'+x.reason).join('\n');
+ s.proposal={report,rules:draft};renderDiagnosisReview()
+}
+function renderDiagnosisReview(){
+ const root=$('profile-diagnostic');root.hidden=false;root.replaceChildren();const s=diagnosticSession;
+ const title=document.createElement('strong');title.textContent='诊断草案：审核后才可保存';root.appendChild(title);
+ const notice=document.createElement('p');notice.textContent='请检查以下记录，并将可操作的偏好提炼到固定要求中；不要直接将个别选择当作长期规律。';root.appendChild(notice);
+ const detail=document.createElement('details');const heading=document.createElement('summary');heading.textContent='查看8题的选择与理由';detail.appendChild(heading);const text=document.createElement('div');text.className='diagnosis-report';text.textContent=s.proposal.report;detail.appendChild(text);root.appendChild(detail);
+ diagText(root,'拟保存的翻译取向（可删改）',s.proposal.rules,v=>s.proposal.rules=v,6);
+ const row=document.createElement('div');row.className='row';
+ row.append(diagBtn('返回修改答案',()=>{s.step=7;renderDiagnosis()}),diagBtn('确认保存为新取向',()=>{
+  if(!s.proposal.rules.trim()){profileMessage('请先填写取向要求');return}
+  const name=prompt('为新取向命名',s.genre+'·我的取向');if(name===null)return;
+  createProfile(name.trim()||'我的翻译取向',s.proposal.rules);
+  const p=profiles.find(x=>x.id===$('profile-select').value);if(p){p.report=s.proposal.report;storeProfiles()}
+  root.hidden=true;profileMessage('取向已保存，诊断记录随取向保存，可在备份中恢复。')
+ }),diagBtn('取消',()=>root.hidden=true));root.appendChild(row)
+}
 function renderProjects(){const sel=$('projects');sel.replaceChildren();Object.entries(db).forEach(([id,p])=>{const o=document.createElement('option');o.value=id;o.textContent=p.name;sel.appendChild(o)});sel.value=current}
 function bootstrap(){loadProfiles();try{const s=JSON.parse(localStorage.getItem(STORAGE)||localStorage.getItem('translator-workbench-agnes-cn-v2')||'null');if(s&&s.db&&Object.keys(s.db).length){db=s.db;current=db[s.current]?s.current:Object.keys(db)[0]}}catch(e){}if(!current){current='default';db={default:{name:'我的翻译项目',data:empty()}}}bind();save()}
 function download(name,body,type){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type:type||'text/plain;charset=utf-8'}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
@@ -181,7 +255,7 @@ $('profile-select').onchange=()=>{const d=db[current].data;d.profileId=$('profil
 $('profile-new').onclick=()=>{const name=prompt('新取向名称');if(name===null)return;createProfile(name.trim()||'未命名取向',$('rules').value)};
 $('profile-save').onclick=()=>{const p=profiles.find(x=>x.id===$('profile-select').value);if(!p){profileMessage('当前是项目独立要求。请先新建取向。');return}p.rules=$('rules').value;storeProfiles();save()};
 $('profile-delete').onclick=()=>{const id=$('profile-select').value;const p=profiles.find(x=>x.id===id);if(!p)return;if(!confirm('确认删除「'+p.name+'」？'))return;profiles=profiles.filter(x=>x.id!==id);storeProfiles();db[current].data.profileId='';renderProfiles(db[current].data);save()};
-$('profile-test').onclick=()=>{diagnosticAnswers=[];testStep(0)};
+$('profile-test').onclick=()=>{startDiagnosis()};
 $('profile-history').onclick=()=>{const d=collect(),decisions=(d.decisions||[]).filter(p=>p.type==='change'&&['accept','keep','custom'].includes(p.choice));if(decisions.length<3){profileMessage('当前项目至少完成3处修改决策后才能生成草案。');return}const lines=['以下内容依据当前项目的实际决策整理，需人工核实：'];for(const [type,label]of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){const selected=decisions.filter(p=>p.choice===type);if(selected.length)lines.push(label+' '+selected.length+' 处。'+selected.map(p=>p.reason).filter(Boolean).slice(0,3).join('；'))}createProfile('历史决策取向 '+new Date().toLocaleDateString('zh-CN'),lines.join('\n'));profileMessage('已生成历史决策草案，请人工审核编辑后保存。')};
 $('use-rules').onchange=()=>{$('rules-wrap').hidden=!$('use-rules').checked;save()};document.querySelectorAll('textarea').forEach(t=>t.addEventListener('input',()=>grow(t)));
 for(const id of ['source','draft','purpose','rules','suggestion','final'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}save()});$('review-filter').onchange=updateProgress;$('undo-decision').onclick=()=>stepHistory(undoStack,redoStack);$('redo-decision').onclick=()=>stepHistory(redoStack,undoStack);$('next-pending').onclick=nextPending;$('model').onchange=save;$('mode-offline').onclick=()=>setMode('offline');$('mode-ai').onclick=()=>setMode('ai');arrangeAssistant();bootstrap();setMode(localStorage.getItem(MODE_STORAGE)||'offline');requestAnimationFrame(growAll);
