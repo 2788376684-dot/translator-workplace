@@ -34,22 +34,41 @@ function grow(el){el.style.height='auto';el.style.height=Math.max(42,el.scrollHe
 function growAll(){document.querySelectorAll('textarea').forEach(grow)}
 function jumpToNext(i){const cards=[...document.querySelectorAll('.change')];const next=cards.slice(i+1).find(c=>c.dataset.choice==='pending')||cards[i+1];if(next){next.scrollIntoView({behavior:'smooth',block:'center'});next.focus({preventScroll:true})}}
 async function explainChange(p){const d=collect();const q='请用中文简要说明这处译文修改是否必要及其依据，不编造理由。\n原文：'+d.source+'\n初译修改处：'+p.before+'\n建议：'+p.after;return (await api([{role:'system',content:'你是翻译审校员，不编造修改理由。'},{role:'user',content:q}])).trim()}
+function sentenceContext(text,start,length){
+ const end=start+length;
+ const boundary=(c,idx)=>/[。！？!?；;\n]/.test(c)||(c==='.'&&(idx+1===text.length||/\s/.test(text[idx+1])));
+ let left=0,right=text.length;
+ for(let k=start-1;k>=0;k--)if(boundary(text[k],k)){left=k+1;break}
+ for(let k=end;k<text.length;k++)if(boundary(text[k],k)){right=k+1;break}
+ // For very long sentences, retain a substantial clause around the edit.
+ if(right-left>640){
+  const pre=text.slice(left,start),post=text.slice(end,right);
+  const lc=Math.max(pre.lastIndexOf('，'),pre.lastIndexOf(','),pre.lastIndexOf('：'),pre.lastIndexOf(':'));
+  if(start-left>230)left=lc>=0&&start-(left+lc+1)<=260?left+lc+1:Math.max(left,start-230);
+  let rc=-1;for(const sep of ['，',',','：',':']){const i=post.indexOf(sep);if(i>=0&&(rc<0||i<rc))rc=i}
+  if(right-end>230)right=rc>=0&&rc<=260?end+rc+1:Math.min(right,end+230)
+ }
+ return {before:(left>0?'…':'')+text.slice(left,start),after:text.slice(end,right)+(right<text.length?'…':'')}
+}
 function renderChanges(){
  const root=$('changes');root.replaceChildren();const ps=parts();let count=0;
  ps.forEach((p,i)=>{
   if(p.type==='same')return;
   const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice;
-  const prev=ps.slice(0,i).reverse().find(x=>x.type==='same');const next=ps.slice(i+1).find(x=>x.type==='same');
-  const before=(prev?.text||'').replace(/\s+/g,' ').slice(-320);const after=(next?.text||'').replace(/\s+/g,' ').slice(0,320);
+  const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
+  const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
+  const posOriginal=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.before).length,0);
+  const posProposed=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.after).length,0);
+  const examples=[sentenceContext(original,posOriginal,p.before.length),sentenceContext(proposed,posProposed,p.after.length)];
   const title=document.createElement('div');title.className='change-title';const n=document.createElement('strong');n.textContent='修改 '+(index+1);title.appendChild(n);
   const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);card.appendChild(title);
   const pair=document.createElement('div');pair.className='pair';
-  for(const [label,value,cl] of [['初译',p.before,'old'],['AI 建议',p.after,'new']]){
+  for(const [j,[label,value,cl]] of [['初译',p.before,'old'],['AI 建议',p.after,'new']].entries()){
    const box=document.createElement('div');box.className='context-cell';const lab=document.createElement('div');lab.className='context-label';lab.textContent=label;box.appendChild(lab);
    const line=document.createElement('div');line.className='context-line';
-   const l=document.createElement('span');l.className='context-side';l.textContent=before;line.appendChild(l);
+   const l=document.createElement('span');l.className='context-side';l.textContent=examples[j].before;line.appendChild(l);
    const mark=document.createElement('mark');mark.className='highlight-'+cl;mark.textContent=value||'（删除）';line.appendChild(mark);
-   const r=document.createElement('span');r.className='context-side';r.textContent=after;line.appendChild(r);box.appendChild(line);pair.appendChild(box);
+   const r=document.createElement('span');r.className='context-side';r.textContent=examples[j].after;line.appendChild(r);box.appendChild(line);pair.appendChild(box);
   }card.appendChild(pair);
   const reasonBox=document.createElement('div');reasonBox.className='reason-box';const reasonTitle=document.createElement('strong');reasonTitle.textContent='AI 修改理由';reasonBox.appendChild(reasonTitle);
   const reason=document.createElement('div');reason.textContent=p.aiReason||'尚未生成；在线模式可点击“生成修改理由”。';reasonBox.appendChild(reason);card.appendChild(reasonBox);
