@@ -60,14 +60,15 @@ function renderChanges(){
  const root=$('changes');root.replaceChildren();const ps=parts();let count=0;
  ps.forEach((p,i)=>{
   if(p.type==='same')return;
-  const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice;
+  const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice||'pending';card.dataset.category=p.category||'optimize';
   const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
   const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
   const posOriginal=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.before).length,0);
   const posProposed=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.after).length,0);
   const examples=[sentenceContext(original,posOriginal,p.before.length),sentenceContext(proposed,posProposed,p.after.length)];
   const title=document.createElement('div');title.className='change-title';const n=document.createElement('strong');n.textContent='修改 '+(index+1);title.appendChild(n);
-  const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);card.appendChild(title);
+  const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);const category=document.createElement('select');category.className='category-select';for(const [v,label] of [['error','明确错误'],['optimize','建议优化'],['optional','可选调整']]){const opt=document.createElement('option');opt.value=v;opt.textContent=label;category.appendChild(opt)}category.value=p.category||'optimize';category.onchange=()=>{snapshot();p.category=category.value;renderChanges();save()};title.appendChild(category);card.appendChild(title);
+  const sourceBox=document.createElement('div');sourceBox.className='source-box';sourceBox.textContent='对应原文：'+(p.sourceExcerpt||'尚未可靠定位；请对照上方原文核查');card.appendChild(sourceBox);const details=document.createElement('details');details.className='source-edit';const summary=document.createElement('summary');summary.textContent='修正对应原句';const fieldSource=document.createElement('textarea');fieldSource.rows=2;fieldSource.value=p.sourceExcerpt||'';fieldSource.onchange=()=>{snapshot();p.sourceExcerpt=fieldSource.value;renderChanges();save()};details.append(summary,fieldSource);card.appendChild(details);
   const pair=document.createElement('div');pair.className='pair';
   for(const [j,[label,value,cl]] of [['初译',p.before,'old'],['AI 建议',p.after,'new']].entries()){
    const box=document.createElement('div');box.className='context-cell';const lab=document.createElement('div');lab.className='context-label';lab.textContent=label;box.appendChild(lab);
@@ -81,16 +82,16 @@ function renderChanges(){
   const choices=document.createElement('div');choices.className='row decision-buttons';
   for(const [v,label] of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){
    const btn=document.createElement('button');btn.textContent=label;btn.setAttribute('aria-pressed',String(p.choice===v));if(p.choice===v)btn.classList.add('active');
-   btn.onclick=()=>{p.choice=v;updateFinal();save();renderChanges();$('decision-status').textContent='修改 '+(index+1)+'：'+({accept:'已接受建议',keep:'已保留初译',custom:'请在下方填写改写内容'})[v];if(v!=='custom')requestAnimationFrame(()=>jumpToNext(index));else requestAnimationFrame(()=>document.querySelectorAll('.change')[index]?.querySelector('.custom-input')?.focus())};choices.appendChild(btn)
+   btn.onclick=()=>{snapshot();p.choice=v;updateFinal();save();renderChanges();$('decision-status').textContent='修改 '+(index+1)+'：'+({accept:'已接受建议',keep:'已保留初译',custom:'请在下方填写改写内容'})[v];if(v!=='custom')requestAnimationFrame(()=>jumpToNext(index));else requestAnimationFrame(()=>document.querySelectorAll('.change')[index]?.querySelector('.custom-input')?.focus())};choices.appendChild(btn)
   }card.appendChild(choices);
   if(p.choice==='accept'||p.choice==='keep'||p.choice==='custom'){
-   if(p.choice==='custom'){const field=document.createElement('textarea');field.rows=1;field.className='compact-area custom-input';field.placeholder='我的改写';field.value=p.custom||'';field.oninput=()=>{p.custom=field.value;grow(field);updateFinal();save()};card.appendChild(field);requestAnimationFrame(()=>grow(field))}
-   const note=document.createElement('textarea');note.rows=1;note.className='compact-area';note.placeholder=p.choice==='custom'?'Learning moment / 改写依据（可选）':'本次决定的理由（可选）';note.value=p.reason||'';note.oninput=()=>{p.reason=note.value;grow(note);save()};card.appendChild(note);requestAnimationFrame(()=>grow(note));
+   if(p.choice==='custom'){const field=document.createElement('textarea');field.rows=1;field.className='compact-area custom-input';field.placeholder='我的改写';field.value=p.custom||'';field.onfocus=()=>snapshot();field.oninput=()=>{p.custom=field.value;grow(field);updateFinal();save()};card.appendChild(field);requestAnimationFrame(()=>grow(field))}
+   const note=document.createElement('textarea');note.rows=1;note.className='compact-area';note.placeholder=p.choice==='custom'?'Learning moment / 改写依据（可选）':'本次决定的理由（可选）';note.value=p.reason||'';note.onfocus=()=>snapshot();note.oninput=()=>{p.reason=note.value;grow(note);save()};card.appendChild(note);requestAnimationFrame(()=>grow(note));
   }
   const buttons=document.createElement('div');buttons.className='row reason-actions';
-  const ask=document.createElement('button');ask.textContent='向 AI 追问此处';ask.onclick=()=>{if(mode!=='ai')setMode('ai');$('assistant-drawer').open=true;$('question').value='请根据原文解释这处译文修改是否必要及其理由。\n初译：'+p.before+'\nAI建议：'+p.after+'\n先前解释：'+(p.aiReason||'未生成');grow($('question'));$('question').scrollIntoView({behavior:'smooth',block:'center'});$('question').focus()};buttons.appendChild(ask);
+  const ask=document.createElement('button');ask.textContent='向 AI 追问此处';ask.onclick=()=>{activeChange=i;if(mode!=='ai')setMode('ai');$('assistant-drawer').open=true;$('question').value='请根据原文解释这处译文修改是否必要及其理由。\n初译：'+p.before+'\nAI建议：'+p.after+'\n先前解释：'+(p.aiReason||'未生成');grow($('question'));$('question').scrollIntoView({behavior:'smooth',block:'center'});$('question').focus()};buttons.appendChild(ask);
   if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';p.aiReason=await explainChange(p);reason.textContent=p.aiReason;save()},'ai-status');buttons.appendChild(why)}
-  card.appendChild(buttons);root.appendChild(card)
+  card.appendChild(buttons);if((p.followups||[]).length){const log=document.createElement('details');log.className='linked-chat';const title=document.createElement('summary');title.textContent='关联追问（'+p.followups.length+'）';log.appendChild(title);for(const m of p.followups){const q=document.createElement('p');q.textContent='问：'+m.question;const a=document.createElement('p');a.textContent='AI：'+m.answer;log.append(q,a)}card.appendChild(log)}root.appendChild(card)
  });
  $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';
 }
