@@ -60,14 +60,14 @@ function renderChanges(){
  const root=$('changes');root.replaceChildren();const ps=parts();let count=0;
  ps.forEach((p,i)=>{
   if(p.type==='same')return;
-  const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice||'pending';card.dataset.category=p.category||'optimize';
+  const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice||'pending';card.dataset.category=p.category||'unclassified';
   const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
   const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
   const posOriginal=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.before).length,0);
   const posProposed=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.after).length,0);
   const examples=[sentenceContext(original,posOriginal,p.before.length),sentenceContext(proposed,posProposed,p.after.length)];
   const title=document.createElement('div');title.className='change-title';const n=document.createElement('strong');n.textContent='修改 '+(index+1);title.appendChild(n);
-  const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);const category=document.createElement('select');category.className='category-select';for(const [v,label] of [['error','明确错误'],['optimize','建议优化'],['optional','可选调整']]){const opt=document.createElement('option');opt.value=v;opt.textContent=label;category.appendChild(opt)}category.value=p.category||'optimize';category.onchange=()=>{snapshot();p.category=category.value;renderChanges();save()};title.appendChild(category);card.appendChild(title);
+  const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);const category=document.createElement('select');category.className='category-select';for(const [v,label] of [['unclassified','待分类'],['error','明确错误'],['optimize','建议优化'],['optional','可选调整']]){const opt=document.createElement('option');opt.value=v;opt.textContent=label;category.appendChild(opt)}category.value=p.category||'unclassified';category.onchange=()=>{snapshot();p.category=category.value;renderChanges();save()};title.appendChild(category);card.appendChild(title);
   const sourceBox=document.createElement('div');sourceBox.className='source-box';sourceBox.textContent='对应原文：'+(p.sourceExcerpt||'尚未可靠定位；请对照上方原文核查');card.appendChild(sourceBox);const details=document.createElement('details');details.className='source-edit';const summary=document.createElement('summary');summary.textContent='修正对应原句';const fieldSource=document.createElement('textarea');fieldSource.rows=2;fieldSource.value=p.sourceExcerpt||'';fieldSource.onchange=()=>{snapshot();p.sourceExcerpt=fieldSource.value;renderChanges();save()};details.append(summary,fieldSource);card.appendChild(details);
   const pair=document.createElement('div');pair.className='pair';
   for(const [j,[label,value,cl]] of [['初译',p.before,'old'],['AI 建议',p.after,'new']].entries()){
@@ -93,7 +93,7 @@ function renderChanges(){
   if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';p.aiReason=await explainChange(p);reason.textContent=p.aiReason;save()},'ai-status');buttons.appendChild(why)}
   card.appendChild(buttons);if((p.followups||[]).length){const log=document.createElement('details');log.className='linked-chat';const title=document.createElement('summary');title.textContent='关联追问（'+p.followups.length+'）';log.appendChild(title);for(const m of p.followups){const q=document.createElement('p');q.textContent='问：'+m.question;const a=document.createElement('p');a.textContent='AI：'+m.answer;log.append(q,a)}card.appendChild(log)}root.appendChild(card)
  });
- $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';
+ $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';updateProgress();
 }
 
 async function explainAll(){
