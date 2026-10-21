@@ -66,6 +66,19 @@ function renderChanges(){
  });
  $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';
 }
+
+async function explainAll(){
+ const ps=parts().filter(p=>p.type==='change').slice(0,12);if(!ps.length)return;
+ const items=ps.map((p,i)=>({id:i+1,before:p.before,after:p.after}));
+ const q='请根据原文与译文，以中文解释每项修改的依据。每条不超过60字，必要时说明该改动只是文体选择。只输出JSON数组，格式为 [{"id":1,"reason":"..."}]，不要Markdown。\n原文：'+$('source').value+'\n修改列表：'+JSON.stringify(items);
+ try{
+  const answer=await api([{role:'system',content:'你是严谨的双向翻译审校员，输出严格JSON，不编造修改理由。'},{role:'user',content:q}]);
+  const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
+  if(!Array.isArray(data))throw Error('格式异常');
+  for(const x of data){const p=ps[Number(x.id)-1];if(p&&typeof x.reason==='string')p.aiReason=x.reason.slice(0,500)}
+  renderChanges();save()
+ }catch(e){$('ai-status').textContent='建议译文已生成；部分理由未能自动取得，可逐处点击生成理由。'}
+}
 function updateFinal(){$('final').value=compose();db[current].data.final=$('final').value}
 function renderChat(){const log=$('chat-log');log.replaceChildren();for(const m of db[current].data.history||[]){const div=document.createElement('div');div.className='msg '+m.role;div.textContent=(m.role==='user'?'我：':'AI：')+'\n'+m.content;log.appendChild(div)}log.scrollTop=log.scrollHeight}
 function context(){const d=collect();return '你是严谨的双向翻译导师（中文到英文或英文到中文，依据原文和初译判断方向）。先依据原文判断，按原文顺序分析；区分错误和文体偏好，不编造依据。\n【文本用途】'+d.purpose+'\n【固定要求】'+(d.useRules?d.rules:'（未启用）')+'\n【原文】'+d.source+'\n【初译】'+d.draft+'\n【建议稿】'+d.suggestion+'\n【当前定稿】'+d.final}
@@ -88,17 +101,17 @@ function setMode(next){
  if(mode==='ai')checkConnection();if(parts().length)renderChanges();
 }
 async function checkConnection(){
- const guide={set className(v){},set textContent(v){}};
+
  if(mode!=='ai')return;
- if(location.protocol==='file:'){guide.className='callout warn';guide.textContent='本地 HTML 可进行离线编辑。要使用公共 AI 服务，请打开已经部署的网址。';$('chat-status').textContent='当前没有公共 AI 服务连接';return}
- try{const r=await fetch('/api/health',{signal:AbortSignal.timeout(5000)});const v=await r.json();if(r.ok&&v.ready){guide.className='callout';guide.textContent='公共 AI 接口已配置。所有访客共用网站后端的模型额度；请勿提交敏感文本。';$('chat-status').textContent='服务已就绪，可测试聊天连接。';return}}
+ if(location.protocol==='file:'){$('chat-status').textContent='当前没有公共 AI 服务连接';return}
+ try{const r=await fetch('/api/health',{signal:AbortSignal.timeout(5000)});const v=await r.json();if(r.ok&&v.ready){$('chat-status').textContent='服务已就绪，可测试聊天连接。';return}}
  catch(e){}
- guide.className='callout warn';guide.textContent='在线 AI 暂不可用（尚未部署、未设置服务器密钥或限额服务）。请切换为「离线编辑」，或联系网站管理员。';$('chat-status').textContent='在线 AI 暂不可用';
+ $('chat-status').textContent='在线 AI 暂不可用';
 }
 
 async function run(button,fn,status){if(busy)return;busy=true;button.disabled=true;try{await fn()}catch(e){$(status).textContent='失败：'+e.message}finally{busy=false;button.disabled=false}}
-function auditPrompt(){const d=collect();return '请根据原文审校我的初译。可能是中译英，也可能是英译中，请根据文本判断方向；建议译文必须与初译使用相同的目标语言。只返回一份完整、可比较的建议译文（保留段落，不要说明或 Markdown）。保持准确、自然及风格一致；没有明确改进价值时保留原译；不得添加原文没有的信息。\n【用途】'+d.purpose+'\n【固定要求】'+d.rules+'\n【原文】\n'+d.source+'\n【我的初译】\n'+d.draft}
-$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成建议稿…';const answer=await api([{role:'system',content:'你是严谨的双向翻译审校员，支持中译英和英译中；依据初译判断目标语言，输出同一语言的完整建议译文，不要评论。'},{role:'user',content:auditPrompt()}]);$('suggestion').value=answer.trim();compare();$('ai-status').textContent='建议稿已生成，请逐处核查。';save()},'ai-status');
+function auditPrompt(){const d=collect();return '请根据原文审校我的初译。可能是中译英，也可能是英译中，请根据文本判断方向；建议译文必须与初译使用相同的目标语言。只返回一份完整、可比较的建议译文（保留段落，不要说明或 Markdown）。保持准确、自然及风格一致；没有明确改进价值时保留原译；不得添加原文没有的信息。\n【用途】'+d.purpose+'\n【固定要求】'+(d.useRules?d.rules:'（未启用）')+'\n【原文】\n'+d.source+'\n【我的初译】\n'+d.draft}
+$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成建议稿…';const answer=await api([{role:'system',content:'你是严谨的双向翻译审校员，支持中译英和英译中；依据初译判断目标语言，输出同一语言的完整建议译文，不要评论。'},{role:'user',content:auditPrompt()}]);$('suggestion').value=answer.trim();compare();$('ai-status').textContent='建议稿已生成，正在整理修改理由…';await explainAll();if(!$('ai-status').textContent.includes('部分理由'))$('ai-status').textContent='建议稿与理由已生成，请逐处核查。';save()},'ai-status');
 function compare(){const d=collect();if(!d.draft.trim()||!d.suggestion.trim())throw Error('需要初译和完整建议稿');d.decisions=diff(d.draft,d.suggestion);updateFinal();renderChanges();save()}
 $('compare').onclick=()=>{try{compare()}catch(e){$('diff-status').textContent=e.message}};
 $('test').onclick=()=>run($('test'),async()=>{$('chat-status').textContent='测试中…';const answer=await api([{role:'user',content:'请只回答“连接成功”。'}]);$('chat-status').textContent='聊天接口响应：'+answer.slice(0,100)},'chat-status');
