@@ -275,7 +275,58 @@ function arrangeAssistant(){const panel=$('ai-panel'),editor=$('changes')?.close
 function grow(el){el.style.height='auto';el.style.height=Math.max(42,el.scrollHeight+2)+'px'}
 function growAll(){document.querySelectorAll('textarea').forEach(grow)}
 function jumpToNext(i){const cards=[...document.querySelectorAll('.change')];const next=cards.slice(i+1).find(c=>c.dataset.choice==='pending')||cards[i+1];if(next){next.scrollIntoView({behavior:'smooth',block:'center'});next.focus({preventScroll:true})}}
-async function explainChange(p){const d=collect();const q='请用中文简要说明这处译文修改是否必要及其依据，不编造理由。\n原文：'+d.source+'\n初译修改处：'+p.before+'\n建议：'+p.after;return (await api([{role:'system',content:'你是翻译审校员，不编造修改理由。'},{role:'user',content:q}])).trim()}
+function changeReviewContext(p){
+ const ps=parts(),idx=ps.indexOf(p);
+ if(idx<0)return {beforeSentence:p.before||'',afterSentence:p.after||''};
+ const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
+ const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
+ let preOld=0,preNew=0;
+ for(let i=0;i<idx;i++){preOld+=ps[i].type==='same'?ps[i].text.length:ps[i].before.length;preNew+=ps[i].type==='same'?ps[i].text.length:ps[i].after.length}
+ const before=sentenceContext(original,preOld,p.before.length);
+ const after=sentenceContext(proposed,preNew,p.after.length);
+ return {beforeSentence:(before.before+p.before+before.after).slice(0,550),afterSentence:(after.before+p.after+after.after).slice(0,550)};
+}
+function reviewRequestItem(p,id){
+ const ctx=changeReviewContext(p);
+ return {id,before:p.before.slice(0,220),after:p.after.slice(0,220),beforeSentence:ctx.beforeSentence.slice(0,450),afterSentence:ctx.afterSentence.slice(0,450),sourceCandidate:p.sourceExcerpt||''};
+}
+function reviewPrompt(excerpt,items){
+ return '复核以下 AI 候选修改。必须判断【修改建议本身】是否准确、自然并有原文支持；禁止为了替修改找理由而强行辩护。对于生硬、不准确、无必要的 AI 建议，verdict 必须为 questionable；证据不足设为 uncertain；仅当建议可靠时设为 support。切勿把 AI 建议中的新问题说成原初译的错误。每条 reason 不超过 90 个汉字，只描述当前 before 到 after 的变化；不得引用所给原文中不存在的英文词句。sourceExcerpt 必须逐字摘录自所提供原文；无法对应则填空字符串。返回 JSON 数组，元素格式 {"id":1,"verdict":"support|questionable|uncertain","category":"error|optimize|optional|unclassified","reason":"...","sourceExcerpt":"..."}。分类 error 仅适用于初译存在明确错误且 AI 改法可靠的情况。不要输出 Markdown。\n【原文（超过长度的部分可能省略）】\n'+excerpt+'\n【候选修改及两侧完整句子】\n'+JSON.stringify(items);
+}
+function validateRationale(p,x,source,oldSentence,newSentence){
+ const reason=typeof x?.reason==='string'?x.reason.trim().slice(0,500):'';
+ const verdict=['support','questionable','uncertain'].includes(x?.verdict)?x.verdict:'uncertain';
+ const quoteExp=/[“"‘'「]([^”"’'」]{3,120})[”"’'」]/g;
+ const hallucinated=[...reason.matchAll(quoteExp)].map(m=>m[1].trim()).filter(q=>/[A-Za-z]{3}/.test(q)&&!source.includes(q)&&!oldSentence.includes(q)&&!newSentence.includes(q));
+ const after=(p.after||'').trim();
+ const selfContradict=after.length>=2&&reason.includes(after)&&/(搭配不当|不自然|不通顺|不准确|不妥|欠妥|生硬|不应|不宜|错译|误译|语义偏差|不合理)/.test(reason);
+ const anchor=typeof x?.sourceExcerpt==='string'?x.sourceExcerpt.trim():'';
+ const reliableAnchor=anchor.length>=4&&source.includes(anchor);
+ if(hallucinated.length)return {status:'questionable',message:'理由引用了原文及译文中均未出现的英文表达（'+hallucinated.slice(0,2).join('、')+'），已拒绝该理由。',reason:'',sourceExcerpt:'',category:''};
+ if(selfContradict)return {status:'questionable',message:'AI 理由否定了它所建议的译法，已将该建议标记为存疑。',reason,sourceExcerpt:reliableAnchor?anchor:'',category:''};
+ if(verdict==='questionable')return {status:'questionable',message:'AI 复核认为当前建议可能不准确、不自然或不必要。',reason,sourceExcerpt:reliableAnchor?anchor:'',category:''};
+ if(verdict==='uncertain'||!reason||!reliableAnchor)return {status:'unverified',message:'缺乏经过核对的原文依据，暂不作确定分类。',reason:reason||'',sourceExcerpt:reliableAnchor?anchor:'',category:''};
+ return {status:'supported',message:'原文引文与理由已通过基础检查；质量判断仍由译员确认。',reason,sourceExcerpt:anchor,category:['error','optimize','optional'].includes(x.category)?x.category:'unclassified'};
+}
+function applyReviewResult(p,x,source){
+ const ctx=changeReviewContext(p),result=validateRationale(p,x,source,ctx.beforeSentence,ctx.afterSentence);
+ p.reviewStatus=result.status;p.reviewMessage=result.message;
+ if(result.reason)p.aiReason=result.reason;else p.aiReason='';
+ if(result.sourceExcerpt&&!p.sourceConfirmed)p.sourceExcerpt=result.sourceExcerpt;
+ if(result.category&&!p.manualCategory)p.category=result.category;
+ else if(!p.manualCategory&&result.status!=='supported')p.category='unclassified';
+ if(result.status==='questionable'&&x?.reason&&!result.reason)p.rejectedReason=String(x.reason).slice(0,500);
+ return result;
+}
+async function explainChange(p){
+ const d=collect(),source=d.source,excerpt=source.slice(0,4200);
+ const answer=await api([{role:'system',content:'你是第二道独立的译后编辑质量复核环节。可以否定 AI 自己的建议。必须只输出 JSON。'},{role:'user',content:reviewPrompt(excerpt,[reviewRequestItem(p,1)])}]);
+ const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
+ const item=Array.isArray(data)?data[0]:data;
+ if(!item||Number(item.id)!==1)throw Error('AI 审核结果格式不正确');
+ if(!parts().includes(p))throw Error('审校项目已变化，请重新审核');
+ return applyReviewResult(p,item,source);
+}
 function sentenceContext(text,start,length){
  const end=start+length;
  const boundary=(c,idx)=>/[。！？!?；;\n]/.test(c)||(c==='.'&&(idx+1===text.length||/\s/.test(text[idx+1])));
@@ -344,33 +395,32 @@ function renderChanges(){
 async function explainAll(){
  const project=current,all=parts().filter(p=>p.type==='change');
  if(!all.length)return;
- const batchSize=8;let processed=0,failed=0;
+ const batchSize=4;let supported=0,questionable=0,unverified=0,failed=0;
+ const source=$('source').value,excerpt=source.slice(0,4200);
  for(let start=0;start<all.length;start+=batchSize){
   if(project!==current)return;
   const batch=all.slice(start,start+batchSize);
-  $('ai-status').textContent='正在分析修改理由：'+Math.min(start+batchSize,all.length)+' / '+all.length;
-  const items=batch.map((p,i)=>({id:i+1,before:p.before.slice(0,350),after:p.after.slice(0,350)}));
-  const excerpt=$('source').value.slice(0,5500);
-  const q='请依据原文区分error（明确错误）、optimize（建议优化）、optional（可选调整）。每项理由不超过60字；sourceExcerpt必须是提供的原文节选中逐字出现的原句，无法可靠对应则为空。只返回 JSON 数组，例如 [{"id":1,"category":"error","reason":"...","sourceExcerpt":"..."}]。\n原文节选（超长原文可能被截断，严禁猜测未提供的内容）：\n'+excerpt+'\n修改列表：'+JSON.stringify(items);
+  $('ai-status').textContent='正在复核 AI 候选建议：'+Math.min(start+batchSize,all.length)+' / '+all.length;
+  const items=batch.map((p,i)=>reviewRequestItem(p,i+1));
   try{
-   const answer=await api([{role:'system',content:'你是翻译审校员。仅根据提供的证据判断。严格输出 JSON，不编造原文定位。'},{role:'user',content:q}]);
-   const cleaned=answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim();
-   const data=JSON.parse(cleaned);if(!Array.isArray(data))throw Error('响应不是数组');
-   for(const x of data){
-    const n=Number(x.id);
-    if(!Number.isInteger(n)||n<1||n>batch.length)continue;
-    const p=batch[n-1];if(!parts().includes(p)||typeof x.reason!=='string')continue;
-    if(!p.aiReason)p.aiReason=x.reason.slice(0,500);
-    if(!p.category||p.category==='unclassified'){
-     if(['error','optimize','optional'].includes(x.category))p.category=x.category;
-    }
-    if(!p.sourceExcerpt&&typeof x.sourceExcerpt==='string'&&excerpt.includes(x.sourceExcerpt)&&x.sourceExcerpt.trim())p.sourceExcerpt=x.sourceExcerpt.slice(0,700);
-    processed++;
+   const answer=await api([{role:'system',content:'你是独立的翻译质量审校员。优先指出 AI 建议自己的错误，可以判为 questionable 或 uncertain。仅输出 JSON 数组。'},{role:'user',content:reviewPrompt(excerpt,items)}]);
+   const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
+   if(!Array.isArray(data))throw Error('响应不是数组');
+   for(let i=0;i<batch.length;i++){
+    const item=data.find(x=>Number(x.id)===i+1),p=batch[i];
+    if(!parts().includes(p))continue;
+    if(!item){p.reviewStatus='unverified';p.reviewMessage='本次 AI 未返回有效审核结果。';unverified++;continue}
+    const result=applyReviewResult(p,item,source);
+    if(result.status==='supported')supported++;else if(result.status==='questionable')questionable++;else unverified++;
    }
-  }catch(e){if(project!==current)return;failed+=batch.length}
+  }catch(e){
+   if(project!==current)return;
+   for(const p of batch){p.reviewStatus='unverified';p.reviewMessage='AI 理由复核失败，可单独重试。';}
+   failed+=batch.length;
+  }
   if(project===current){renderChanges();save()}
  }
- $('ai-status').textContent='建议译文已生成，已获得 '+processed+' 处修改的初步分析'+(failed?'；'+failed+' 处分析失败，可逐处重试。':'，请逐处核查。');
+ $('ai-status').textContent='候选修改复核完成：基础校验通过 '+supported+' 处、存疑 '+questionable+' 处、依据不足 '+unverified+' 处'+(failed?'，复核请求失败 '+failed+' 处。':'。')+' 所有 AI 判断仍需人工核实。';
 }
 function renderFinalDirty(){
  const d=db[current]?.data||{},dirty=!!d.manualFinalDirty;
