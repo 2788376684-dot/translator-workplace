@@ -32,7 +32,7 @@
 </details>
 <footer>离线编辑与在线 AI 可自由切换 · 项目仅存于本浏览器（非跨设备同步） · 公共 API Key 仅保存在服务器</footer></main>
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id),STORAGE='translator-workbench-agnes-cn-v3', MODE_STORAGE='translator-workbench-mode-v1';let db={},current='',busy=false,mode='offline',undoStack=[],redoStack=[],activeChange=-1;
+(()=>{'use strict';const $=id=>document.getElementById(id),STORAGE='translator-workbench-agnes-cn-v3', MODE_STORAGE='translator-workbench-mode-v1';let db={},current='',busy=false,mode='offline',undoStack=[],redoStack=[],activeChange=-1,editingTermIndex=-1;
 const PROFILE_STORE='translator-workbench-profiles-v1';let profiles=[],diagnosticAnswers=[];const empty=()=>({source:'',draft:'',purpose:'',rules:'按原文顺序逐句评析；区分确定错误与可讨论的文体选择；有依据地修改，不要为改而改。',useRules:false,profileId:'',suggestion:'',final:'',decisions:[],history:[],model:'agnes-2.5-flash',direction:'auto',manualFinalDirty:false});
 
 function extraData(){const d=db[current]?.data||{};if(!Array.isArray(d.terms))d.terms=[];if(!Array.isArray(d.versions))d.versions=[];return d}
@@ -41,25 +41,80 @@ function appendText(parent,tag,value,klass){const el=document.createElement(tag)
 function termAndVersionRender(){
  const d=extraData();const terms=$('term-list');terms.replaceChildren();
  if(!d.terms.length)appendText(terms,'p','暂无术语记录','hint');
- d.terms.forEach((t,i)=>{const e=appendText(terms,'div','','tool-item');appendText(e,'strong',t.source+' → '+t.target);if(t.context)appendText(e,'div','语境：'+t.context,'muted');if(t.evidence)appendText(e,'div','来源（用户记录，尚未自动核验）：'+t.evidence,'muted');const b=appendText(e,'button','删除');b.type='button';b.onclick=()=>{if(!confirm('删除这条术语？'))return;d.terms.splice(i,1);save();termAndVersionRender()}})
+ d.terms.forEach((t,i)=>{const e=appendText(terms,'div','','tool-item');appendText(e,'strong',t.source+' → '+t.target);if(t.context)appendText(e,'div','语境：'+t.context,'muted');if(t.evidence)appendText(e,'div','来源（用户记录，尚未自动核验）：'+t.evidence,'muted');const edit=appendText(e,'button','编辑');edit.type='button';edit.onclick=()=>{editingTermIndex=i;$('term-source').value=t.source;$('term-target').value=t.target;$('term-context').value=t.context||'';$('term-evidence').value=t.evidence||'';$('term-add').textContent='保存修改';$('term-source').focus()};const b=appendText(e,'button','删除');b.type='button';b.onclick=()=>{if(!confirm('删除这条术语？'))return;d.terms.splice(i,1);save();termAndVersionRender()}})
  const versions=$('version-list');versions.replaceChildren();
  if(!d.versions.length)appendText(versions,'p','暂无版本快照','hint');
- d.versions.forEach((v,i)=>{const e=appendText(versions,'div','','tool-item');appendText(e,'strong',v.label||'未命名版本');appendText(e,'span',' · '+new Date(v.at).toLocaleString('zh-CN'),'muted');const b=appendText(e,'button','恢复');b.type='button';b.onclick=()=>{if(!confirm('恢复此版本将覆盖当前原文、初译、要求、建议和最终译文，并清除现有差异决策。请确认已备份。'))return;for(const k of ['source','draft','purpose','suggestion','final'])$(k).value=v[k]||'';d.decisions=[];d.history=[];activeChange=-1;renderChanges();renderChat();save();growAll();termAndVersionRender()};const del=appendText(e,'button','删除');del.type='button';del.onclick=()=>{if(!confirm('删除此快照？'))return;d.versions.splice(i,1);save();termAndVersionRender()}})
+ d.versions.forEach((v,i)=>{
+  const e=appendText(versions,'div','','tool-item');
+  appendText(e,'strong',v.label||'未命名版本');appendText(e,'span',' · '+new Date(v.at).toLocaleString('zh-CN'),'muted');
+  const b=appendText(e,'button','恢复');b.type='button';b.onclick=()=>{
+   if(!confirm('恢复此版本会替换当前项目内容。工作台将先自动保存一份恢复前快照；确认继续？'))return;
+   if(d.versions.length>=20)return alert('版本数已达上限。请删除旧版本，或先导出全部项目备份。');
+   const currentCopy=versionPayload(d);
+   const restored=v.payload?JSON.parse(JSON.stringify(v.payload)):{...empty(),source:v.source||'',draft:v.draft||'',purpose:v.purpose||'',suggestion:v.suggestion||'',final:v.final||'',manualFinalDirty:false};
+   const preservedVersions=d.versions;
+   preservedVersions.push({label:'恢复前自动快照',at:new Date().toISOString(),payload:currentCopy});
+   for(const k of Object.keys(d))if(k!=='versions')delete d[k];
+   Object.assign(d,restored);d.versions=preservedVersions;
+   editingTermIndex=-1;activeChange=-1;undoStack=[];redoStack=[];
+   bind();save();termAndVersionRender();
+  };
+  const del=appendText(e,'button','删除');del.type='button';del.onclick=()=>{if(!confirm('删除此快照？'))return;d.versions.splice(i,1);save();termAndVersionRender()};
+ });
  const changes=(d.decisions||[]).filter(x=>x.type==='change');const finished=changes.filter(x=>['accept','keep','custom'].includes(x.choice));const counts={};for(const p of finished){const cat=p.category||'uncategorized';counts[cat]=(counts[cat]||0)+1}$('research-summary').textContent='已决策 '+finished.length+'/'+changes.length+' 处；采纳 '+finished.filter(x=>x.choice==='accept').length+'、保留 '+finished.filter(x=>x.choice==='keep').length+'、自主修改 '+finished.filter(x=>x.choice==='custom').length+'。问题分类：'+(Object.entries(counts).map(([k,v])=>({error:'明确错误',optimize:'建议优化',optional:'可选调整',uncategorized:'未分类'}[k]||k)+v+'处').join('，')||'暂无')+'。';
 }
+function versionPayload(d){const data={...d};delete data.versions;return JSON.parse(JSON.stringify(data))}
 function csvLine(xs){return xs.map(x=>'"'+cellText(x).replace(/"/g,'""')+'"').join(',')}
+function runLocalQA(){
+ const d=collect(),warnings=[];
+ if(!d.source.trim()||!d.final.trim()){warnings.push('原文或最终译文为空，无法完成交付检查。')}
+ const terms=(d.terms||[]);
+ for(const t of terms){
+  if(!t.source||!t.target)continue;
+  const sourceHas=d.source.toLocaleLowerCase().includes(t.source.toLocaleLowerCase());
+  const finalHas=d.final.toLocaleLowerCase().includes(t.target.toLocaleLowerCase());
+  if(sourceHas&&!finalHas)warnings.push('术语待核查：「'+t.source+'」已在原文中出现，但最终译文中没有找到「'+t.target+'」。');
+ }
+ const numbers=x=>x.match(/[0-9]+(?:[,.][0-9]+)*(?:\s*%)?/g)?.map(n=>n.replace(/,/g,'').replace(/\s+/g,''))||[];
+ const remaining=new Map();for(const x of numbers(d.final))remaining.set(x,(remaining.get(x)||0)+1);
+ for(const x of numbers(d.source)){const n=remaining.get(x)||0;if(n)remaining.set(x,n-1);else warnings.push('数字待核查：原文中的「'+x+'」未在译文中找到相同的阿拉伯数字。')}
+ if(d.manualFinalDirty)warnings.push('最终译文含有手工编辑，与审校决策的自动拼接稿可能不同；请确认版本。');
+ const unfinished=(d.decisions||[]).filter(p=>p.type==='change'&&!['accept','keep','custom'].includes(p.choice)).length;
+ if(unfinished)warnings.push('尚有 '+unfinished+' 处修改未作出决定。');
+ const root=$('qa-results');root.replaceChildren();
+ if(!warnings.length)appendText(root,'div','基础术语与数字检查未发现明显异常。此结果不代表语义审校已完成。','qa-pass');
+ else{appendText(root,'strong','发现 '+warnings.length+' 项待人工核查');for(const issue of warnings)appendText(root,'div',issue,'qa-issue')}
+}
 function researchRows(all){const rows=[['项目','编号','原文','初译全文','建议译文全文','修改前','修改后','决定','自主改写','类别','原文对应片段','译者理由','AI理由','追问记录','最终译文']];for(const [id,p] of Object.entries(db)){if(!all&&id!==current)continue;const d=p.data||{};let n=0;for(const x of d.decisions||[]){if(x.type!=='change')continue;n++;rows.push([p.name,n,d.source,d.draft,d.suggestion,x.before,x.after,({accept:'采纳',keep:'保留',custom:'自主修改'}[x.choice]||'待处理'),x.custom,x.category,x.sourceExcerpt,x.reason,x.aiReason,JSON.stringify(x.followups||[]),d.final])}}return rows}
 function exportCSV(all){save();const csv='\uFEFF'+researchRows(all).map(csvLine).join('\r\n');download(all?'全部项目_译者决策.csv':'本项目_译者决策.csv',csv,'text/csv;charset=utf-8')}
 function initExtraTools(){
- $('term-add').onclick=()=>{const source=$('term-source').value.trim(),target=$('term-target').value.trim();if(!source||!target)return alert('请填写原文术语与译法');extraData().terms.push({source,target,context:$('term-context').value.trim(),evidence:$('term-evidence').value.trim()});for(const k of ['term-source','term-target','term-context','term-evidence'])$(k).value='';save();termAndVersionRender()};
- $('version-save').onclick=()=>{const d=collect();const label=$('version-label').value.trim()||'译文快照 '+(d.versions.length+1);if(d.versions.length>=30)return alert('每项目最多保存30个快照，请先删除较旧快照');d.versions.push({label,at:new Date().toISOString(),source:d.source,draft:d.draft,purpose:d.purpose,suggestion:d.suggestion,final:d.final});$('version-label').value='';save();termAndVersionRender()};
+ $('term-add').onclick=()=>{
+ const source=$('term-source').value.trim(),target=$('term-target').value.trim();
+ if(!source||!target)return alert('请填写原文术语与译法');
+ const d=extraData(),value={source,target,context:$('term-context').value.trim(),evidence:$('term-evidence').value.trim()};
+ if(editingTermIndex>=0&&editingTermIndex<d.terms.length)d.terms[editingTermIndex]=value;else d.terms.push(value);
+ editingTermIndex=-1;$('term-add').textContent='保存术语';
+ for(const k of ['term-source','term-target','term-context','term-evidence'])$(k).value='';
+ save();termAndVersionRender();
+};
+ $('version-save').onclick=()=>{
+ const d=collect(),label=$('version-label').value.trim()||'译文快照 '+(d.versions.length+1);
+ if(d.versions.length>=20)return alert('每项目最多保留20个快照；建议先备份，再删除旧版本。');
+ d.versions.push({label,at:new Date().toISOString(),payload:versionPayload(d)});
+ $('version-label').value='';save();termAndVersionRender();
+};
+ $('qa-run').onclick=runLocalQA;
+ $('terms-csv').onclick=()=>{
+  const d=collect(),rows=[['原文术语','目标语译法','适用语境','记录来源'],...(d.terms||[]).map(t=>[t.source,t.target,t.context||'',t.evidence||''])];
+  download('项目术语.csv','\uFEFF'+rows.map(csvLine).join('\r\n'),'text/csv;charset=utf-8');
+ };
  $('csv-current').onclick=()=>exportCSV(false);$('csv-all').onclick=()=>exportCSV(true);
  $('replay-export').onclick=()=>{save();const d=collect();const lines=['# 译者决策回放',db[current].name,'','## 时间','导出于 '+new Date().toLocaleString('zh-CN'),'','## 原文',d.source,'','## 初译',d.draft,'','## 审校决策'];let i=0;for(const x of d.decisions||[]){if(x.type!=='change')continue;lines.push('','### '+(++i),'初译：'+cellText(x.before),'建议：'+cellText(x.after),'决定：'+cellText(x.choice),'改写：'+cellText(x.custom),'类别：'+cellText(x.category),'依据：'+cellText(x.reason),'追问：'+JSON.stringify(x.followups||[]))}lines.push('','## 最终译文',d.final);download('译者决策回放.md',lines.join('\n'),'text/markdown;charset=utf-8')};
  $('workspace-tools').addEventListener('toggle',()=>{if($('workspace-tools').open)termAndVersionRender()});
 }
 function save(){try{db[current].data=collect();localStorage.setItem(STORAGE,JSON.stringify({current,db}));$('save-status').textContent='已保存在当前浏览器 · '+new Date().toLocaleTimeString('zh-CN')+'。建议定期导出备份。'}catch(e){$('save-status').textContent='自动保存失败，请导出 JSON 备份。'}}
 function collect(){const d=db[current].data;for(const key of ['source','draft','purpose','suggestion','final'])d[key]=$(key).value;if(!$('profile-select').value)d.rules=$('rules').value;d.useRules=$('use-rules').checked;d.profileId=$('profile-select').value;d.model=$('model').value;d.direction=$('direction').value;return d}
-function bind(){let d=db[current].data;for(const k of ['source','draft','purpose','rules','suggestion','final'])$(k).value=d[k]||'';$('use-rules').checked=!!d.useRules;$('rules-wrap').hidden=!d.useRules;renderProfiles(d);$('model').value=d.model||'agnes-2.5-flash';$('direction').value=d.direction||'auto';if((d.decisions||[]).length&&d.final!==compose())d.manualFinalDirty=true;renderFinalDirty();renderProjects();renderChanges();renderChat();termAndVersionRender();undoStack=[];redoStack=[];activeChange=-1;historyButtons();requestAnimationFrame(growAll)}
+function bind(){editingTermIndex=-1;$('term-add').textContent='保存术语';$('qa-results').replaceChildren();let d=db[current].data;for(const k of ['source','draft','purpose','rules','suggestion','final'])$(k).value=d[k]||'';$('use-rules').checked=!!d.useRules;$('rules-wrap').hidden=!d.useRules;renderProfiles(d);$('model').value=d.model||'agnes-2.5-flash';$('direction').value=d.direction||'auto';if((d.decisions||[]).length&&d.final!==compose())d.manualFinalDirty=true;renderFinalDirty();renderProjects();renderChanges();renderChat();termAndVersionRender();undoStack=[];redoStack=[];activeChange=-1;historyButtons();requestAnimationFrame(growAll)}
 
 function loadProfiles(){try{const x=JSON.parse(localStorage.getItem(PROFILE_STORE)||'[]');if(Array.isArray(x))profiles=x.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.rules==='string')}catch(e){}}
 function storeProfiles(){try{localStorage.setItem(PROFILE_STORE,JSON.stringify(profiles));$('profile-status').textContent='取向已保存在当前浏览器。'}catch(e){$('profile-status').textContent='保存失败，请检查浏览器存储。'}}
@@ -168,9 +223,9 @@ function normalize(s){return s.trim().replace(/\r\n/g,'\n')}
 function tokenize(t){return t.match(/\s+|[\p{Script=Han}]|[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*|[^\s]/gu)||[]}
 function diff(a,b){const x=tokenize(a),y=tokenize(b),n=x.length,m=y.length;if(n*m>1500000)throw Error('文本太长，请按段处理（建议单次不超过约 500 英文词）');let dp=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);let i=0,j=0,ops=[];function add(t,v){if(ops.length&&ops.at(-1).type===t)ops.at(-1).text+=v;else ops.push({type:t,text:v})}while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);let parts=[];for(let k=0;k<ops.length;){if(ops[k].type==='same'){parts.push({type:'same',text:ops[k++].text});continue}let old='',newer='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')old+=ops[k].text;else newer+=ops[k].text;k++}parts.push({type:'change',before:old,after:newer,choice:'pending',reason:'',custom:'',aiReason:''})}return parts}
 function parts(){return db[current].data.decisions||[]}
-function snapshot(){undoStack.push(JSON.stringify({decisions:parts(),final:$('final').value}));if(undoStack.length>60)undoStack.shift();redoStack=[];historyButtons()}
+function snapshot(){undoStack.push(JSON.stringify({decisions:parts(),final:$('final').value,manualFinalDirty:!!db[current].data.manualFinalDirty}));if(undoStack.length>60)undoStack.shift();redoStack=[];historyButtons()}
 function historyButtons(){$('undo-decision').disabled=!undoStack.length;$('redo-decision').disabled=!redoStack.length}
-function stepHistory(a,b){if(!a.length)return;b.push(JSON.stringify({decisions:parts(),final:$('final').value}));const x=JSON.parse(a.pop());db[current].data.decisions=x.decisions;$('final').value=x.final;renderChanges();grow($('final'));save();historyButtons()}
+function stepHistory(a,b){if(!a.length)return;b.push(JSON.stringify({decisions:parts(),final:$('final').value,manualFinalDirty:!!db[current].data.manualFinalDirty}));const x=JSON.parse(a.pop());db[current].data.decisions=x.decisions;db[current].data.manualFinalDirty=!!x.manualFinalDirty;$('final').value=x.final;renderFinalDirty();renderChanges();grow($('final'));save();historyButtons()}
 function updateProgress(){const all=parts().filter(p=>p.type==='change'),done=all.filter(p=>['accept','keep','custom'].includes(p.choice)).length;$('progress-count').textContent=done+'/'+all.length;$('progress-fill').style.width=(all.length?100*done/all.length:0)+'%';const f=$('review-filter').value;document.querySelectorAll('.change').forEach(c=>c.hidden=f==='pending'?c.dataset.choice!=='pending':(['error','optimize','optional'].includes(f)?c.dataset.category!==f:false))}
 function nextPending(){const card=[...document.querySelectorAll('.change')].find(c=>!c.hidden&&c.dataset.choice==='pending');if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.focus({preventScroll:true})}}
 function compose(){return parts().map(p=>p.type==='same'?p.text:p.choice==='accept'?p.after:p.choice==='custom'?(p.custom||p.before):p.before).join('')}
@@ -335,7 +390,7 @@ $('profile-test').onclick=()=>{startDiagnosis()};
 $('profile-history').onclick=()=>{const d=collect(),decisions=(d.decisions||[]).filter(p=>p.type==='change'&&['accept','keep','custom'].includes(p.choice));if(decisions.length<3){profileMessage('当前项目至少完成3处修改决策后才能生成草案。');return}const lines=['以下内容依据当前项目的实际决策整理，需人工核实：'];for(const [type,label]of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){const selected=decisions.filter(p=>p.choice===type);if(selected.length)lines.push(label+' '+selected.length+' 处。'+selected.map(p=>p.reason).filter(Boolean).slice(0,3).join('；'))}createProfile('历史决策取向 '+new Date().toLocaleDateString('zh-CN'),lines.join('\n'));profileMessage('已生成历史决策草案，请人工审核编辑后保存。')};
 $('use-rules').onchange=()=>{$('rules-wrap').hidden=!$('use-rules').checked;save()};document.querySelectorAll('textarea').forEach(t=>t.addEventListener('input',()=>grow(t)));
 for(const id of ['source','draft','purpose','rules','suggestion'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}save()});$('final').addEventListener('input',()=>{
- const d=db[current].data;d.manualFinalDirty=!!(d.decisions||[]).length;
+ const d=db[current].data;d.manualFinalDirty=true;
  renderFinalDirty();save();
 });
 $('resync-final').onclick=()=>{
