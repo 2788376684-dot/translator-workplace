@@ -291,7 +291,7 @@ function reviewRequestItem(p,id){
  return {id,before:p.before.slice(0,220),after:p.after.slice(0,220),beforeSentence:ctx.beforeSentence.slice(0,450),afterSentence:ctx.afterSentence.slice(0,450),sourceCandidate:p.sourceExcerpt||''};
 }
 function reviewPrompt(excerpt,items){
- return '复核以下 AI 候选修改。必须判断【修改建议本身】是否准确、自然并有原文支持；禁止为了替修改找理由而强行辩护。对于生硬、不准确、无必要的 AI 建议，verdict 必须为 questionable；证据不足设为 uncertain；仅当建议可靠时设为 support。切勿把 AI 建议中的新问题说成原初译的错误。每条 reason 不超过 90 个汉字，只描述当前 before 到 after 的变化；不得引用所给原文中不存在的英文词句。sourceExcerpt 必须逐字摘录自所提供原文；无法对应则填空字符串。返回 JSON 数组，元素格式 {"id":1,"verdict":"support|questionable|uncertain","category":"error|optimize|optional|unclassified","reason":"...","sourceExcerpt":"..."}。分类 error 仅适用于初译存在明确错误且 AI 改法可靠的情况。不要输出 Markdown。\n【原文（超过长度的部分可能省略）】\n'+excerpt+'\n【候选修改及两侧完整句子】\n'+JSON.stringify(items);
+ return '复核以下 AI 候选修改。必须判断【修改建议本身】是否准确、自然并有原文支持；禁止为了替修改找理由而强行辩护。对于生硬、不准确、无必要的 AI 建议，verdict 必须为 questionable；证据不足设为 uncertain；仅当建议可靠时设为 support。切勿把 AI 建议中的新问题说成原初译的错误。每条 reason 不超过 90 个汉字，只描述当前 before 到 after 的变化；不得引用所给原文中不存在的英文词句。sourceExcerpt 必须逐字摘录自所提供原文；无法对应则填空字符串。返回 JSON 数组。例如 {"id":1,"verdict":"support","category":"optimize","reason":"...","sourceExcerpt":"..."}。verdict 仅允许 support、questionable、uncertain；category 仅允许 error、optimize、optional、unclassified，必须从中选单个值。分类 error 仅适用于初译存在明确错误且 AI 改法可靠的情况。不要输出 Markdown。\n【原文（超过长度的部分可能省略）】\n'+excerpt+'\n【候选修改及两侧完整句子】\n'+JSON.stringify(items);
 }
 function validateRationale(p,x,source,oldSentence,newSentence){
  const reason=typeof x?.reason==='string'?x.reason.trim().slice(0,500):'';
