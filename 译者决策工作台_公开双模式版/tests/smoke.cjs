@@ -49,3 +49,24 @@ test('key reliability features remain wired',()=>{
   assert.ok((script+api).includes(expected),'missing '+expected);
  }
 });
+
+test('rationale review rejects invented quotations and self-contradictions',()=>{
+ const start=script.indexOf('function validateRationale('),end=script.indexOf('function applyReviewResult(',start);
+ assert.ok(start>=0&&end>start,'review validator must be defined');
+ const validate=new Function(script.slice(start,end)+';return validateRationale;')();
+ const source='any mental or physical anguish';
+ const before='亲爱的格温德琳，要是你为此伤心伤身';
+ const after='亲爱的格温德琳，要是让你身心痛苦';
+ const samples=[
+  [{after:'心痛苦'}, {verdict:'support',category:'error',sourceExcerpt:source,reason:"添加'心痛苦'与前面残留文字搭配不当，且'verbal anguish'应译为'精神痛苦'。"},'questionable'],
+  [{after:'心痛苦'}, {verdict:'support',category:'error',sourceExcerpt:source,reason:'添加“心痛苦”搭配不当。'},'questionable'],
+  [{after:'身心痛苦'}, {verdict:'support',category:'optimize',sourceExcerpt:source,reason:'改为“身心痛苦”，自然概括精神和肉体两类痛苦。'},'supported'],
+  [{after:'身心痛苦'}, {verdict:'questionable',category:'error',sourceExcerpt:source,reason:'建议存在语义偏差，应人工确认。'},'questionable'],
+  [{after:'身心痛苦'}, {verdict:'support',category:'error',sourceExcerpt:'unrelated source text',reason:'将措辞改得更精确。'},'unverified'],
+ ];
+ for(const [change,output,expected] of samples){
+  const result=validate(change,output,source,before,after);
+  assert.equal(result.status,expected,'Unexpected review decision');
+  if(result.status!=='supported')assert.equal(result.category,'','Unverified suggestions must not be auto-classified');
+ }
+});

@@ -11,12 +11,17 @@
 .mode-card{min-height:76px;padding:12px 14px}.mode-card strong{font-size:15px}.mode-card span{font-size:12px;line-height:1.45;margin-top:3px}.mode-switch{margin-bottom:8px}.mode-detail{font-size:13px}
 #final-warning{color:#97551b;font-size:13px}#final-warning:empty{display:none}
 #qa-results{white-space:pre-wrap;margin-top:10px;font-size:13px}.qa-issue{padding:8px 10px;border:1px solid var(--border);border-radius:6px;margin:6px 0;background:#fffaf2}.qa-pass{color:var(--green)}.review-bar{top:0}
+
+.review-flag{margin:10px 0;padding:9px 12px;border-left:3px solid #b78e52;background:#fff9ea;color:#62481f;font-size:13px}
+.review-flag.verified{border-color:#43836c;background:#f1f8f4;color:#295b49}
+.review-flag.questionable{border-color:#b65f53;background:#fff2ef;color:#893a32}
+.source-evidence{font-size:12px;color:var(--muted);margin:4px 0}
 </style></head><body><header><h1>译者决策工作台</h1><p>双向翻译 · 自主决策 · 任选离线编辑或在线 AI 协作</p></header><main>
 <section class="panel" id="mode-section"><h2>选择工作模式</h2><div class="mode-switch"><button type="button" id="mode-offline" class="mode-card selected" aria-pressed="true"><strong>离线编辑</strong><span>无需账号或 API Key；手动粘贴建议稿、比较差异、逐处决定和保存项目。</span></button><button type="button" id="mode-ai" class="mode-card" aria-pressed="false"><strong>在线 AI 辅助</strong><span>由网站连接 Agnes；访客无需配置密钥。可自动审校、连续对话与追问，请仅在可信范围分享网址。</span></button></div><div class="mode-detail" id="mode-description" role="status">当前：离线编辑。网页不会发送原文或译文到 AI 服务。</div><p class="hint">可随时切换，两种模式共用本浏览器的翻译项目。切换为在线 AI 后，只有主动点击 AI 功能才会传输项目内容。</p></section>
 <div class="review-bar"><strong>已处理 <span id="progress-count">0/0</span></strong><div class="progress-track"><div id="progress-fill"></div></div><select id="review-filter"><option value="all">全部修改</option><option value="pending">待处理</option><option value="error">明确错误</option><option value="optimize">建议优化</option><option value="optional">可选调整</option></select><button id="undo-decision" disabled>撤销</button><button id="redo-decision" disabled>恢复</button><button id="next-pending">下一处待处理</button></div><section class="panel"><div class="row"><strong>翻译项目</strong><select id="projects" aria-label="选择项目"></select><button id="new">新建</button><button id="rename">重命名</button><button id="remove">删除</button><button id="backup">导出全部项目 JSON</button><button id="restore">导入备份</button><input id="file" type="file" accept=".json" hidden></div><p class="hint" id="save-status">项目仅自动保存在当前浏览器；请定期导出 JSON 备份，避免清除浏览器数据造成丢失。</p></section>
 <div class="widegrid"><div>
 <section class="panel"><h2>01 · 准备译文</h2><div class="row"><button id="import-source-txt" type="button">导入原文 TXT</button><button id="import-draft-txt" type="button">导入初译 TXT</button><input id="import-text-file" type="file" accept=".txt,text/plain" hidden></div><div class="grid"><div><label for="source">原文（中文或英文）</label><textarea id="source" rows="2" placeholder="粘贴原文"></textarea></div><div><label for="draft">我的初译（中文或英文）</label><textarea id="draft" rows="2" class="english" placeholder="粘贴与你的原文对应的初译"></textarea></div></div><div class="row"><label for="direction" style="margin:0">翻译方向</label><select id="direction" aria-label="翻译方向"><option value="auto">自动识别</option><option value="zh-en">中译英 · ZH→EN</option><option value="en-zh">英译中 · EN→ZH</option></select></div><label for="purpose">本次翻译要求</label><textarea id="purpose" rows="2" placeholder="例如：社科论文译文，学术读者，保持论证逻辑"></textarea><div class="profile-module"><label class="row" for="use-rules"><input type="checkbox" id="use-rules" style="width:auto;flex:none"> 启用我的翻译取向</label><div id="rules-wrap" hidden><div class="row"><select id="profile-select" aria-label="翻译取向"></select><button id="profile-new" type="button">新建</button><button id="profile-save" type="button">保存修改</button><button id="profile-delete" type="button">删除</button></div><label for="rules">具体要求</label><textarea id="rules" rows="2"></textarea><div class="row"><button id="profile-test" type="button">通过情境测试创建</button><button id="profile-report" type="button">查看诊断记录</button><button id="profile-history" type="button">从当前审校记录创建</button></div><p class="hint" id="profile-status" role="status">已保存的取向可在不同项目之间切换。</p><div id="profile-diagnostic" class="profile-test" hidden></div></div></div></section>
-<section class="panel"><h2>02 · AI 建议与文本比较</h2><div class="row"><button class="primary mode-ai-only mode-hidden" id="analyze">AI 分析初译</button><button id="copy-prompt">复制审校提示词</button></div><p class="status" id="ai-status" role="status"></p><label for="suggestion">完整建议译文（与初译语言一致，可由 AI 生成或自行粘贴）</label><textarea id="suggestion" rows="2"></textarea><button id="compare">比较差异</button><p class="hint" id="diff-status"></p><p id="decision-status" class="status" role="status" aria-live="polite"></p><div id="changes"></div><label for="final">最终译文（可手动修改）</label><textarea id="final" rows="2"></textarea><p id="final-warning" role="status" aria-live="polite"></p><button id="resync-final" type="button" hidden>根据审校决策重新生成最终译文</button><div class="row"><button class="primary" id="export-txt">导出最终译文</button><button id="export-md">导出决策日志</button></div></section>
+<section class="panel"><h2>02 · AI 建议与文本比较</h2><div class="row"><button class="primary mode-ai-only mode-hidden" id="analyze">AI 分析初译</button><button id="copy-prompt">复制审校提示词</button></div><p class="status" id="ai-status" role="status"></p><label for="suggestion">候选建议译文（须逐处核对，可由 AI 生成或自行粘贴）</label><textarea id="suggestion" rows="2"></textarea><button id="compare">比较差异</button><p class="hint" id="diff-status"></p><p id="decision-status" class="status" role="status" aria-live="polite"></p><div id="changes"></div><label for="final">最终译文（可手动修改）</label><textarea id="final" rows="2"></textarea><p id="final-warning" role="status" aria-live="polite"></p><button id="resync-final" type="button" hidden>根据审校决策重新生成最终译文</button><div class="row"><button class="primary" id="export-txt">导出最终译文</button><button id="export-md">导出决策日志</button></div></section>
 </div><div>
 <section class="panel mode-ai-only mode-hidden" id="ai-panel"><h2>在线 AI 助手</h2><label for="access-code">访问码（仅在管理员启用时填写，本次页面会话内使用）</label><input id="access-code" type="password" autocomplete="off" placeholder="未设置访问限制可留空"><label for="model">Agnes 模型</label><select id="model"><option>agnes-2.5-flash</option><option>agnes-3.0-flash</option></select><div class="row" style="margin-top:10px"><button id="test">测试聊天连接</button><button id="clear-chat">清空当前对话</button></div><p class="status" id="chat-status" role="status">正在检查本地 AI 服务…</p><div id="chat-log" aria-live="polite"></div><label for="question">询问 AI（自动附带当前项目上下文）</label><textarea id="question" rows="2" placeholder="例如：为什么这处修改更自然？有没有语义偏移？"></textarea><div class="row"><button class="primary" id="ask">发送并继续对话</button></div><p class="hint">对话保存在本浏览器。发送提问或请求分析时，当前项目的原文、初译等会传输至网站后端和 Agnes。免费服务可能有限额；请勿上传保密材料。</p></section>
 
@@ -270,7 +275,58 @@ function arrangeAssistant(){const panel=$('ai-panel'),editor=$('changes')?.close
 function grow(el){el.style.height='auto';el.style.height=Math.max(42,el.scrollHeight+2)+'px'}
 function growAll(){document.querySelectorAll('textarea').forEach(grow)}
 function jumpToNext(i){const cards=[...document.querySelectorAll('.change')];const next=cards.slice(i+1).find(c=>c.dataset.choice==='pending')||cards[i+1];if(next){next.scrollIntoView({behavior:'smooth',block:'center'});next.focus({preventScroll:true})}}
-async function explainChange(p){const d=collect();const q='请用中文简要说明这处译文修改是否必要及其依据，不编造理由。\n原文：'+d.source+'\n初译修改处：'+p.before+'\n建议：'+p.after;return (await api([{role:'system',content:'你是翻译审校员，不编造修改理由。'},{role:'user',content:q}])).trim()}
+function changeReviewContext(p){
+ const ps=parts(),idx=ps.indexOf(p);
+ if(idx<0)return {beforeSentence:p.before||'',afterSentence:p.after||''};
+ const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
+ const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
+ let preOld=0,preNew=0;
+ for(let i=0;i<idx;i++){preOld+=ps[i].type==='same'?ps[i].text.length:ps[i].before.length;preNew+=ps[i].type==='same'?ps[i].text.length:ps[i].after.length}
+ const before=sentenceContext(original,preOld,p.before.length);
+ const after=sentenceContext(proposed,preNew,p.after.length);
+ return {beforeSentence:(before.before+p.before+before.after).slice(0,550),afterSentence:(after.before+p.after+after.after).slice(0,550)};
+}
+function reviewRequestItem(p,id){
+ const ctx=changeReviewContext(p);
+ return {id,before:p.before.slice(0,220),after:p.after.slice(0,220),beforeSentence:ctx.beforeSentence.slice(0,450),afterSentence:ctx.afterSentence.slice(0,450),sourceCandidate:p.sourceExcerpt||''};
+}
+function reviewPrompt(excerpt,items){
+ return '复核以下 AI 候选修改。必须判断【修改建议本身】是否准确、自然并有原文支持；禁止为了替修改找理由而强行辩护。对于生硬、不准确、无必要的 AI 建议，verdict 必须为 questionable；证据不足设为 uncertain；仅当建议可靠时设为 support。切勿把 AI 建议中的新问题说成原初译的错误。每条 reason 不超过 90 个汉字，只描述当前 before 到 after 的变化；不得引用所给原文中不存在的英文词句。sourceExcerpt 必须逐字摘录自所提供原文；无法对应则填空字符串。返回 JSON 数组。例如 {"id":1,"verdict":"support","category":"optimize","reason":"...","sourceExcerpt":"..."}。verdict 仅允许 support、questionable、uncertain；category 仅允许 error、optimize、optional、unclassified，必须从中选单个值。分类 error 仅适用于初译存在明确错误且 AI 改法可靠的情况。不要输出 Markdown。\n【原文（超过长度的部分可能省略）】\n'+excerpt+'\n【候选修改及两侧完整句子】\n'+JSON.stringify(items);
+}
+function validateRationale(p,x,source,oldSentence,newSentence){
+ const reason=typeof x?.reason==='string'?x.reason.trim().slice(0,500):'';
+ const verdict=['support','questionable','uncertain'].includes(x?.verdict)?x.verdict:'uncertain';
+ const quoteExp=/[“"‘'「]([^”"’'」]{3,120})[”"’'」]/g;
+ const hallucinated=[...reason.matchAll(quoteExp)].map(m=>m[1].trim()).filter(q=>/[A-Za-z]{3}/.test(q)&&!source.includes(q)&&!oldSentence.includes(q)&&!newSentence.includes(q));
+ const after=(p.after||'').trim();
+ const selfContradict=after.length>=2&&reason.includes(after)&&/(搭配不当|不自然|不通顺|不准确|不妥|欠妥|生硬|不应|不宜|错译|误译|语义偏差|不合理)/.test(reason);
+ const anchor=p.sourceConfirmed&&typeof p.sourceExcerpt==='string'&&source.includes(p.sourceExcerpt)?p.sourceExcerpt.trim():(typeof x?.sourceExcerpt==='string'?x.sourceExcerpt.trim():'');
+ const reliableAnchor=anchor.length>=4&&source.includes(anchor);
+ if(hallucinated.length)return {status:'questionable',message:'理由引用了原文及译文中均未出现的英文表达（'+hallucinated.slice(0,2).join('、')+'），已拒绝该理由。',reason:'',sourceExcerpt:'',category:''};
+ if(selfContradict)return {status:'questionable',message:'AI 理由否定了它所建议的译法，已将该建议标记为存疑。',reason,sourceExcerpt:reliableAnchor?anchor:'',category:''};
+ if(verdict==='questionable')return {status:'questionable',message:'AI 复核认为当前建议可能不准确、不自然或不必要。',reason,sourceExcerpt:reliableAnchor?anchor:'',category:''};
+ if(verdict==='uncertain'||!reason||!reliableAnchor)return {status:'unverified',message:'缺乏经过核对的原文依据，暂不作确定分类。',reason:reason||'',sourceExcerpt:reliableAnchor?anchor:'',category:''};
+ return {status:'supported',message:'原文引文与理由已通过基础检查；质量判断仍由译员确认。',reason,sourceExcerpt:anchor,category:['error','optimize','optional'].includes(x.category)?x.category:'unclassified'};
+}
+function applyReviewResult(p,x,source){
+ const ctx=changeReviewContext(p),result=validateRationale(p,x,source,ctx.beforeSentence,ctx.afterSentence);
+ p.reviewStatus=result.status;p.reviewMessage=result.message;
+ if(result.reason)p.aiReason=result.reason;else p.aiReason='';
+ if(result.sourceExcerpt&&!p.sourceConfirmed)p.sourceExcerpt=result.sourceExcerpt;
+ if(result.category&&!p.manualCategory)p.category=result.category;
+ else if(!p.manualCategory&&result.status!=='supported')p.category='unclassified';
+ if(result.status==='questionable'&&x?.reason&&!result.reason)p.rejectedReason=String(x.reason).slice(0,500);
+ return result;
+}
+async function explainChange(p){
+ const project=current,d=collect(),source=d.source,oldDraft=d.draft,oldSuggestion=d.suggestion,excerpt=source.slice(0,4200);
+ const answer=await api([{role:'system',content:'你是第二道独立的译后编辑质量复核环节。可以否定 AI 自己的建议。必须只输出 JSON。'},{role:'user',content:reviewPrompt(excerpt,[reviewRequestItem(p,1)])}]);
+ const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
+ const item=Array.isArray(data)?data[0]:data;
+ if(!item||Number(item.id)!==1)throw Error('AI 审核结果格式不正确');
+ if(project!==current||!parts().includes(p)||$('source').value!==source||$('draft').value!==oldDraft||$('suggestion').value!==oldSuggestion)throw Error('项目文本发生变化，旧审核结果已忽略，请重新审核');
+ return applyReviewResult(p,item,source);
+}
 function sentenceContext(text,start,length){
  const end=start+length;
  const boundary=(c,idx)=>/[。！？!?；;\n]/.test(c)||(c==='.'&&(idx+1===text.length||/\s/.test(text[idx+1])));
@@ -299,8 +355,14 @@ function renderChanges(){
   const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice||'pending';card.dataset.category=p.category||'unclassified';
   const examples=[sentenceContext(original,posOriginal,p.before.length),sentenceContext(proposed,posProposed,p.after.length)];
   const title=document.createElement('div');title.className='change-title';const n=document.createElement('strong');n.textContent='修改 '+(index+1);title.appendChild(n);
-  const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);const category=document.createElement('select');category.className='category-select';for(const [v,label] of [['unclassified','待分类'],['error','明确错误'],['optimize','建议优化'],['optional','可选调整']]){const opt=document.createElement('option');opt.value=v;opt.textContent=label;category.appendChild(opt)}category.value=p.category||'unclassified';category.onchange=()=>{snapshot();p.category=category.value;renderChanges();save()};title.appendChild(category);card.appendChild(title);
-  const sourceBox=document.createElement('div');sourceBox.className='source-box';sourceBox.textContent='对应原文：'+(p.sourceExcerpt||'尚未可靠定位；请对照上方原文核查');card.appendChild(sourceBox);const details=document.createElement('details');details.className='source-edit';const summary=document.createElement('summary');summary.textContent='修正对应原句';const fieldSource=document.createElement('textarea');fieldSource.rows=2;fieldSource.value=p.sourceExcerpt||'';fieldSource.onchange=()=>{snapshot();p.sourceExcerpt=fieldSource.value;renderChanges();save()};details.append(summary,fieldSource);card.appendChild(details);
+  const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);const category=document.createElement('select');category.className='category-select';for(const [v,label] of [['unclassified','待分类'],['error','明确错误'],['optimize','建议优化'],['optional','可选调整']]){const opt=document.createElement('option');opt.value=v;opt.textContent=(v==='error'&&!p.manualCategory&&p.reviewStatus!=='supported')?'明确错误（未核验）':label;category.appendChild(opt)}category.value=p.category||'unclassified';category.onchange=()=>{snapshot();p.category=category.value;p.manualCategory=true;renderChanges();save()};title.appendChild(category);card.appendChild(title);
+  const sourceBox=document.createElement('div');sourceBox.className='source-box';sourceBox.textContent=(p.sourceConfirmed?'译员核对原文：':'原文候选片段（AI 提议，待核实）：')+(p.sourceExcerpt||'尚未可靠定位，请对照原文核查');
+   card.appendChild(sourceBox);const details=document.createElement('details');details.className='source-edit';const summary=document.createElement('summary');summary.textContent='核对／修正原文片段';const fieldSource=document.createElement('textarea');fieldSource.rows=2;fieldSource.value=p.sourceExcerpt||'';fieldSource.onchange=()=>{
+    if(fieldSource.value.trim()&&!$('source').value.includes(fieldSource.value.trim())){alert('该片段未在原文中找到，请粘贴原文中的精确连续文字。');return}
+    snapshot();p.sourceExcerpt=fieldSource.value.trim();p.sourceConfirmed=!!p.sourceExcerpt;
+    p.reviewStatus='unverified';p.reviewMessage='对应原文已由译员修正，请重新复核修改理由。';
+    renderChanges();save()
+   };details.append(summary,fieldSource);card.appendChild(details);
   const pair=document.createElement('div');pair.className='pair';
   for(const [j,[label,value,cl]] of [['初译',p.before,'old'],['AI 建议',p.after,'new']].entries()){
    const box=document.createElement('div');box.className='context-cell';const lab=document.createElement('div');lab.className='context-label';lab.textContent=label;box.appendChild(lab);
@@ -309,20 +371,27 @@ function renderChanges(){
    const mark=document.createElement('mark');mark.className='highlight-'+cl;mark.textContent=value||'（删除）';line.appendChild(mark);
    const r=document.createElement('span');r.className='context-side';r.textContent=examples[j].after;line.appendChild(r);box.appendChild(line);pair.appendChild(box);
   }card.appendChild(pair);
-  const reasonBox=document.createElement('div');reasonBox.className='reason-box';const reasonTitle=document.createElement('strong');reasonTitle.textContent='AI 修改理由';reasonBox.appendChild(reasonTitle);
-  const reason=document.createElement('div');reason.textContent=p.aiReason||'尚未生成；在线模式可点击“生成修改理由”。';reasonBox.appendChild(reason);card.appendChild(reasonBox);
+  const state=p.reviewStatus||'unverified';
+   const flag=document.createElement('div');flag.className='review-flag '+(state==='supported'?'verified':state==='questionable'?'questionable':'');
+   const label={supported:'已通过基础一致性校验（仍需译员核实）',questionable:'AI 建议存疑，请谨慎接受',unverified:'AI 理由尚未可靠核验'}[state]||'AI 理由尚未可靠核验';
+   flag.textContent=label+(p.reviewMessage?'：'+p.reviewMessage:'');
+   card.appendChild(flag);
+   const reasonBox=document.createElement('div');reasonBox.className='reason-box';const reasonTitle=document.createElement('strong');reasonTitle.textContent='AI 审核说明';reasonBox.appendChild(reasonTitle);
+  const reason=document.createElement('div');reason.textContent=p.aiReason||(p.reviewStatus==='questionable'?'此条 AI 建议存在疑点，暂不展示未经核实的修改理由。':'尚无通过一致性核验的理由。');reasonBox.appendChild(reason);card.appendChild(reasonBox);
   const choices=document.createElement('div');choices.className='row decision-buttons';
   for(const [v,label] of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){
    const btn=document.createElement('button');btn.textContent=label;btn.setAttribute('aria-pressed',String(p.choice===v));if(p.choice===v)btn.classList.add('active');
-   btn.onclick=()=>{snapshot();p.choice=v;updateFinal();save();renderChanges();$('decision-status').textContent='修改 '+(index+1)+'：'+({accept:'已接受建议',keep:'已保留初译',custom:'请在下方填写改写内容'})[v];if(v!=='custom')requestAnimationFrame(()=>jumpToNext(index));else requestAnimationFrame(()=>document.querySelectorAll('.change')[index]?.querySelector('.custom-input')?.focus())};choices.appendChild(btn)
+   btn.onclick=()=>{
+     if(v==='accept'&&p.reviewStatus==='questionable'&&!confirm('系统检测到此条 AI 建议存在疑点。仍要接受当前建议吗？'))return;
+     snapshot();p.choice=v;updateFinal();save();renderChanges();$('decision-status').textContent='修改 '+(index+1)+'：'+({accept:'已接受建议',keep:'已保留初译',custom:'请在下方填写改写内容'})[v];if(v!=='custom')requestAnimationFrame(()=>jumpToNext(index));else requestAnimationFrame(()=>document.querySelectorAll('.change')[index]?.querySelector('.custom-input')?.focus())};choices.appendChild(btn)
   }card.appendChild(choices);
   if(p.choice==='accept'||p.choice==='keep'||p.choice==='custom'){
    if(p.choice==='custom'){const field=document.createElement('textarea');field.rows=1;field.className='compact-area custom-input';field.placeholder='我的改写';field.value=p.custom||'';field.onfocus=()=>snapshot();field.oninput=()=>{p.custom=field.value;grow(field);updateFinal();save()};card.appendChild(field);requestAnimationFrame(()=>grow(field))}
    const note=document.createElement('textarea');note.rows=1;note.className='compact-area';note.placeholder=p.choice==='custom'?'Learning moment / 改写依据（可选）':'本次决定的理由（可选）';note.value=p.reason||'';note.onfocus=()=>snapshot();note.oninput=()=>{p.reason=note.value;grow(note);save()};card.appendChild(note);requestAnimationFrame(()=>grow(note));
   }
   const buttons=document.createElement('div');buttons.className='row reason-actions';
-  const ask=document.createElement('button');ask.textContent='向 AI 追问此处';ask.onclick=()=>{activeChange=i;if(mode!=='ai')setMode('ai');$('assistant-drawer').open=true;$('question').value='请根据原文解释这处译文修改是否必要及其理由。\n初译：'+p.before+'\nAI建议：'+p.after+'\n先前解释：'+(p.aiReason||'未生成');grow($('question'));$('question').scrollIntoView({behavior:'smooth',block:'center'});$('question').focus()};buttons.appendChild(ask);
-  if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';p.aiReason=await explainChange(p);reason.textContent=p.aiReason;save()},'ai-status');buttons.appendChild(why)}
+  const ask=document.createElement('button');ask.textContent='向 AI 追问此处';ask.onclick=()=>{activeChange=i;if(mode!=='ai')setMode('ai');$('assistant-drawer').open=true;$('question').value='请审查 AI 建议本身是否成立，如修改不自然或无依据请直接指出；不要为错误建议辩护。\n初译：'+p.before+'\nAI建议：'+p.after+'\n先前解释：'+(p.aiReason||'未生成');grow($('question'));$('question').scrollIntoView({behavior:'smooth',block:'center'});$('question').focus()};buttons.appendChild(ask);
+  if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';await explainChange(p);renderChanges();save()},'ai-status');buttons.appendChild(why)}
   card.appendChild(buttons);if((p.followups||[]).length){const log=document.createElement('details');log.className='linked-chat';const title=document.createElement('summary');title.textContent='关联追问（'+p.followups.length+'）';log.appendChild(title);for(const m of p.followups){const q=document.createElement('p');q.textContent='问：'+m.question;const a=document.createElement('p');a.textContent='AI：'+m.answer;log.append(q,a)}card.appendChild(log)}root.appendChild(card)
  });
  $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';if(ps.length&&db[current].data.compareMode==='segmented')$('diff-status').textContent+=' 长文本已启用句段级对比，请核查较大的改动块。';updateProgress();
@@ -331,33 +400,32 @@ function renderChanges(){
 async function explainAll(){
  const project=current,all=parts().filter(p=>p.type==='change');
  if(!all.length)return;
- const batchSize=8;let processed=0,failed=0;
+ const batchSize=4;let supported=0,questionable=0,unverified=0,failed=0;
+ const source=$('source').value,draft=$('draft').value,suggestion=$('suggestion').value,excerpt=source.slice(0,4200);
  for(let start=0;start<all.length;start+=batchSize){
-  if(project!==current)return;
+  if(project!==current||source!==$('source').value||draft!==$('draft').value||suggestion!==$('suggestion').value)return;
   const batch=all.slice(start,start+batchSize);
-  $('ai-status').textContent='正在分析修改理由：'+Math.min(start+batchSize,all.length)+' / '+all.length;
-  const items=batch.map((p,i)=>({id:i+1,before:p.before.slice(0,350),after:p.after.slice(0,350)}));
-  const excerpt=$('source').value.slice(0,5500);
-  const q='请依据原文区分error（明确错误）、optimize（建议优化）、optional（可选调整）。每项理由不超过60字；sourceExcerpt必须是提供的原文节选中逐字出现的原句，无法可靠对应则为空。只返回 JSON 数组，例如 [{"id":1,"category":"error","reason":"...","sourceExcerpt":"..."}]。\n原文节选（超长原文可能被截断，严禁猜测未提供的内容）：\n'+excerpt+'\n修改列表：'+JSON.stringify(items);
+  $('ai-status').textContent='正在复核 AI 候选建议：'+Math.min(start+batchSize,all.length)+' / '+all.length;
+  const items=batch.map((p,i)=>reviewRequestItem(p,i+1));
   try{
-   const answer=await api([{role:'system',content:'你是翻译审校员。仅根据提供的证据判断。严格输出 JSON，不编造原文定位。'},{role:'user',content:q}]);
-   const cleaned=answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim();
-   const data=JSON.parse(cleaned);if(!Array.isArray(data))throw Error('响应不是数组');
-   for(const x of data){
-    const n=Number(x.id);
-    if(!Number.isInteger(n)||n<1||n>batch.length)continue;
-    const p=batch[n-1];if(!parts().includes(p)||typeof x.reason!=='string')continue;
-    if(!p.aiReason)p.aiReason=x.reason.slice(0,500);
-    if(!p.category||p.category==='unclassified'){
-     if(['error','optimize','optional'].includes(x.category))p.category=x.category;
-    }
-    if(!p.sourceExcerpt&&typeof x.sourceExcerpt==='string'&&excerpt.includes(x.sourceExcerpt)&&x.sourceExcerpt.trim())p.sourceExcerpt=x.sourceExcerpt.slice(0,700);
-    processed++;
+   const answer=await api([{role:'system',content:'你是独立的翻译质量审校员。优先指出 AI 建议自己的错误，可以判为 questionable 或 uncertain。仅输出 JSON 数组。'},{role:'user',content:reviewPrompt(excerpt,items)}]);
+   const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
+   if(!Array.isArray(data))throw Error('响应不是数组');
+   for(let i=0;i<batch.length;i++){
+    const item=data.find(x=>Number(x.id)===i+1),p=batch[i];
+    if(!parts().includes(p)||source!==$('source').value||draft!==$('draft').value||suggestion!==$('suggestion').value)return;
+    if(!item){p.reviewStatus='unverified';p.reviewMessage='本次 AI 未返回有效审核结果。';unverified++;continue}
+    const result=applyReviewResult(p,item,source);
+    if(result.status==='supported')supported++;else if(result.status==='questionable')questionable++;else unverified++;
    }
-  }catch(e){if(project!==current)return;failed+=batch.length}
+  }catch(e){
+   if(project!==current)return;
+   for(const p of batch){p.reviewStatus='unverified';p.reviewMessage='AI 理由复核失败，可单独重试。';}
+   failed+=batch.length;
+  }
   if(project===current){renderChanges();save()}
  }
- $('ai-status').textContent='建议译文已生成，已获得 '+processed+' 处修改的初步分析'+(failed?'；'+failed+' 处分析失败，可逐处重试。':'，请逐处核查。');
+ $('ai-status').textContent='候选修改复核完成：基础校验通过 '+supported+' 处、存疑 '+questionable+' 处、依据不足 '+unverified+' 处'+(failed?'，复核请求失败 '+failed+' 处。':'。')+' 所有 AI 判断仍需人工核实。';
 }
 function renderFinalDirty(){
  const d=db[current]?.data||{},dirty=!!d.manualFinalDirty;
@@ -418,7 +486,7 @@ function compare(){
  for(const p of d.decisions){
   if(p.type!=='change')continue;
   const index=old.findIndex((x,i)=>!used.has(i)&&x.before===p.before&&x.after===p.after);
-  if(index>=0){used.add(index);const match=old[index];Object.assign(p,{choice:match.choice,reason:match.reason,custom:match.custom,aiReason:match.aiReason,category:match.category,sourceExcerpt:match.sourceExcerpt,followups:match.followups})}
+  if(index>=0){used.add(index);const match=old[index];Object.assign(p,{choice:match.choice,reason:match.reason,custom:match.custom,aiReason:match.aiReason,category:match.category,sourceExcerpt:match.sourceExcerpt,sourceConfirmed:match.sourceConfirmed,followups:match.followups,reviewStatus:match.reviewStatus,reviewMessage:match.reviewMessage,rejectedReason:match.rejectedReason,manualCategory:match.manualCategory})}
  }
  updateFinal();renderChanges();save();
 }
@@ -485,7 +553,7 @@ $('profile-delete').onclick=()=>{const id=$('profile-select').value;const p=prof
 $('profile-test').onclick=()=>{startDiagnosis()};
 $('profile-history').onclick=()=>{const d=collect(),decisions=(d.decisions||[]).filter(p=>p.type==='change'&&['accept','keep','custom'].includes(p.choice));if(decisions.length<3){profileMessage('当前项目至少完成3处修改决策后才能生成草案。');return}const lines=['以下内容依据当前项目的实际决策整理，需人工核实：'];for(const [type,label]of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){const selected=decisions.filter(p=>p.choice===type);if(selected.length)lines.push(label+' '+selected.length+' 处。'+selected.map(p=>p.reason).filter(Boolean).slice(0,3).join('；'))}createProfile('历史决策取向 '+new Date().toLocaleDateString('zh-CN'),lines.join('\n'));profileMessage('已生成历史决策草案，请人工审核编辑后保存。')};
 $('use-rules').onchange=()=>{$('rules-wrap').hidden=!$('use-rules').checked;save()};document.querySelectorAll('textarea').forEach(t=>t.addEventListener('input',()=>grow(t)));
-for(const id of ['source','draft','purpose','rules','suggestion'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}save()});$('final').addEventListener('input',()=>{
+for(const id of ['source','draft','purpose','rules','suggestion'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}if(id==='source'){for(const p of parts()){if(p.type==='change'){p.reviewStatus='unverified';p.reviewMessage='原文已更改，先前的 AI 依据与分类需要重新复核。';if(!p.manualCategory)p.category='unclassified';}}renderChanges()}save()});$('final').addEventListener('input',()=>{
  const d=db[current].data;d.manualFinalDirty=true;
  renderFinalDirty();save();
 });
