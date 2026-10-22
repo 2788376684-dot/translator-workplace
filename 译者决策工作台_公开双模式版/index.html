@@ -319,12 +319,12 @@ function applyReviewResult(p,x,source){
  return result;
 }
 async function explainChange(p){
- const d=collect(),source=d.source,excerpt=source.slice(0,4200);
+ const project=current,d=collect(),source=d.source,oldDraft=d.draft,oldSuggestion=d.suggestion,excerpt=source.slice(0,4200);
  const answer=await api([{role:'system',content:'你是第二道独立的译后编辑质量复核环节。可以否定 AI 自己的建议。必须只输出 JSON。'},{role:'user',content:reviewPrompt(excerpt,[reviewRequestItem(p,1)])}]);
  const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
  const item=Array.isArray(data)?data[0]:data;
  if(!item||Number(item.id)!==1)throw Error('AI 审核结果格式不正确');
- if(!parts().includes(p))throw Error('审校项目已变化，请重新审核');
+ if(project!==current||!parts().includes(p)||$('source').value!==source||$('draft').value!==oldDraft||$('suggestion').value!==oldSuggestion)throw Error('项目文本发生变化，旧审核结果已忽略，请重新审核');
  return applyReviewResult(p,item,source);
 }
 function sentenceContext(text,start,length){
@@ -401,9 +401,9 @@ async function explainAll(){
  const project=current,all=parts().filter(p=>p.type==='change');
  if(!all.length)return;
  const batchSize=4;let supported=0,questionable=0,unverified=0,failed=0;
- const source=$('source').value,excerpt=source.slice(0,4200);
+ const source=$('source').value,draft=$('draft').value,suggestion=$('suggestion').value,excerpt=source.slice(0,4200);
  for(let start=0;start<all.length;start+=batchSize){
-  if(project!==current)return;
+  if(project!==current||source!==$('source').value||draft!==$('draft').value||suggestion!==$('suggestion').value)return;
   const batch=all.slice(start,start+batchSize);
   $('ai-status').textContent='正在复核 AI 候选建议：'+Math.min(start+batchSize,all.length)+' / '+all.length;
   const items=batch.map((p,i)=>reviewRequestItem(p,i+1));
@@ -413,7 +413,7 @@ async function explainAll(){
    if(!Array.isArray(data))throw Error('响应不是数组');
    for(let i=0;i<batch.length;i++){
     const item=data.find(x=>Number(x.id)===i+1),p=batch[i];
-    if(!parts().includes(p))continue;
+    if(!parts().includes(p)||source!==$('source').value||draft!==$('draft').value||suggestion!==$('suggestion').value)return;
     if(!item){p.reviewStatus='unverified';p.reviewMessage='本次 AI 未返回有效审核结果。';unverified++;continue}
     const result=applyReviewResult(p,item,source);
     if(result.status==='supported')supported++;else if(result.status==='questionable')questionable++;else unverified++;
@@ -553,7 +553,7 @@ $('profile-delete').onclick=()=>{const id=$('profile-select').value;const p=prof
 $('profile-test').onclick=()=>{startDiagnosis()};
 $('profile-history').onclick=()=>{const d=collect(),decisions=(d.decisions||[]).filter(p=>p.type==='change'&&['accept','keep','custom'].includes(p.choice));if(decisions.length<3){profileMessage('当前项目至少完成3处修改决策后才能生成草案。');return}const lines=['以下内容依据当前项目的实际决策整理，需人工核实：'];for(const [type,label]of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){const selected=decisions.filter(p=>p.choice===type);if(selected.length)lines.push(label+' '+selected.length+' 处。'+selected.map(p=>p.reason).filter(Boolean).slice(0,3).join('；'))}createProfile('历史决策取向 '+new Date().toLocaleDateString('zh-CN'),lines.join('\n'));profileMessage('已生成历史决策草案，请人工审核编辑后保存。')};
 $('use-rules').onchange=()=>{$('rules-wrap').hidden=!$('use-rules').checked;save()};document.querySelectorAll('textarea').forEach(t=>t.addEventListener('input',()=>grow(t)));
-for(const id of ['source','draft','purpose','rules','suggestion'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}save()});$('final').addEventListener('input',()=>{
+for(const id of ['source','draft','purpose','rules','suggestion'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}if(id==='source'){for(const p of parts()){if(p.type==='change'){p.reviewStatus='unverified';p.reviewMessage='原文已更改，先前的 AI 依据与分类需要重新复核。';if(!p.manualCategory)p.category='unclassified';}}renderChanges()}save()});$('final').addEventListener('input',()=>{
  const d=db[current].data;d.manualFinalDirty=true;
  renderFinalDirty();save();
 });
