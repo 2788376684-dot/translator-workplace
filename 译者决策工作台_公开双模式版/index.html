@@ -221,7 +221,28 @@ function bootstrap(){loadProfiles();try{const s=JSON.parse(localStorage.getItem(
 function download(name,body,type){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type:type||'text/plain;charset=utf-8'}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 function normalize(s){return s.trim().replace(/\r\n/g,'\n')}
 function tokenize(t){return t.match(/\s+|[\p{Script=Han}]|[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*|[^\s]/gu)||[]}
-function diff(a,b){const x=tokenize(a),y=tokenize(b),n=x.length,m=y.length;if(n*m>1500000)throw Error('文本太长，请按段处理（建议单次不超过约 500 英文词）');let dp=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);let i=0,j=0,ops=[];function add(t,v){if(ops.length&&ops.at(-1).type===t)ops.at(-1).text+=v;else ops.push({type:t,text:v})}while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);let parts=[];for(let k=0;k<ops.length;){if(ops[k].type==='same'){parts.push({type:'same',text:ops[k++].text});continue}let old='',newer='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')old+=ops[k].text;else newer+=ops[k].text;k++}parts.push({type:'change',before:old,after:newer,choice:'pending',reason:'',custom:'',aiReason:''})}return parts}
+function coarseDiff(a,b){
+ const chunk=x=>x.match(/[^\n。！？!?；;]+(?:[\n。！？!?；;]+|$)/g)||[x];
+ const x=chunk(a),y=chunk(b),n=x.length,m=y.length;
+ const make=(before,after)=>({type:'change',before,after,choice:'pending',reason:'',custom:'',aiReason:''});
+ if(n*m>180000){
+  let left=0,right=0;while(left<a.length&&left<b.length&&a[left]===b[left])left++;
+  while(right<a.length-left&&right<b.length-left&&a[a.length-right-1]===b[b.length-right-1])right++;
+  return [left?{type:'same',text:a.slice(0,left)}:null,make(a.slice(left,a.length-right),b.slice(left,b.length-right)),right?{type:'same',text:a.slice(a.length-right)}:null].filter(Boolean);
+ }
+ const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+ for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
+ let i=0,j=0,ops=[];const add=(type,text)=>{if(ops.length&&ops.at(-1).type===type)ops.at(-1).text+=text;else ops.push({type,text})};
+ while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}
+ while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);
+ const result=[];for(let k=0;k<ops.length;){
+  if(ops[k].type==='same'){result.push({type:'same',text:ops[k++].text});continue}
+  let before='',after='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')before+=ops[k].text;else after+=ops[k].text;k++}
+  if(tokenize(before).length*tokenize(after).length<=1500000)result.push(...diff(before,after));else result.push(make(before,after));
+ }
+ return result;
+}
+function diff(a,b){const x=tokenize(a),y=tokenize(b),n=x.length,m=y.length;if(n*m>1500000)return coarseDiff(a,b);let dp=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);let i=0,j=0,ops=[];function add(t,v){if(ops.length&&ops.at(-1).type===t)ops.at(-1).text+=v;else ops.push({type:t,text:v})}while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);let parts=[];for(let k=0;k<ops.length;){if(ops[k].type==='same'){parts.push({type:'same',text:ops[k++].text});continue}let old='',newer='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')old+=ops[k].text;else newer+=ops[k].text;k++}parts.push({type:'change',before:old,after:newer,choice:'pending',reason:'',custom:'',aiReason:''})}return parts}
 function parts(){return db[current].data.decisions||[]}
 function snapshot(){undoStack.push(JSON.stringify({decisions:parts(),final:$('final').value,manualFinalDirty:!!db[current].data.manualFinalDirty}));if(undoStack.length>60)undoStack.shift();redoStack=[];historyButtons()}
 function historyButtons(){$('undo-decision').disabled=!undoStack.length;$('redo-decision').disabled=!redoStack.length}
@@ -289,20 +310,39 @@ function renderChanges(){
   if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';p.aiReason=await explainChange(p);reason.textContent=p.aiReason;save()},'ai-status');buttons.appendChild(why)}
   card.appendChild(buttons);if((p.followups||[]).length){const log=document.createElement('details');log.className='linked-chat';const title=document.createElement('summary');title.textContent='关联追问（'+p.followups.length+'）';log.appendChild(title);for(const m of p.followups){const q=document.createElement('p');q.textContent='问：'+m.question;const a=document.createElement('p');a.textContent='AI：'+m.answer;log.append(q,a)}card.appendChild(log)}root.appendChild(card)
  });
- $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';updateProgress();
+ $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';if(ps.length&&db[current].data.compareMode==='segmented')$('diff-status').textContent+=' 长文本已启用句段级对比，请核查较大的改动块。';updateProgress();
 }
 
 async function explainAll(){
- const ps=parts().filter(p=>p.type==='change').slice(0,12);if(!ps.length)return;
- const items=ps.map((p,i)=>({id:i+1,before:p.before,after:p.after}));
- const q='请依据原文将修改分为error（明确错误）、optimize（建议优化）、optional（可选调整）。用中文解释理由，每项不超过60字；sourceExcerpt摘录对应原文完整句，无法准确定位则为空。仅输出JSON数组，如 [{"id":1,"category":"error","reason":"...","sourceExcerpt":"..."}]，不加Markdown。\n原文：'+$('source').value+'\n修改列表：'+JSON.stringify(items);
- try{
-  const answer=await api([{role:'system',content:'你是翻译审校员。只输出JSON，不编造依据。'},{role:'user',content:q}]);
-  const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
-  if(!Array.isArray(data))throw Error('格式异常');
-  for(const x of data){const p=ps[Number(x.id)-1];if(p&&typeof x.reason==='string'){p.aiReason=x.reason.slice(0,500);if(['error','optimize','optional'].includes(x.category))p.category=x.category;if(typeof x.sourceExcerpt==='string')p.sourceExcerpt=x.sourceExcerpt.slice(0,700)}}
-  renderChanges();save()
- }catch(e){$('ai-status').textContent='建议译文已生成；部分理由未能自动取得，可逐处点击生成理由。'}
+ const project=current,all=parts().filter(p=>p.type==='change');
+ if(!all.length)return;
+ const batchSize=8;let processed=0,failed=0;
+ for(let start=0;start<all.length;start+=batchSize){
+  if(project!==current)return;
+  const batch=all.slice(start,start+batchSize);
+  $('ai-status').textContent='正在分析修改理由：'+Math.min(start+batchSize,all.length)+' / '+all.length;
+  const items=batch.map((p,i)=>({id:i+1,before:p.before.slice(0,350),after:p.after.slice(0,350)}));
+  const excerpt=$('source').value.slice(0,5500);
+  const q='请依据原文区分error（明确错误）、optimize（建议优化）、optional（可选调整）。每项理由不超过60字；sourceExcerpt必须是提供的原文节选中逐字出现的原句，无法可靠对应则为空。只返回 JSON 数组，例如 [{"id":1,"category":"error","reason":"...","sourceExcerpt":"..."}]。\n原文节选（超长原文可能被截断，严禁猜测未提供的内容）：\n'+excerpt+'\n修改列表：'+JSON.stringify(items);
+  try{
+   const answer=await api([{role:'system',content:'你是翻译审校员。仅根据提供的证据判断。严格输出 JSON，不编造原文定位。'},{role:'user',content:q}]);
+   const cleaned=answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim();
+   const data=JSON.parse(cleaned);if(!Array.isArray(data))throw Error('响应不是数组');
+   for(const x of data){
+    const n=Number(x.id);
+    if(!Number.isInteger(n)||n<1||n>batch.length)continue;
+    const p=batch[n-1];if(!parts().includes(p)||typeof x.reason!=='string')continue;
+    if(!p.aiReason)p.aiReason=x.reason.slice(0,500);
+    if(!p.category||p.category==='unclassified'){
+     if(['error','optimize','optional'].includes(x.category))p.category=x.category;
+    }
+    if(!p.sourceExcerpt&&typeof x.sourceExcerpt==='string'&&excerpt.includes(x.sourceExcerpt)&&x.sourceExcerpt.trim())p.sourceExcerpt=x.sourceExcerpt.slice(0,700);
+    processed++;
+   }
+  }catch(e){if(project!==current)return;failed+=batch.length}
+  if(project===current){renderChanges();save()}
+ }
+ $('ai-status').textContent='建议译文已生成，已获得 '+processed+' 处修改的初步分析'+(failed?'；'+failed+' 处分析失败，可逐处重试。':'，请逐处核查。');
 }
 function renderFinalDirty(){
  const d=db[current]?.data||{},dirty=!!d.manualFinalDirty;
@@ -355,10 +395,10 @@ async function checkConnection(){
 
 async function run(button,fn,status){if(busy)return;busy=true;button.disabled=true;try{await fn()}catch(e){$(status).textContent='失败：'+e.message}finally{busy=false;button.disabled=false}}
 function auditPrompt(){const d=collect();return '任务：'+(translationDirection()==='en-zh'?'英译汉':translationDirection()==='zh-en'?'中译英':'根据原文和初译判断方向')+'。审校已有译文，不得改写原文。只输出完整的'+targetLabel()+'建议译文，不要解释、标题或Markdown。只修改有依据的问题，保留准确自然的表达。'+'\n【本次要求】'+(d.purpose||'无')+'\n【固定要求】'+(d.useRules?activeRules():'无')+'\n【原文】\n'+d.source+'\n【初译】\n'+d.draft+glossaryInstructions()}
-$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成'+targetLabel()+'建议译文…';const sys='你是翻译审校员。必须使用'+targetLabel()+'输出建议译文，禁止改写原文。只输出完整译文。';let answer=await api([{role:'system',content:sys},{role:'user',content:auditPrompt()}]);if(wrongLanguage(answer)){$('ai-status').textContent='输出语言错误，正在重试…';answer=await api([{role:'system',content:sys+'严格使用要求的目标语言。'},{role:'user',content:auditPrompt()+'\n上次输出语言错误。必须输出'+targetLabel()+'。'}]);if(wrongLanguage(answer))throw Error('AI 连续输出错误语言，已停止比较。请手动选择翻译方向后重试。')}$('suggestion').value=answer.trim();grow($('suggestion'));compare();$('ai-status').textContent='建议译文已生成，正在整理修改理由…';await explainAll();if(!$('ai-status').textContent.includes('部分理由'))$('ai-status').textContent='建议译文与理由已生成，请逐处核查。';save()},'ai-status');
+$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成'+targetLabel()+'建议译文…';const sys='你是翻译审校员。必须使用'+targetLabel()+'输出建议译文，禁止改写原文。只输出完整译文。';let answer=await api([{role:'system',content:sys},{role:'user',content:auditPrompt()}]);if(wrongLanguage(answer)){$('ai-status').textContent='输出语言错误，正在重试…';answer=await api([{role:'system',content:sys+'严格使用要求的目标语言。'},{role:'user',content:auditPrompt()+'\n上次输出语言错误。必须输出'+targetLabel()+'。'}]);if(wrongLanguage(answer))throw Error('AI 连续输出错误语言，已停止比较。请手动选择翻译方向后重试。')}$('suggestion').value=answer.trim();grow($('suggestion'));compare();$('ai-status').textContent='建议译文已生成，正在整理修改理由…';await explainAll();save()},'ai-status');
 function compare(){
  const d=collect();if(!d.draft.trim()||!d.suggestion.trim())throw Error('需要初译和完整建议稿');
- snapshot();const old=parts().filter(p=>p.type==='change'),used=new Set();
+ snapshot();d.compareMode=tokenize(d.draft).length*tokenize(d.suggestion).length>1500000?'segmented':'word';const old=parts().filter(p=>p.type==='change'),used=new Set();
  d.decisions=diff(d.draft,d.suggestion);
  for(const p of d.decisions){
   if(p.type!=='change')continue;
