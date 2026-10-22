@@ -51,7 +51,7 @@ function termAndVersionRender(){
    if(!confirm('恢复此版本会替换当前项目内容。工作台将先自动保存一份恢复前快照；确认继续？'))return;
    if(d.versions.length>=20)return alert('版本数已达上限。请删除旧版本，或先导出全部项目备份。');
    const currentCopy=versionPayload(d);
-   const restored=v.payload?JSON.parse(JSON.stringify(v.payload)):{...empty(),source:v.source||'',draft:v.draft||'',purpose:v.purpose||'',suggestion:v.suggestion||'',final:v.final||'',manualFinalDirty:false};
+   const restored=v.payload?JSON.parse(JSON.stringify(v.payload)):{...empty(),terms:JSON.parse(JSON.stringify(d.terms||[])),rules:d.rules||'',useRules:!!d.useRules,profileId:d.profileId||'',direction:d.direction||'auto',source:v.source||'',draft:v.draft||'',purpose:v.purpose||'',suggestion:v.suggestion||'',final:v.final||'',manualFinalDirty:false};
    const preservedVersions=d.versions;
    preservedVersions.push({label:'恢复前自动快照',at:new Date().toISOString(),payload:currentCopy});
    for(const k of Object.keys(d))if(k!=='versions')delete d[k];
