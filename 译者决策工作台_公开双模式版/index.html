@@ -7,14 +7,18 @@
 .review-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 14px;margin-bottom:15px;border:1px solid var(--border);border-radius:9px;background:#fffffffa;box-shadow:0 3px 12px #183c6218}.review-bar select{width:auto;min-width:125px;padding:6px}.review-bar button{padding:6px 10px}.progress-track{width:110px;height:7px;border-radius:7px;background:#dbe5ec;overflow:hidden}#progress-fill{width:0;height:100%;background:#276b53}.category-select{width:auto;max-width:165px;padding:5px;font-size:13px}.source-box{background:#fff9e9;border-left:3px solid #d8ae60;padding:10px;white-space:pre-wrap;margin:10px 0}.source-edit{font-size:12px}.linked-chat{font-size:13px;background:#f6f8fa;padding:8px;margin-top:10px}.linked-chat p{white-space:pre-wrap}.change[hidden]{display:none}
 .profile-module{margin:14px 0 0;padding:12px;border:1px solid var(--border);border-radius:9px;background:#fbfdff}.profile-module .row{margin:8px 0}.profile-module select{flex:1;min-width:175px}.profile-test{padding:13px;margin-top:10px;background:white;border:1px solid var(--border);border-radius:8px}.profile-test .test-choice{font-weight:400;display:block;padding:5px 0}.profile-test .test-choice input{width:auto;margin-right:8px}
 .diagnosis-report{white-space:pre-wrap;max-height:300px;overflow:auto;background:#f5f7fa;border-radius:7px;padding:12px;font-size:13px}.profile-test textarea{margin-bottom:7px}
-\n#workspace-tools>summary{font-size:16px;list-style-position:inside}#workspace-tools .grid{margin:14px 0 18px}#workspace-tools input{margin:4px 0}.tool-list{max-height:260px;overflow:auto;margin-top:8px}.tool-item{padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;overflow-wrap:anywhere}.tool-item button{font-size:12px;padding:3px 9px;margin-left:6px}.tool-item em{font-style:normal;color:var(--muted)}\n</style></head><body><header><h1>译者决策工作台</h1><p>双向翻译 · 自主决策 · 任选离线编辑或在线 AI 协作</p></header><main>
+\n#workspace-tools>summary{font-size:16px;list-style-position:inside}#workspace-tools .grid{margin:14px 0 18px}#workspace-tools input{margin:4px 0}.tool-list{max-height:260px;overflow:auto;margin-top:8px}.tool-item{padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;overflow-wrap:anywhere}.tool-item button{font-size:12px;padding:3px 9px;margin-left:6px}.tool-item em{font-style:normal;color:var(--muted)}\n
+.mode-card{min-height:76px;padding:12px 14px}.mode-card strong{font-size:15px}.mode-card span{font-size:12px;line-height:1.45;margin-top:3px}.mode-switch{margin-bottom:8px}.mode-detail{font-size:13px}
+#final-warning{color:#97551b;font-size:13px}#final-warning:empty{display:none}
+#qa-results{white-space:pre-wrap;margin-top:10px;font-size:13px}.qa-issue{padding:8px 10px;border:1px solid var(--border);border-radius:6px;margin:6px 0;background:#fffaf2}.qa-pass{color:var(--green)}.review-bar{top:0}
+</style></head><body><header><h1>译者决策工作台</h1><p>双向翻译 · 自主决策 · 任选离线编辑或在线 AI 协作</p></header><main>
 <section class="panel" id="mode-section"><h2>选择工作模式</h2><div class="mode-switch"><button type="button" id="mode-offline" class="mode-card selected" aria-pressed="true"><strong>离线编辑</strong><span>无需账号或 API Key；手动粘贴建议稿、比较差异、逐处决定和保存项目。</span></button><button type="button" id="mode-ai" class="mode-card" aria-pressed="false"><strong>在线 AI 辅助</strong><span>由网站连接 Agnes；访客无需配置密钥。可自动审校、连续对话与追问，请仅在可信范围分享网址。</span></button></div><div class="mode-detail" id="mode-description" role="status">当前：离线编辑。网页不会发送原文或译文到 AI 服务。</div><p class="hint">可随时切换，两种模式共用本浏览器的翻译项目。切换为在线 AI 后，只有主动点击 AI 功能才会传输项目内容。</p></section>
 <div class="review-bar"><strong>已处理 <span id="progress-count">0/0</span></strong><div class="progress-track"><div id="progress-fill"></div></div><select id="review-filter"><option value="all">全部修改</option><option value="pending">待处理</option><option value="error">明确错误</option><option value="optimize">建议优化</option><option value="optional">可选调整</option></select><button id="undo-decision" disabled>撤销</button><button id="redo-decision" disabled>恢复</button><button id="next-pending">下一处待处理</button></div><section class="panel"><div class="row"><strong>翻译项目</strong><select id="projects" aria-label="选择项目"></select><button id="new">新建</button><button id="rename">重命名</button><button id="remove">删除</button><button id="backup">导出全部项目 JSON</button><button id="restore">导入备份</button><input id="file" type="file" accept=".json" hidden></div><p class="hint" id="save-status">项目仅自动保存在当前浏览器；请定期导出 JSON 备份，避免清除浏览器数据造成丢失。</p></section>
 <div class="widegrid"><div>
-<section class="panel"><h2>01 · 准备译文</h2><div class="grid"><div><label for="source">原文（中文或英文）</label><textarea id="source" rows="2" placeholder="粘贴原文"></textarea></div><div><label for="draft">我的初译（中文或英文）</label><textarea id="draft" rows="2" class="english" placeholder="粘贴与你的原文对应的初译"></textarea></div></div><label for="purpose">本次翻译要求</label><textarea id="purpose" rows="2" placeholder="例如：社科论文译文，学术读者，保持论证逻辑"></textarea><div class="profile-module"><label class="row" for="use-rules"><input type="checkbox" id="use-rules" style="width:auto;flex:none"> 启用我的翻译取向</label><div id="rules-wrap" hidden><div class="row"><select id="profile-select" aria-label="翻译取向"></select><button id="profile-new" type="button">新建</button><button id="profile-save" type="button">保存修改</button><button id="profile-delete" type="button">删除</button></div><label for="rules">具体要求</label><textarea id="rules" rows="2"></textarea><div class="row"><button id="profile-test" type="button">通过情境测试创建</button><button id="profile-report" type="button">查看诊断记录</button><button id="profile-history" type="button">从当前审校记录创建</button></div><p class="hint" id="profile-status" role="status">已保存的取向可在不同项目之间切换。</p><div id="profile-diagnostic" class="profile-test" hidden></div></div></div></section>
-<section class="panel"><h2>02 · AI 建议与文本比较</h2><div class="row"><button class="primary mode-ai-only mode-hidden" id="analyze">AI 分析初译</button><button id="copy-prompt">复制审校提示词</button></div><p class="status" id="ai-status" role="status"></p><label for="suggestion">完整建议译文（与初译语言一致，可由 AI 生成或自行粘贴）</label><textarea id="suggestion" rows="2"></textarea><button id="compare">比较差异</button><p class="hint" id="diff-status"></p><p id="decision-status" class="status" role="status" aria-live="polite"></p><div id="changes"></div><label for="final">最终译文（可手动修改）</label><textarea id="final" rows="2"></textarea><div class="row"><button class="primary" id="export-txt">导出最终译文</button><button id="export-md">导出决策日志</button></div></section>
+<section class="panel"><h2>01 · 准备译文</h2><div class="row"><button id="import-source-txt" type="button">导入原文 TXT</button><button id="import-draft-txt" type="button">导入初译 TXT</button><input id="import-text-file" type="file" accept=".txt,text/plain" hidden></div><div class="grid"><div><label for="source">原文（中文或英文）</label><textarea id="source" rows="2" placeholder="粘贴原文"></textarea></div><div><label for="draft">我的初译（中文或英文）</label><textarea id="draft" rows="2" class="english" placeholder="粘贴与你的原文对应的初译"></textarea></div></div><div class="row"><label for="direction" style="margin:0">翻译方向</label><select id="direction" aria-label="翻译方向"><option value="auto">自动识别</option><option value="zh-en">中译英 · ZH→EN</option><option value="en-zh">英译中 · EN→ZH</option></select></div><label for="purpose">本次翻译要求</label><textarea id="purpose" rows="2" placeholder="例如：社科论文译文，学术读者，保持论证逻辑"></textarea><div class="profile-module"><label class="row" for="use-rules"><input type="checkbox" id="use-rules" style="width:auto;flex:none"> 启用我的翻译取向</label><div id="rules-wrap" hidden><div class="row"><select id="profile-select" aria-label="翻译取向"></select><button id="profile-new" type="button">新建</button><button id="profile-save" type="button">保存修改</button><button id="profile-delete" type="button">删除</button></div><label for="rules">具体要求</label><textarea id="rules" rows="2"></textarea><div class="row"><button id="profile-test" type="button">通过情境测试创建</button><button id="profile-report" type="button">查看诊断记录</button><button id="profile-history" type="button">从当前审校记录创建</button></div><p class="hint" id="profile-status" role="status">已保存的取向可在不同项目之间切换。</p><div id="profile-diagnostic" class="profile-test" hidden></div></div></div></section>
+<section class="panel"><h2>02 · AI 建议与文本比较</h2><div class="row"><button class="primary mode-ai-only mode-hidden" id="analyze">AI 分析初译</button><button id="copy-prompt">复制审校提示词</button></div><p class="status" id="ai-status" role="status"></p><label for="suggestion">完整建议译文（与初译语言一致，可由 AI 生成或自行粘贴）</label><textarea id="suggestion" rows="2"></textarea><button id="compare">比较差异</button><p class="hint" id="diff-status"></p><p id="decision-status" class="status" role="status" aria-live="polite"></p><div id="changes"></div><label for="final">最终译文（可手动修改）</label><textarea id="final" rows="2"></textarea><p id="final-warning" role="status" aria-live="polite"></p><button id="resync-final" type="button" hidden>根据审校决策重新生成最终译文</button><div class="row"><button class="primary" id="export-txt">导出最终译文</button><button id="export-md">导出决策日志</button></div></section>
 </div><div>
-<section class="panel mode-ai-only mode-hidden" id="ai-panel"><h2>在线 AI 助手</h2><label for="model">Agnes 模型</label><select id="model"><option>agnes-2.5-flash</option><option>agnes-3.0-flash</option></select><div class="row" style="margin-top:10px"><button id="test">测试聊天连接</button><button id="clear-chat">清空当前对话</button></div><p class="status" id="chat-status" role="status">正在检查本地 AI 服务…</p><div id="chat-log" aria-live="polite"></div><label for="question">询问 AI（自动附带当前项目上下文）</label><textarea id="question" rows="2" placeholder="例如：为什么这处修改更自然？有没有语义偏移？"></textarea><div class="row"><button class="primary" id="ask">发送并继续对话</button></div><p class="hint">对话保存在本浏览器。发送提问或请求分析时，当前项目的原文、初译等会传输至网站后端和 Agnes。免费服务可能有限额；请勿上传保密材料。</p></section>
+<section class="panel mode-ai-only mode-hidden" id="ai-panel"><h2>在线 AI 助手</h2><label for="access-code">访问码（仅在管理员启用时填写，本次页面会话内使用）</label><input id="access-code" type="password" autocomplete="off" placeholder="未设置访问限制可留空"><label for="model">Agnes 模型</label><select id="model"><option>agnes-2.5-flash</option><option>agnes-3.0-flash</option></select><div class="row" style="margin-top:10px"><button id="test">测试聊天连接</button><button id="clear-chat">清空当前对话</button></div><p class="status" id="chat-status" role="status">正在检查本地 AI 服务…</p><div id="chat-log" aria-live="polite"></div><label for="question">询问 AI（自动附带当前项目上下文）</label><textarea id="question" rows="2" placeholder="例如：为什么这处修改更自然？有没有语义偏移？"></textarea><div class="row"><button class="primary" id="ask">发送并继续对话</button></div><p class="hint">对话保存在本浏览器。发送提问或请求分析时，当前项目的原文、初译等会传输至网站后端和 Agnes。免费服务可能有限额；请勿上传保密材料。</p></section>
 
 </div></div>
 <details class="panel" id="workspace-tools"><summary>资料与记录 · 术语、版本、研究导出</summary>
@@ -23,13 +27,13 @@
 <section><h3>术语与证据</h3><div class="row"><input id="term-source" placeholder="原文术语" aria-label="原文术语"><input id="term-target" placeholder="译法" aria-label="术语译法"></div><input id="term-context" placeholder="适用语境（选填）" aria-label="适用语境"><input id="term-evidence" placeholder="来源 / URL（未核验可留空）" aria-label="术语来源"><button id="term-add" type="button">保存术语</button><div id="term-list" class="tool-list"></div></section>
 <section><h3>译文版本</h3><div class="row"><input id="version-label" placeholder="版本名称，例如：课堂反馈后" aria-label="版本名称"><button id="version-save" type="button">保存快照</button></div><div id="version-list" class="tool-list"></div><p class="hint">恢复快照会覆盖当前编辑文本，请先备份。</p></section>
 </div>
-<h3>学习与研究记录</h3><p id="research-summary" class="hint"></p><div class="row"><button id="csv-current" type="button">导出本项目决策 CSV</button><button id="csv-all" type="button">导出全部项目 CSV</button><button id="replay-export" type="button">导出决策回放</button></div>
+<section><h3>交付前质量检查</h3><p class="hint">本地检查项目术语及阿拉伯数字；提示需要人工复核，不会自动修改译文。</p><div class="row"><button id="qa-run" type="button">检查最终译文</button><button id="terms-csv" type="button">导出项目术语 CSV</button></div><div id="qa-results" role="status"></div></section><h3>学习与研究记录</h3><p id="research-summary" class="hint"></p><div class="row"><button id="csv-current" type="button">导出本项目决策 CSV</button><button id="csv-all" type="button">导出全部项目 CSV</button><button id="replay-export" type="button">导出决策回放</button></div>
 <p class="hint">分类及判断依据由译者记录，CSV 保留原文、初译、AI建议、选择和追问，不自动推断认知过程。</p>
 </details>
 <footer>离线编辑与在线 AI 可自由切换 · 项目仅存于本浏览器（非跨设备同步） · 公共 API Key 仅保存在服务器</footer></main>
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id),STORAGE='translator-workbench-agnes-cn-v3', MODE_STORAGE='translator-workbench-mode-v1';let db={},current='',busy=false,mode='offline',undoStack=[],redoStack=[],activeChange=-1;
-const PROFILE_STORE='translator-workbench-profiles-v1';let profiles=[],diagnosticAnswers=[];const empty=()=>({source:'',draft:'',purpose:'',rules:'按原文顺序逐句评析；区分确定错误与可讨论的文体选择；有依据地修改，不要为改而改。',useRules:false,profileId:'',suggestion:'',final:'',decisions:[],history:[],model:'agnes-2.5-flash'});
+(()=>{'use strict';const $=id=>document.getElementById(id),STORAGE='translator-workbench-agnes-cn-v3', MODE_STORAGE='translator-workbench-mode-v1';let db={},current='',busy=false,mode='offline',undoStack=[],redoStack=[],activeChange=-1,editingTermIndex=-1;
+const PROFILE_STORE='translator-workbench-profiles-v1';let profiles=[],diagnosticAnswers=[];const empty=()=>({source:'',draft:'',purpose:'',rules:'按原文顺序逐句评析；区分确定错误与可讨论的文体选择；有依据地修改，不要为改而改。',useRules:false,profileId:'',suggestion:'',final:'',decisions:[],history:[],model:'agnes-2.5-flash',direction:'auto',manualFinalDirty:false});
 
 function extraData(){const d=db[current]?.data||{};if(!Array.isArray(d.terms))d.terms=[];if(!Array.isArray(d.versions))d.versions=[];return d}
 function cellText(s){return String(s??'')}
@@ -37,25 +41,94 @@ function appendText(parent,tag,value,klass){const el=document.createElement(tag)
 function termAndVersionRender(){
  const d=extraData();const terms=$('term-list');terms.replaceChildren();
  if(!d.terms.length)appendText(terms,'p','暂无术语记录','hint');
- d.terms.forEach((t,i)=>{const e=appendText(terms,'div','','tool-item');appendText(e,'strong',t.source+' → '+t.target);if(t.context)appendText(e,'div','语境：'+t.context,'muted');if(t.evidence)appendText(e,'div','来源（用户记录，尚未自动核验）：'+t.evidence,'muted');const b=appendText(e,'button','删除');b.type='button';b.onclick=()=>{if(!confirm('删除这条术语？'))return;d.terms.splice(i,1);save();termAndVersionRender()}})
+ d.terms.forEach((t,i)=>{const e=appendText(terms,'div','','tool-item');appendText(e,'strong',t.source+' → '+t.target);if(t.context)appendText(e,'div','语境：'+t.context,'muted');if(t.evidence)appendText(e,'div','来源（用户记录，尚未自动核验）：'+t.evidence,'muted');const edit=appendText(e,'button','编辑');edit.type='button';edit.onclick=()=>{editingTermIndex=i;$('term-source').value=t.source;$('term-target').value=t.target;$('term-context').value=t.context||'';$('term-evidence').value=t.evidence||'';$('term-add').textContent='保存修改';$('term-source').focus()};const b=appendText(e,'button','删除');b.type='button';b.onclick=()=>{if(!confirm('删除这条术语？'))return;d.terms.splice(i,1);save();termAndVersionRender()}})
  const versions=$('version-list');versions.replaceChildren();
  if(!d.versions.length)appendText(versions,'p','暂无版本快照','hint');
- d.versions.forEach((v,i)=>{const e=appendText(versions,'div','','tool-item');appendText(e,'strong',v.label||'未命名版本');appendText(e,'span',' · '+new Date(v.at).toLocaleString('zh-CN'),'muted');const b=appendText(e,'button','恢复');b.type='button';b.onclick=()=>{if(!confirm('恢复此版本将覆盖当前原文、初译、要求、建议和最终译文，并清除现有差异决策。请确认已备份。'))return;for(const k of ['source','draft','purpose','suggestion','final'])$(k).value=v[k]||'';d.decisions=[];d.history=[];activeChange=-1;renderChanges();renderChat();save();growAll();termAndVersionRender()};const del=appendText(e,'button','删除');del.type='button';del.onclick=()=>{if(!confirm('删除此快照？'))return;d.versions.splice(i,1);save();termAndVersionRender()}})
+ d.versions.forEach((v,i)=>{
+  const e=appendText(versions,'div','','tool-item');
+  appendText(e,'strong',v.label||'未命名版本');appendText(e,'span',' · '+new Date(v.at).toLocaleString('zh-CN'),'muted');
+  const b=appendText(e,'button','恢复');b.type='button';b.onclick=()=>{
+   if(!confirm('恢复此版本会替换当前项目内容。工作台将先自动保存一份恢复前快照；确认继续？'))return;
+   if(d.versions.length>=20)return alert('版本数已达上限。请删除旧版本，或先导出全部项目备份。');
+   const currentCopy=versionPayload(d);
+   const restored=v.payload?JSON.parse(JSON.stringify(v.payload)):{...empty(),source:v.source||'',draft:v.draft||'',purpose:v.purpose||'',suggestion:v.suggestion||'',final:v.final||'',manualFinalDirty:false};
+   const preservedVersions=d.versions;
+   preservedVersions.push({label:'恢复前自动快照',at:new Date().toISOString(),payload:currentCopy});
+   for(const k of Object.keys(d))if(k!=='versions')delete d[k];
+   Object.assign(d,restored);d.versions=preservedVersions;
+   editingTermIndex=-1;activeChange=-1;undoStack=[];redoStack=[];
+   bind();save();termAndVersionRender();
+  };
+  const del=appendText(e,'button','删除');del.type='button';del.onclick=()=>{if(!confirm('删除此快照？'))return;d.versions.splice(i,1);save();termAndVersionRender()};
+ });
  const changes=(d.decisions||[]).filter(x=>x.type==='change');const finished=changes.filter(x=>['accept','keep','custom'].includes(x.choice));const counts={};for(const p of finished){const cat=p.category||'uncategorized';counts[cat]=(counts[cat]||0)+1}$('research-summary').textContent='已决策 '+finished.length+'/'+changes.length+' 处；采纳 '+finished.filter(x=>x.choice==='accept').length+'、保留 '+finished.filter(x=>x.choice==='keep').length+'、自主修改 '+finished.filter(x=>x.choice==='custom').length+'。问题分类：'+(Object.entries(counts).map(([k,v])=>({error:'明确错误',optimize:'建议优化',optional:'可选调整',uncategorized:'未分类'}[k]||k)+v+'处').join('，')||'暂无')+'。';
 }
+function versionPayload(d){const data={...d};delete data.versions;return JSON.parse(JSON.stringify(data))}
 function csvLine(xs){return xs.map(x=>'"'+cellText(x).replace(/"/g,'""')+'"').join(',')}
+function runLocalQA(){
+ const d=collect(),warnings=[];
+ if(!d.source.trim()||!d.final.trim()){warnings.push('原文或最终译文为空，无法完成交付检查。')}
+ const terms=(d.terms||[]);
+ for(const t of terms){
+  if(!t.source||!t.target)continue;
+  const sourceHas=d.source.toLocaleLowerCase().includes(t.source.toLocaleLowerCase());
+  const finalHas=d.final.toLocaleLowerCase().includes(t.target.toLocaleLowerCase());
+  if(sourceHas&&!finalHas)warnings.push('术语待核查：「'+t.source+'」已在原文中出现，但最终译文中没有找到「'+t.target+'」。');
+ }
+ const numbers=x=>x.match(/[0-9]+(?:[,.][0-9]+)*(?:\s*%)?/g)?.map(n=>n.replace(/,/g,'').replace(/\s+/g,''))||[];
+ const remaining=new Map();for(const x of numbers(d.final))remaining.set(x,(remaining.get(x)||0)+1);
+ for(const x of numbers(d.source)){const n=remaining.get(x)||0;if(n)remaining.set(x,n-1);else warnings.push('数字待核查：原文中的「'+x+'」未在译文中找到相同的阿拉伯数字。')}
+ if(d.manualFinalDirty)warnings.push('最终译文含有手工编辑，与审校决策的自动拼接稿可能不同；请确认版本。');
+ const unfinished=(d.decisions||[]).filter(p=>p.type==='change'&&!['accept','keep','custom'].includes(p.choice)).length;
+ if(unfinished)warnings.push('尚有 '+unfinished+' 处修改未作出决定。');
+ const root=$('qa-results');root.replaceChildren();
+ if(!warnings.length)appendText(root,'div','基础术语与数字检查未发现明显异常。此结果不代表语义审校已完成。','qa-pass');
+ else{appendText(root,'strong','发现 '+warnings.length+' 项待人工核查');for(const issue of warnings)appendText(root,'div',issue,'qa-issue')}
+}
 function researchRows(all){const rows=[['项目','编号','原文','初译全文','建议译文全文','修改前','修改后','决定','自主改写','类别','原文对应片段','译者理由','AI理由','追问记录','最终译文']];for(const [id,p] of Object.entries(db)){if(!all&&id!==current)continue;const d=p.data||{};let n=0;for(const x of d.decisions||[]){if(x.type!=='change')continue;n++;rows.push([p.name,n,d.source,d.draft,d.suggestion,x.before,x.after,({accept:'采纳',keep:'保留',custom:'自主修改'}[x.choice]||'待处理'),x.custom,x.category,x.sourceExcerpt,x.reason,x.aiReason,JSON.stringify(x.followups||[]),d.final])}}return rows}
 function exportCSV(all){save();const csv='\uFEFF'+researchRows(all).map(csvLine).join('\r\n');download(all?'全部项目_译者决策.csv':'本项目_译者决策.csv',csv,'text/csv;charset=utf-8')}
+function initTextImport(){
+ let target='source';
+ for(const id of ['source','draft'])$('import-'+id+'-txt').onclick=()=>{target=id;$('import-text-file').click()};
+ $('import-text-file').onchange=async()=>{
+  const file=$('import-text-file').files?.[0];if(!file)return;
+  try{
+   if(file.size>2000000)throw Error('TXT 文件超过 2 MB，请先分拆文档');
+   const content=(await file.text()).replace(/^\uFEFF/,'');
+   if(!content.trim())throw Error('文件为空');
+   if(!confirm('将 UTF-8 TXT 导入'+(target==='source'?'原文':'初译')+'，覆盖当前对应文本。建议先保存版本快照。是否继续？'))return;
+   $(target).value=content;grow($(target));$('diff-status').textContent='已导入文本。请重新生成建议或比较差异。';save();
+  }catch(e){alert('导入失败：'+e.message)}finally{$('import-text-file').value=''}
+ };
+}
 function initExtraTools(){
- $('term-add').onclick=()=>{const source=$('term-source').value.trim(),target=$('term-target').value.trim();if(!source||!target)return alert('请填写原文术语与译法');extraData().terms.push({source,target,context:$('term-context').value.trim(),evidence:$('term-evidence').value.trim()});for(const k of ['term-source','term-target','term-context','term-evidence'])$(k).value='';save();termAndVersionRender()};
- $('version-save').onclick=()=>{const d=collect();const label=$('version-label').value.trim()||'译文快照 '+(d.versions.length+1);if(d.versions.length>=30)return alert('每项目最多保存30个快照，请先删除较旧快照');d.versions.push({label,at:new Date().toISOString(),source:d.source,draft:d.draft,purpose:d.purpose,suggestion:d.suggestion,final:d.final});$('version-label').value='';save();termAndVersionRender()};
+ $('term-add').onclick=()=>{
+ const source=$('term-source').value.trim(),target=$('term-target').value.trim();
+ if(!source||!target)return alert('请填写原文术语与译法');
+ const d=extraData(),value={source,target,context:$('term-context').value.trim(),evidence:$('term-evidence').value.trim()};
+ if(editingTermIndex>=0&&editingTermIndex<d.terms.length)d.terms[editingTermIndex]=value;else d.terms.push(value);
+ editingTermIndex=-1;$('term-add').textContent='保存术语';
+ for(const k of ['term-source','term-target','term-context','term-evidence'])$(k).value='';
+ save();termAndVersionRender();
+};
+ $('version-save').onclick=()=>{
+ const d=collect(),label=$('version-label').value.trim()||'译文快照 '+(d.versions.length+1);
+ if(d.versions.length>=20)return alert('每项目最多保留20个快照；建议先备份，再删除旧版本。');
+ d.versions.push({label,at:new Date().toISOString(),payload:versionPayload(d)});
+ $('version-label').value='';save();termAndVersionRender();
+};
+ $('qa-run').onclick=runLocalQA;
+ $('terms-csv').onclick=()=>{
+  const d=collect(),rows=[['原文术语','目标语译法','适用语境','记录来源'],...(d.terms||[]).map(t=>[t.source,t.target,t.context||'',t.evidence||''])];
+  download('项目术语.csv','\uFEFF'+rows.map(csvLine).join('\r\n'),'text/csv;charset=utf-8');
+ };
  $('csv-current').onclick=()=>exportCSV(false);$('csv-all').onclick=()=>exportCSV(true);
  $('replay-export').onclick=()=>{save();const d=collect();const lines=['# 译者决策回放',db[current].name,'','## 时间','导出于 '+new Date().toLocaleString('zh-CN'),'','## 原文',d.source,'','## 初译',d.draft,'','## 审校决策'];let i=0;for(const x of d.decisions||[]){if(x.type!=='change')continue;lines.push('','### '+(++i),'初译：'+cellText(x.before),'建议：'+cellText(x.after),'决定：'+cellText(x.choice),'改写：'+cellText(x.custom),'类别：'+cellText(x.category),'依据：'+cellText(x.reason),'追问：'+JSON.stringify(x.followups||[]))}lines.push('','## 最终译文',d.final);download('译者决策回放.md',lines.join('\n'),'text/markdown;charset=utf-8')};
  $('workspace-tools').addEventListener('toggle',()=>{if($('workspace-tools').open)termAndVersionRender()});
 }
 function save(){try{db[current].data=collect();localStorage.setItem(STORAGE,JSON.stringify({current,db}));$('save-status').textContent='已保存在当前浏览器 · '+new Date().toLocaleTimeString('zh-CN')+'。建议定期导出备份。'}catch(e){$('save-status').textContent='自动保存失败，请导出 JSON 备份。'}}
-function collect(){const d=db[current].data;for(const key of ['source','draft','purpose','suggestion','final'])d[key]=$(key).value;if(!$('profile-select').value)d.rules=$('rules').value;d.useRules=$('use-rules').checked;d.profileId=$('profile-select').value;d.model=$('model').value;return d}
-function bind(){let d=db[current].data;for(const k of ['source','draft','purpose','rules','suggestion','final'])$(k).value=d[k]||'';$('use-rules').checked=!!d.useRules;$('rules-wrap').hidden=!d.useRules;renderProfiles(d);$('model').value=d.model||'agnes-2.5-flash';renderProjects();renderChanges();renderChat();termAndVersionRender();undoStack=[];redoStack=[];activeChange=-1;historyButtons();requestAnimationFrame(growAll)}
+function collect(){const d=db[current].data;for(const key of ['source','draft','purpose','suggestion','final'])d[key]=$(key).value;if(!$('profile-select').value)d.rules=$('rules').value;d.useRules=$('use-rules').checked;d.profileId=$('profile-select').value;d.model=$('model').value;d.direction=$('direction').value;return d}
+function bind(){editingTermIndex=-1;$('term-add').textContent='保存术语';$('qa-results').replaceChildren();let d=db[current].data;for(const k of ['source','draft','purpose','rules','suggestion','final'])$(k).value=d[k]||'';$('use-rules').checked=!!d.useRules;$('rules-wrap').hidden=!d.useRules;renderProfiles(d);$('model').value=d.model||'agnes-2.5-flash';$('direction').value=d.direction||'auto';if((d.decisions||[]).length&&d.final!==compose())d.manualFinalDirty=true;renderFinalDirty();renderProjects();renderChanges();renderChat();termAndVersionRender();undoStack=[];redoStack=[];activeChange=-1;historyButtons();requestAnimationFrame(growAll)}
 
 function loadProfiles(){try{const x=JSON.parse(localStorage.getItem(PROFILE_STORE)||'[]');if(Array.isArray(x))profiles=x.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.rules==='string')}catch(e){}}
 function storeProfiles(){try{localStorage.setItem(PROFILE_STORE,JSON.stringify(profiles));$('profile-status').textContent='取向已保存在当前浏览器。'}catch(e){$('profile-status').textContent='保存失败，请检查浏览器存储。'}}
@@ -162,11 +235,33 @@ function bootstrap(){loadProfiles();try{const s=JSON.parse(localStorage.getItem(
 function download(name,body,type){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type:type||'text/plain;charset=utf-8'}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 function normalize(s){return s.trim().replace(/\r\n/g,'\n')}
 function tokenize(t){return t.match(/\s+|[\p{Script=Han}]|[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*|[^\s]/gu)||[]}
-function diff(a,b){const x=tokenize(a),y=tokenize(b),n=x.length,m=y.length;if(n*m>1500000)throw Error('文本太长，请按段处理（建议单次不超过约 500 英文词）');let dp=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);let i=0,j=0,ops=[];function add(t,v){if(ops.length&&ops.at(-1).type===t)ops.at(-1).text+=v;else ops.push({type:t,text:v})}while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);let parts=[];for(let k=0;k<ops.length;){if(ops[k].type==='same'){parts.push({type:'same',text:ops[k++].text});continue}let old='',newer='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')old+=ops[k].text;else newer+=ops[k].text;k++}parts.push({type:'change',before:old,after:newer,choice:'pending',reason:'',custom:'',aiReason:''})}return parts}
+function coarseDiff(a,b){
+ if(a===b)return [{type:'same',text:a}];
+ const chunk=x=>x.match(/[^\n。！？!?；;]*[\n。！？!?；;]+|[^\n。！？!?；;]+$/g)||[];
+ const x=chunk(a),y=chunk(b),n=x.length,m=y.length;
+ const make=(before,after)=>({type:'change',before,after,choice:'pending',reason:'',custom:'',aiReason:''});
+ if(n*m>180000){
+  let left=0,right=0;while(left<a.length&&left<b.length&&a[left]===b[left])left++;
+  while(right<a.length-left&&right<b.length-left&&a[a.length-right-1]===b[b.length-right-1])right++;
+  return [left?{type:'same',text:a.slice(0,left)}:null,make(a.slice(left,a.length-right),b.slice(left,b.length-right)),right?{type:'same',text:a.slice(a.length-right)}:null].filter(Boolean);
+ }
+ const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+ for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
+ let i=0,j=0,ops=[];const add=(type,text)=>{if(ops.length&&ops.at(-1).type===type)ops.at(-1).text+=text;else ops.push({type,text})};
+ while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}
+ while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);
+ const result=[];for(let k=0;k<ops.length;){
+  if(ops[k].type==='same'){result.push({type:'same',text:ops[k++].text});continue}
+  let before='',after='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')before+=ops[k].text;else after+=ops[k].text;k++}
+  if(tokenize(before).length*tokenize(after).length<=1500000)result.push(...diff(before,after));else result.push(make(before,after));
+ }
+ return result;
+}
+function diff(a,b){const x=tokenize(a),y=tokenize(b),n=x.length,m=y.length;if(n*m>1500000)return coarseDiff(a,b);let dp=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);let i=0,j=0,ops=[];function add(t,v){if(ops.length&&ops.at(-1).type===t)ops.at(-1).text+=v;else ops.push({type:t,text:v})}while(i<n&&j<m){if(x[i]===y[j]){add('same',x[i]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])add('del',x[i++]);else add('ins',y[j++])}while(i<n)add('del',x[i++]);while(j<m)add('ins',y[j++]);let parts=[];for(let k=0;k<ops.length;){if(ops[k].type==='same'){parts.push({type:'same',text:ops[k++].text});continue}let old='',newer='';while(k<ops.length&&ops[k].type!=='same'){if(ops[k].type==='del')old+=ops[k].text;else newer+=ops[k].text;k++}parts.push({type:'change',before:old,after:newer,choice:'pending',reason:'',custom:'',aiReason:''})}return parts}
 function parts(){return db[current].data.decisions||[]}
-function snapshot(){undoStack.push(JSON.stringify({decisions:parts(),final:$('final').value}));if(undoStack.length>60)undoStack.shift();redoStack=[];historyButtons()}
+function snapshot(){undoStack.push(JSON.stringify({decisions:parts(),final:$('final').value,manualFinalDirty:!!db[current].data.manualFinalDirty}));if(undoStack.length>60)undoStack.shift();redoStack=[];historyButtons()}
 function historyButtons(){$('undo-decision').disabled=!undoStack.length;$('redo-decision').disabled=!redoStack.length}
-function stepHistory(a,b){if(!a.length)return;b.push(JSON.stringify({decisions:parts(),final:$('final').value}));const x=JSON.parse(a.pop());db[current].data.decisions=x.decisions;$('final').value=x.final;renderChanges();grow($('final'));save();historyButtons()}
+function stepHistory(a,b){if(!a.length)return;b.push(JSON.stringify({decisions:parts(),final:$('final').value,manualFinalDirty:!!db[current].data.manualFinalDirty}));const x=JSON.parse(a.pop());db[current].data.decisions=x.decisions;db[current].data.manualFinalDirty=!!x.manualFinalDirty;$('final').value=x.final;renderFinalDirty();renderChanges();grow($('final'));save();historyButtons()}
 function updateProgress(){const all=parts().filter(p=>p.type==='change'),done=all.filter(p=>['accept','keep','custom'].includes(p.choice)).length;$('progress-count').textContent=done+'/'+all.length;$('progress-fill').style.width=(all.length?100*done/all.length:0)+'%';const f=$('review-filter').value;document.querySelectorAll('.change').forEach(c=>c.hidden=f==='pending'?c.dataset.choice!=='pending':(['error','optimize','optional'].includes(f)?c.dataset.category!==f:false))}
 function nextPending(){const card=[...document.querySelectorAll('.change')].find(c=>!c.hidden&&c.dataset.choice==='pending');if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.focus({preventScroll:true})}}
 function compose(){return parts().map(p=>p.type==='same'?p.text:p.choice==='accept'?p.after:p.choice==='custom'?(p.custom||p.before):p.before).join('')}
@@ -194,13 +289,14 @@ function sentenceContext(text,start,length){
 }
 function renderChanges(){
  const root=$('changes');root.replaceChildren();const ps=parts();let count=0;
+ const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
+ const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
+ let offsetOriginal=0,offsetProposed=0;
  ps.forEach((p,i)=>{
-  if(p.type==='same')return;
+  if(p.type==='same'){offsetOriginal+=p.text.length;offsetProposed+=p.text.length;return}
+  const posOriginal=offsetOriginal,posProposed=offsetProposed;
+  offsetOriginal+=p.before.length;offsetProposed+=p.after.length;
   const index=count++,card=document.createElement('article');card.className='change';card.tabIndex=-1;card.dataset.choice=p.choice||'pending';card.dataset.category=p.category||'unclassified';
-  const original=ps.map(x=>x.type==='same'?x.text:x.before).join('');
-  const proposed=ps.map(x=>x.type==='same'?x.text:x.after).join('');
-  const posOriginal=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.before).length,0);
-  const posProposed=ps.slice(0,i).reduce((n,x)=>n+(x.type==='same'?x.text:x.after).length,0);
   const examples=[sentenceContext(original,posOriginal,p.before.length),sentenceContext(proposed,posProposed,p.after.length)];
   const title=document.createElement('div');title.className='change-title';const n=document.createElement('strong');n.textContent='修改 '+(index+1);title.appendChild(n);
   const status=document.createElement('span');status.className='decision-pill';status.textContent=({pending:'待决定',accept:'已接受',keep:'已保留',custom:'自行改写'})[p.choice]||'待决定';title.appendChild(status);const category=document.createElement('select');category.className='category-select';for(const [v,label] of [['unclassified','待分类'],['error','明确错误'],['optimize','建议优化'],['optional','可选调整']]){const opt=document.createElement('option');opt.value=v;opt.textContent=label;category.appendChild(opt)}category.value=p.category||'unclassified';category.onchange=()=>{snapshot();p.category=category.value;renderChanges();save()};title.appendChild(category);card.appendChild(title);
@@ -229,33 +325,68 @@ function renderChanges(){
   if(mode==='ai'){const why=document.createElement('button');why.textContent=p.aiReason?'重新生成理由':'生成修改理由';why.onclick=()=>run(why,async()=>{reason.textContent='正在生成理由…';p.aiReason=await explainChange(p);reason.textContent=p.aiReason;save()},'ai-status');buttons.appendChild(why)}
   card.appendChild(buttons);if((p.followups||[]).length){const log=document.createElement('details');log.className='linked-chat';const title=document.createElement('summary');title.textContent='关联追问（'+p.followups.length+'）';log.appendChild(title);for(const m of p.followups){const q=document.createElement('p');q.textContent='问：'+m.question;const a=document.createElement('p');a.textContent='AI：'+m.answer;log.append(q,a)}card.appendChild(log)}root.appendChild(card)
  });
- $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';updateProgress();
+ $('diff-status').textContent=ps.length?'共 '+count+' 处修改。红色标示被替换的初译文字，绿色标示 AI 建议。':'尚未比较';if(ps.length&&db[current].data.compareMode==='segmented')$('diff-status').textContent+=' 长文本已启用句段级对比，请核查较大的改动块。';updateProgress();
 }
 
 async function explainAll(){
- const ps=parts().filter(p=>p.type==='change').slice(0,12);if(!ps.length)return;
- const items=ps.map((p,i)=>({id:i+1,before:p.before,after:p.after}));
- const q='请依据原文将修改分为error（明确错误）、optimize（建议优化）、optional（可选调整）。用中文解释理由，每项不超过60字；sourceExcerpt摘录对应原文完整句，无法准确定位则为空。仅输出JSON数组，如 [{"id":1,"category":"error","reason":"...","sourceExcerpt":"..."}]，不加Markdown。\n原文：'+$('source').value+'\n修改列表：'+JSON.stringify(items);
- try{
-  const answer=await api([{role:'system',content:'你是翻译审校员。只输出JSON，不编造依据。'},{role:'user',content:q}]);
-  const data=JSON.parse(answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim());
-  if(!Array.isArray(data))throw Error('格式异常');
-  for(const x of data){const p=ps[Number(x.id)-1];if(p&&typeof x.reason==='string'){p.aiReason=x.reason.slice(0,500);if(['error','optimize','optional'].includes(x.category))p.category=x.category;if(typeof x.sourceExcerpt==='string')p.sourceExcerpt=x.sourceExcerpt.slice(0,700)}}
-  renderChanges();save()
- }catch(e){$('ai-status').textContent='建议译文已生成；部分理由未能自动取得，可逐处点击生成理由。'}
+ const project=current,all=parts().filter(p=>p.type==='change');
+ if(!all.length)return;
+ const batchSize=8;let processed=0,failed=0;
+ for(let start=0;start<all.length;start+=batchSize){
+  if(project!==current)return;
+  const batch=all.slice(start,start+batchSize);
+  $('ai-status').textContent='正在分析修改理由：'+Math.min(start+batchSize,all.length)+' / '+all.length;
+  const items=batch.map((p,i)=>({id:i+1,before:p.before.slice(0,350),after:p.after.slice(0,350)}));
+  const excerpt=$('source').value.slice(0,5500);
+  const q='请依据原文区分error（明确错误）、optimize（建议优化）、optional（可选调整）。每项理由不超过60字；sourceExcerpt必须是提供的原文节选中逐字出现的原句，无法可靠对应则为空。只返回 JSON 数组，例如 [{"id":1,"category":"error","reason":"...","sourceExcerpt":"..."}]。\n原文节选（超长原文可能被截断，严禁猜测未提供的内容）：\n'+excerpt+'\n修改列表：'+JSON.stringify(items);
+  try{
+   const answer=await api([{role:'system',content:'你是翻译审校员。仅根据提供的证据判断。严格输出 JSON，不编造原文定位。'},{role:'user',content:q}]);
+   const cleaned=answer.replace(/^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$/g,'').trim();
+   const data=JSON.parse(cleaned);if(!Array.isArray(data))throw Error('响应不是数组');
+   for(const x of data){
+    const n=Number(x.id);
+    if(!Number.isInteger(n)||n<1||n>batch.length)continue;
+    const p=batch[n-1];if(!parts().includes(p)||typeof x.reason!=='string')continue;
+    if(!p.aiReason)p.aiReason=x.reason.slice(0,500);
+    if(!p.category||p.category==='unclassified'){
+     if(['error','optimize','optional'].includes(x.category))p.category=x.category;
+    }
+    if(!p.sourceExcerpt&&typeof x.sourceExcerpt==='string'&&excerpt.includes(x.sourceExcerpt)&&x.sourceExcerpt.trim())p.sourceExcerpt=x.sourceExcerpt.slice(0,700);
+    processed++;
+   }
+  }catch(e){if(project!==current)return;failed+=batch.length}
+  if(project===current){renderChanges();save()}
+ }
+ $('ai-status').textContent='建议译文已生成，已获得 '+processed+' 处修改的初步分析'+(failed?'；'+failed+' 处分析失败，可逐处重试。':'，请逐处核查。');
 }
-function updateFinal(){$('final').value=compose();db[current].data.final=$('final').value;requestAnimationFrame(()=>grow($('final')))}
+function renderFinalDirty(){
+ const d=db[current]?.data||{},dirty=!!d.manualFinalDirty;
+ $('final-warning').textContent=dirty?'最终译文包含手工编辑，后续审校决定不会覆盖它。若需要同步新决定，请先核对并主动重新生成。':'';
+ $('resync-final').hidden=!dirty;
+}
+function updateFinal(force=false){
+ const d=db[current].data;
+ if(d.manualFinalDirty&&!force){renderFinalDirty();return}
+ $('final').value=compose();d.final=$('final').value;d.manualFinalDirty=false;
+ renderFinalDirty();requestAnimationFrame(()=>grow($('final')));
+}
 function renderChat(){const log=$('chat-log');log.replaceChildren();for(const m of db[current].data.history||[]){const div=document.createElement('div');div.className='msg '+m.role;div.textContent=(m.role==='user'?'我：':'AI：')+'\n'+m.content;log.appendChild(div)}log.scrollTop=log.scrollHeight}
-function translationDirection(){const d=collect();const han=x=>(x.match(/[\u3400-\u9fff]/g)||[]).length;const a=han(d.source),b=han(d.draft);if(a>0&&b===0)return 'zh-en';if(b>0&&a===0)return 'en-zh';if(a>3*b&&a>2)return 'zh-en';if(b>3*a&&b>2)return 'en-zh';return null}
+function translationDirection(){const forced=$('direction').value;if(forced==='zh-en'||forced==='en-zh')return forced;const d=collect();const han=x=>(x.match(/[\u3400-\u9fff]/g)||[]).length;const a=han(d.source),b=han(d.draft);if(a>0&&b===0)return 'zh-en';if(b>0&&a===0)return 'en-zh';if(a>3*b&&a>2)return 'zh-en';if(b>3*a&&b>2)return 'en-zh';return null}
 function targetLabel(){const d=translationDirection();return d==='en-zh'?'中文':d==='zh-en'?'英文':'与初译相同的语言'}
 function wrongLanguage(x){const d=translationDirection();if(!d)return false;const han=(x.match(/[\u3400-\u9fff]/g)||[]).length,latin=(x.match(/[A-Za-z]/g)||[]).length;return d==='en-zh'?han<3&&latin>han*3:han>latin*2&&han>10}
-function context(){const d=collect();return '你是翻译审校助手。方向：'+(translationDirection()==='en-zh'?'英译汉':translationDirection()==='zh-en'?'中译英':'根据原文和初译确定')+'。依据原文解释译文准确性和表达问题。'+'\n【本次要求】'+d.purpose+'\n【固定要求】'+(d.useRules?activeRules():'无')+'\n【原文】'+d.source+'\n【初译】'+d.draft+'\n【建议译文】'+d.suggestion+'\n【当前译文】'+d.final}
+function glossaryInstructions(){
+ const d=extraData(),items=(d.terms||[]).filter(t=>t.source&&d.source.toLocaleLowerCase().includes(t.source.toLocaleLowerCase()));
+ return items.length?'\n【项目术语（由译员记录；按语境核对后优先遵守）】\n'+items.slice(0,60).map(t=>[t.source,t.target,t.context?'语境：'+t.context:''].filter(Boolean).join(' → ')).join('\n').slice(0,2400):'';
+}
+function context(){const d=collect();return '你是翻译审校助手。方向：'+(translationDirection()==='en-zh'?'英译汉':translationDirection()==='zh-en'?'中译英':'根据原文和初译确定')+'。依据原文解释译文准确性和表达问题。'+'\n【本次要求】'+d.purpose+'\n【固定要求】'+(d.useRules?activeRules():'无')+'\n【原文】'+d.source+'\n【初译】'+d.draft+'\n【建议译文】'+d.suggestion+'\n【当前译文】'+d.final+glossaryInstructions()}
 async function api(messages){
+ const requestedProject=current;
  if(mode!=='ai')throw Error('当前为离线编辑模式。请在页面顶部选择「在线 AI 辅助」。');
  if(location.protocol==='file:')throw Error('当前打开的是本地文件。在线 AI 模式需要访问已部署的公开网站。离线编辑仍可使用。');
- let r;try{r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:$('model').value,messages}),signal:AbortSignal.timeout(65000)})}
+ let r;try{r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Workspace-Access':$('access-code').value},body:JSON.stringify({model:$('model').value,messages}),signal:AbortSignal.timeout(65000)})}
  catch(e){throw Error('网络请求失败，请确认网站已部署且网络正常。你仍可切换离线编辑。('+e.message+')')}
  let body;try{body=await r.json()}catch(e){throw Error('服务响应格式异常（HTTP '+r.status+'）')}
+ if(requestedProject!==current||mode!=='ai')throw Error('已切换项目或工作模式，原 AI 请求结果已忽略。');
  if(!r.ok)throw Error(body.error||'HTTP '+r.status);
  return body.content
 }
@@ -278,9 +409,19 @@ async function checkConnection(){
 }
 
 async function run(button,fn,status){if(busy)return;busy=true;button.disabled=true;try{await fn()}catch(e){$(status).textContent='失败：'+e.message}finally{busy=false;button.disabled=false}}
-function auditPrompt(){const d=collect();return '任务：'+(translationDirection()==='en-zh'?'英译汉':translationDirection()==='zh-en'?'中译英':'根据原文和初译判断方向')+'。审校已有译文，不得改写原文。只输出完整的'+targetLabel()+'建议译文，不要解释、标题或Markdown。只修改有依据的问题，保留准确自然的表达。'+'\n【本次要求】'+(d.purpose||'无')+'\n【固定要求】'+(d.useRules?activeRules():'无')+'\n【原文】\n'+d.source+'\n【初译】\n'+d.draft}
-$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成'+targetLabel()+'建议译文…';const sys='你是翻译审校员。必须使用'+targetLabel()+'输出建议译文，禁止改写原文。只输出完整译文。';let answer=await api([{role:'system',content:sys},{role:'user',content:auditPrompt()}]);if(wrongLanguage(answer)){$('ai-status').textContent='输出语言错误，正在重试…';answer=await api([{role:'system',content:sys+'严格使用要求的目标语言。'},{role:'user',content:auditPrompt()+'\n上次输出语言错误。必须输出'+targetLabel()+'。'}]);if(wrongLanguage(answer))throw Error('AI 连续输出错误语言，已停止比较。请手动选择翻译方向后重试。')}$('suggestion').value=answer.trim();grow($('suggestion'));compare();$('ai-status').textContent='建议译文已生成，正在整理修改理由…';await explainAll();if(!$('ai-status').textContent.includes('部分理由'))$('ai-status').textContent='建议译文与理由已生成，请逐处核查。';save()},'ai-status');
-function compare(){const d=collect();if(!d.draft.trim()||!d.suggestion.trim())throw Error('需要初译和完整建议稿');snapshot();const old=parts().filter(p=>p.type==='change');d.decisions=diff(d.draft,d.suggestion);for(const p of d.decisions){if(p.type!=='change')continue;const match=old.find(x=>x.before===p.before&&x.after===p.after);if(match)Object.assign(p,{choice:match.choice,reason:match.reason,custom:match.custom,aiReason:match.aiReason,category:match.category,sourceExcerpt:match.sourceExcerpt,followups:match.followups})}updateFinal();renderChanges();save()}
+function auditPrompt(){const d=collect();return '任务：'+(translationDirection()==='en-zh'?'英译汉':translationDirection()==='zh-en'?'中译英':'根据原文和初译判断方向')+'。审校已有译文，不得改写原文。只输出完整的'+targetLabel()+'建议译文，不要解释、标题或Markdown。只修改有依据的问题，保留准确自然的表达。'+'\n【本次要求】'+(d.purpose||'无')+'\n【固定要求】'+(d.useRules?activeRules():'无')+'\n【原文】\n'+d.source+'\n【初译】\n'+d.draft+glossaryInstructions()}
+$('analyze').onclick=()=>run($('analyze'),async()=>{if(!$('source').value.trim()||!$('draft').value.trim())throw Error('请填写原文及初译');$('ai-status').textContent='正在生成'+targetLabel()+'建议译文…';const sys='你是翻译审校员。必须使用'+targetLabel()+'输出建议译文，禁止改写原文。只输出完整译文。';let answer=await api([{role:'system',content:sys},{role:'user',content:auditPrompt()}]);if(wrongLanguage(answer)){$('ai-status').textContent='输出语言错误，正在重试…';answer=await api([{role:'system',content:sys+'严格使用要求的目标语言。'},{role:'user',content:auditPrompt()+'\n上次输出语言错误。必须输出'+targetLabel()+'。'}]);if(wrongLanguage(answer))throw Error('AI 连续输出错误语言，已停止比较。请手动选择翻译方向后重试。')}$('suggestion').value=answer.trim();grow($('suggestion'));compare();$('ai-status').textContent='建议译文已生成，正在整理修改理由…';await explainAll();save()},'ai-status');
+function compare(){
+ const d=collect();if(!d.draft.trim()||!d.suggestion.trim())throw Error('需要初译和完整建议稿');
+ snapshot();d.compareMode=tokenize(d.draft).length*tokenize(d.suggestion).length>1500000?'segmented':'word';const old=parts().filter(p=>p.type==='change'),used=new Set();
+ d.decisions=diff(d.draft,d.suggestion);
+ for(const p of d.decisions){
+  if(p.type!=='change')continue;
+  const index=old.findIndex((x,i)=>!used.has(i)&&x.before===p.before&&x.after===p.after);
+  if(index>=0){used.add(index);const match=old[index];Object.assign(p,{choice:match.choice,reason:match.reason,custom:match.custom,aiReason:match.aiReason,category:match.category,sourceExcerpt:match.sourceExcerpt,followups:match.followups})}
+ }
+ updateFinal();renderChanges();save();
+}
 $('compare').onclick=()=>{try{compare()}catch(e){$('diff-status').textContent=e.message}};
 $('test').onclick=()=>run($('test'),async()=>{$('chat-status').textContent='测试中…';const answer=await api([{role:'user',content:'请只回答“连接成功”。'}]);$('chat-status').textContent='聊天接口响应：'+answer.slice(0,100)},'chat-status');
 $('ask').onclick=()=>run($('ask'),async()=>{const q=$('question').value.trim();if(!q)throw Error('请先填写问题');$('chat-status').textContent='正在等待回复…';const d=collect();const history=d.history||[];const linked=activeChange>=0?parts()[activeChange]:null;const result=await api([{role:'system',content:context()},...history.slice(-12),{role:'user',content:q}]);if(linked&&linked.type==='change'){snapshot();linked.followups=linked.followups||[];linked.followups.push({question:q,answer:result});renderChanges()}activeChange=-1;history.push({role:'user',content:q},{role:'assistant',content:result});d.history=history;$('question').value='';grow($('question'));renderChat();save();$('chat-status').textContent='已回复，对话保存在当前项目。'},'chat-status');
@@ -291,7 +432,48 @@ $('rename').onclick=()=>{const name=prompt('重命名项目',db[current].name);i
 $('remove').onclick=()=>{if(Object.keys(db).length===1)return alert('请至少保留一个项目');if(!confirm('删除当前项目及本地记录？建议先备份。'))return;delete db[current];current=Object.keys(db)[0];bind();save()};
 $('projects').onchange=()=>{save();current=$('projects').value;bind();save()};
 $('backup').onclick=()=>{save();download('译者决策工作台_项目备份.json',JSON.stringify({format:'translator-workbench-agnes-cn-v2',current,db,profiles},null,2),'application/json;charset=utf-8')};
-$('restore').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(data.format!=='translator-workbench-agnes-cn-v2'||!data.db||!Object.keys(data.db).length)throw Error('不是新版工作台 JSON 备份');if(!confirm('导入会覆盖当前浏览器的所有项目。继续？'))return;db=data.db;if(Array.isArray(data.profiles)){profiles=data.profiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.rules==='string');storeProfiles()}current=db[data.current]?data.current:Object.keys(db)[0];bind();save()}catch(e){alert('导入失败：'+e.message)}$('file').value=''};
+$('restore').onclick=()=>$('file').click();
+$('file').onchange=async()=>{
+ const f=$('file').files[0];if(!f)return;
+ try{
+  if(f.size>10000000)throw Error('备份文件超过10 MB，请检查文件内容');
+  const data=JSON.parse(await f.text());
+  if(data.format!=='translator-workbench-agnes-cn-v2'||!data.db||typeof data.db!=='object'||Array.isArray(data.db))throw Error('备份格式不受支持');
+  const entries=Object.entries(data.db);
+  if(!entries.length||entries.length>250)throw Error('备份中的项目数量异常');
+  for(const [id,p] of entries){
+   if(['__proto__','constructor','prototype'].includes(id)||!p||typeof p.name!=='string'||!p.data||typeof p.data!=='object'||typeof p.data.source!=='string'||typeof p.data.draft!=='string')throw Error('备份项目结构不合法');
+  }
+  const choice=prompt('请选择恢复方式：输入「追加」将备份项目导入为新项目；输入「覆盖」替换当前全部项目。取消则不导入。','追加');
+  if(choice===null)return;
+  if(!['追加','覆盖'].includes(choice.trim()))throw Error('请选择「追加」或「覆盖」');
+  if(choice.trim()==='覆盖'&&!confirm('覆盖将替换当前所有项目和取向。工作台会先下载现有备份，请确认。'))return;
+  save();
+  download('导入前自动备份.json',JSON.stringify({format:'translator-workbench-agnes-cn-v2',current,db,profiles},null,2),'application/json;charset=utf-8');
+  const importedProfiles=Array.isArray(data.profiles)?data.profiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.rules==='string'):[];
+  if(choice.trim()==='覆盖'){
+   db=data.db;profiles=importedProfiles;current=db[data.current]?data.current:Object.keys(db)[0];
+  }else{
+   const idMap=new Map(),existing=new Set(profiles.map(p=>p.id));
+   for(const p of importedProfiles){
+    let id=p.id;
+    if(existing.has(id)){id='import_profile_'+Date.now()+'_'+existing.size}
+    idMap.set(p.id,id);existing.add(id);profiles.push({...p,id});
+   }
+   let firstId='';
+   for(const [id,p] of entries){
+    let dest=id;
+    while(Object.prototype.hasOwnProperty.call(db,dest))dest='import_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+    const copied=JSON.parse(JSON.stringify(p));
+    if(copied.data.profileId&&idMap.has(copied.data.profileId))copied.data.profileId=idMap.get(copied.data.profileId);
+    db[dest]=copied;if(!firstId)firstId=dest;
+   }
+   current=firstId||current;
+  }
+  storeProfiles();bind();save();
+  alert('导入完成：'+entries.length+' 个项目。导入前备份已下载，请妥善保管。');
+ }catch(e){alert('导入失败：'+e.message)}finally{$('file').value=''}
+};
 $('export-txt').onclick=()=>download('最终译文.txt',$('final').value);
 $('export-md').onclick=()=>{const d=collect();let lines=['# 翻译决策日志','','## 原文','',d.source,'','## 初译','',d.draft,'','## 建议稿','',d.suggestion,'','## 逐处判断',''];let i=0;for(const p of d.decisions){if(p.type==='same')continue;lines.push('',`### 修改 ${++i}`,'','初译：'+p.before,'建议：'+p.after,'选择：'+({accept:'采纳',keep:'保留',custom:'自行改写'}[p.choice]||''),'我的改写：'+(p.custom||''),'修改性质：'+({error:'明确错误',optimize:'建议优化',optional:'可选调整'}[p.category]||'未分类'),'对应原文：'+(p.sourceExcerpt||''),'判断依据：'+(p.reason||''),'追问记录：'+JSON.stringify(p.followups||[]))}lines.push('','## 最终译文','',d.final);download('翻译决策日志.md',lines.join('\n'),'text/markdown;charset=utf-8')};
 
@@ -303,6 +485,15 @@ $('profile-delete').onclick=()=>{const id=$('profile-select').value;const p=prof
 $('profile-test').onclick=()=>{startDiagnosis()};
 $('profile-history').onclick=()=>{const d=collect(),decisions=(d.decisions||[]).filter(p=>p.type==='change'&&['accept','keep','custom'].includes(p.choice));if(decisions.length<3){profileMessage('当前项目至少完成3处修改决策后才能生成草案。');return}const lines=['以下内容依据当前项目的实际决策整理，需人工核实：'];for(const [type,label]of [['accept','接受建议'],['keep','保留初译'],['custom','自行改写']]){const selected=decisions.filter(p=>p.choice===type);if(selected.length)lines.push(label+' '+selected.length+' 处。'+selected.map(p=>p.reason).filter(Boolean).slice(0,3).join('；'))}createProfile('历史决策取向 '+new Date().toLocaleDateString('zh-CN'),lines.join('\n'));profileMessage('已生成历史决策草案，请人工审核编辑后保存。')};
 $('use-rules').onchange=()=>{$('rules-wrap').hidden=!$('use-rules').checked;save()};document.querySelectorAll('textarea').forEach(t=>t.addEventListener('input',()=>grow(t)));
-for(const id of ['source','draft','purpose','rules','suggestion','final'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}save()});$('review-filter').onchange=updateProgress;$('undo-decision').onclick=()=>stepHistory(undoStack,redoStack);$('redo-decision').onclick=()=>stepHistory(redoStack,undoStack);$('next-pending').onclick=nextPending;$('model').onchange=save;$('mode-offline').onclick=()=>setMode('offline');$('mode-ai').onclick=()=>setMode('ai');arrangeAssistant();bootstrap();initExtraTools();setMode(localStorage.getItem(MODE_STORAGE)||'offline');requestAnimationFrame(growAll);
+for(const id of ['source','draft','purpose','rules','suggestion'])$(id).addEventListener('input',()=>{if(id==='source'||id==='draft'||id==='suggestion'){$('diff-status').textContent='材料已变化，如需更新差异，请点击「比较差异」。'}save()});$('final').addEventListener('input',()=>{
+ const d=db[current].data;d.manualFinalDirty=true;
+ renderFinalDirty();save();
+});
+$('resync-final').onclick=()=>{
+ if(!confirm('重新生成会用审校决策拼接译文，覆盖目前手动编辑的最终译文。建议先保存版本快照。确认继续？'))return;
+ snapshot();updateFinal(true);save();
+};
+$('direction').onchange=save;
+$('review-filter').onchange=updateProgress;$('undo-decision').onclick=()=>stepHistory(undoStack,redoStack);$('redo-decision').onclick=()=>stepHistory(redoStack,undoStack);$('next-pending').onclick=nextPending;$('model').onchange=save;$('mode-offline').onclick=()=>setMode('offline');$('mode-ai').onclick=()=>setMode('ai');arrangeAssistant();bootstrap();initExtraTools();initTextImport();setMode(localStorage.getItem(MODE_STORAGE)||'offline');requestAnimationFrame(growAll);
 })();
 </script></body></html>
