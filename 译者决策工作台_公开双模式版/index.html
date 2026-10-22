@@ -432,7 +432,48 @@ $('rename').onclick=()=>{const name=prompt('重命名项目',db[current].name);i
 $('remove').onclick=()=>{if(Object.keys(db).length===1)return alert('请至少保留一个项目');if(!confirm('删除当前项目及本地记录？建议先备份。'))return;delete db[current];current=Object.keys(db)[0];bind();save()};
 $('projects').onchange=()=>{save();current=$('projects').value;bind();save()};
 $('backup').onclick=()=>{save();download('译者决策工作台_项目备份.json',JSON.stringify({format:'translator-workbench-agnes-cn-v2',current,db,profiles},null,2),'application/json;charset=utf-8')};
-$('restore').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(data.format!=='translator-workbench-agnes-cn-v2'||!data.db||!Object.keys(data.db).length)throw Error('不是新版工作台 JSON 备份');if(!confirm('导入会覆盖当前浏览器的所有项目。继续？'))return;db=data.db;if(Array.isArray(data.profiles)){profiles=data.profiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.rules==='string');storeProfiles()}current=db[data.current]?data.current:Object.keys(db)[0];bind();save()}catch(e){alert('导入失败：'+e.message)}$('file').value=''};
+$('restore').onclick=()=>$('file').click();
+$('file').onchange=async()=>{
+ const f=$('file').files[0];if(!f)return;
+ try{
+  if(f.size>10000000)throw Error('备份文件超过10 MB，请检查文件内容');
+  const data=JSON.parse(await f.text());
+  if(data.format!=='translator-workbench-agnes-cn-v2'||!data.db||typeof data.db!=='object'||Array.isArray(data.db))throw Error('备份格式不受支持');
+  const entries=Object.entries(data.db);
+  if(!entries.length||entries.length>250)throw Error('备份中的项目数量异常');
+  for(const [id,p] of entries){
+   if(['__proto__','constructor','prototype'].includes(id)||!p||typeof p.name!=='string'||!p.data||typeof p.data!=='object'||typeof p.data.source!=='string'||typeof p.data.draft!=='string')throw Error('备份项目结构不合法');
+  }
+  const choice=prompt('请选择恢复方式：输入「追加」将备份项目导入为新项目；输入「覆盖」替换当前全部项目。取消则不导入。','追加');
+  if(choice===null)return;
+  if(!['追加','覆盖'].includes(choice.trim()))throw Error('请选择「追加」或「覆盖」');
+  if(choice.trim()==='覆盖'&&!confirm('覆盖将替换当前所有项目和取向。工作台会先下载现有备份，请确认。'))return;
+  save();
+  download('导入前自动备份.json',JSON.stringify({format:'translator-workbench-agnes-cn-v2',current,db,profiles},null,2),'application/json;charset=utf-8');
+  const importedProfiles=Array.isArray(data.profiles)?data.profiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.rules==='string'):[];
+  if(choice.trim()==='覆盖'){
+   db=data.db;profiles=importedProfiles;current=db[data.current]?data.current:Object.keys(db)[0];
+  }else{
+   const idMap=new Map(),existing=new Set(profiles.map(p=>p.id));
+   for(const p of importedProfiles){
+    let id=p.id;
+    if(existing.has(id)){id='import_profile_'+Date.now()+'_'+existing.size}
+    idMap.set(p.id,id);existing.add(id);profiles.push({...p,id});
+   }
+   let firstId='';
+   for(const [id,p] of entries){
+    let dest=id;
+    while(Object.prototype.hasOwnProperty.call(db,dest))dest='import_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+    const copied=JSON.parse(JSON.stringify(p));
+    if(copied.data.profileId&&idMap.has(copied.data.profileId))copied.data.profileId=idMap.get(copied.data.profileId);
+    db[dest]=copied;if(!firstId)firstId=dest;
+   }
+   current=firstId||current;
+  }
+  storeProfiles();bind();save();
+  alert('导入完成：'+entries.length+' 个项目。导入前备份已下载，请妥善保管。');
+ }catch(e){alert('导入失败：'+e.message)}finally{$('file').value=''}
+};
 $('export-txt').onclick=()=>download('最终译文.txt',$('final').value);
 $('export-md').onclick=()=>{const d=collect();let lines=['# 翻译决策日志','','## 原文','',d.source,'','## 初译','',d.draft,'','## 建议稿','',d.suggestion,'','## 逐处判断',''];let i=0;for(const p of d.decisions){if(p.type==='same')continue;lines.push('',`### 修改 ${++i}`,'','初译：'+p.before,'建议：'+p.after,'选择：'+({accept:'采纳',keep:'保留',custom:'自行改写'}[p.choice]||''),'我的改写：'+(p.custom||''),'修改性质：'+({error:'明确错误',optimize:'建议优化',optional:'可选调整'}[p.category]||'未分类'),'对应原文：'+(p.sourceExcerpt||''),'判断依据：'+(p.reason||''),'追问记录：'+JSON.stringify(p.followups||[]))}lines.push('','## 最终译文','',d.final);download('翻译决策日志.md',lines.join('\n'),'text/markdown;charset=utf-8')};
 
