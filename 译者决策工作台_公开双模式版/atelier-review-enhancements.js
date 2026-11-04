@@ -34,7 +34,17 @@ function saved(){try{return JSON.parse(localStorage.getItem(key)||'{}')||{};}cat
 function enhance(){
  const el=document.querySelector('#stageContent .source-ref');if(!el||el.dataset.twDone)return;
  const card=el.closest('.pane'),pane=el.closest('.pane-content'),{p,s}=current();
- if(!card||!pane||!p||!s||!s.reviewDecisions?.length)return;
+ if(!card||!pane)return;
+ // Compare the two visible text blocks even if saved project data cannot be resolved.
+ const visibleBoxes=Array.from(pane.querySelectorAll('.readbox'));
+ if(visibleBoxes.length>=2){
+  const original=visibleBoxes[0].textContent.trim();
+  const suggested=visibleBoxes[1].textContent.trim();
+  visibleBoxes[1].classList.add('tw-diff');
+  visibleBoxes[1].innerHTML=original===suggested?esc(suggested):diff(original,suggested);
+ }
+ card.classList.add('tw-card');el.dataset.twDone='1';
+ if(!p||!s||!s.reviewDecisions?.length)return;
  const m=(card.querySelector('.pane-top strong')?.textContent||'').match(/第\s*(\d+)\s*\/\s*(\d+)\s*句/);
  if(!m)return;
  const index=Number(m[1])-1,total=Number(m[2]),units=sentences(s.source,p.sourceLang),count=units.length;
