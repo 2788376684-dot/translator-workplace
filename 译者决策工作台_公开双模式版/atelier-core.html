@@ -191,7 +191,7 @@ function showSentenceReview(s,locked){
  else html+='<span class="pill ok">二稿已锁定</span>';
  html+='</div></div>';
  if(!valid){
-  html+='<section class="pane"><div class="pane-content"><p class="panel-note">当前项目仍保存旧版成段审校数据。它们不会自动清除；重新建立逐句审校前请先导出备份。</p>';
+  html+='<section class="pane"><div class="pane-content"><p class="panel-note">'+(ds.length?'当前项目保存了旧版审校决策。重新建立逐句审校前请先导出备份。':'当前尚无审校建议。可以点击上方“AI 逐句审校”，或者开始逐句人工审校。')+'</p>';
   if(!locked)html+='<button class="btn primary" id="manualSentenceReview">开始逐句审校</button>';
   html+='</div></section><details class="export-pane"><summary>查看原文与已有二稿</summary><div class="readbox">'+E(s.source)+'</div><div class="readbox">'+E(s.revision||s.revInput||s.draft)+'</div></details>';
   return html;
