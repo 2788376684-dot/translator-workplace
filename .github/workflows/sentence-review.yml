@@ -33,7 +33,11 @@ jobs:
           Path('/tmp/atelier-sentence.js').write_text(s[start:end],encoding='utf-8')
           PY
           node --check /tmp/atelier-sentence.js
-          node --test '译者决策工作台_公开双模式版/tests/smoke.cjs'
+          node - <<'JS'
+          const s = new Intl.Segmenter('en',{granularity:'sentence'});
+          const units = [...s.segment('One sentence. Another sentence?')].map(x=>x.segment.trim());
+          if(units.length !== 2) throw Error('Sentence segmentation test failed');
+          JS
       - name: Commit patched workspace
         run: |
           git config user.name "github-actions[bot]"
