@@ -1,5 +1,5 @@
 from pathlib import Path
-p=Path('译者决策工作台_公开双模式版/atelier.html')
+p=Path('译者决策工作台_公开双模式版/atelier-core.html')
 s=p.read_text()
 def one(a,b,label):
  global s
