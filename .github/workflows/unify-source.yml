@@ -1,0 +1,42 @@
+name: Unify Atelier source entry
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/unify-source.yml'
+      - '.github/scripts/unify-source.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Replace dual input with unified source editor
+        run: python3 .github/scripts/unify-source.py
+      - name: Validate embedded JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text(encoding='utf-8')
+          assert "function applyDocumentSource(" in s
+          assert "id=\"sourceEditor\"" in s
+          assert "function ensureDraftDirection" in s
+          start=s.index("<script>'use strict';(()=>")+len("<script>")
+          end=s.index("</script>",start)
+          Path('/tmp/atelier-unified-check.js').write_text(s[start:end],encoding='utf-8')
+          PY
+          node --check /tmp/atelier-unified-check.js
+          node --test '译者决策工作台_公开双模式版/tests/smoke.cjs'
+      - name: Commit updated Atelier core
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '译者决策工作台_公开双模式版/atelier-core.html'
+          if ! git diff --cached --quiet; then
+            git commit -m "Unify Atelier source entry and preserve unchanged translations"
+            git push
+          fi
