@@ -162,7 +162,18 @@ function diffHtml(a,b){const tk=t=>String(t).match(/\s+|[\p{L}\p{N}]+|[^\p{L}\p{
 function sentenceReviewUnits(text,lang){
  const v=String(text||'');
  if(!v.trim())return [];
- if(typeof Intl.Segmenter==='function')return Array.from(new Intl.Segmenter(lang==='中文'?'zh':'en',{granularity:'sentence'}).segment(v),x=>({start:x.index,end:x.index+x.segment.length,old:x.segment})).filter(x=>x.old.trim());
+ if(typeof Intl.Segmenter==='function'){
+  const items=Array.from(new Intl.Segmenter(lang==='中文'?'zh':'en',{granularity:'sentence'}).segment(v),x=>({start:x.index,end:x.index+x.segment.length,old:x.segment})).filter(x=>x.old.trim());
+  if(lang==='中文')return items;
+  const combined=[];
+  const abbreviation=/(?:\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|No|Vol|Fig|etc|vs|cf|pp|Inc)|\b[A-Z])\.\s*$/i;
+  for(const item of items){
+   if(combined.length&&abbreviation.test(combined[combined.length-1].old)){
+    const last=combined[combined.length-1];last.old+=item.old;last.end=item.end;
+   }else combined.push(item);
+  }
+  return combined;
+ }
  const out=[],regex=/[^。！？!?\.]+[。！？!?\.]*\s*/g;let m;
  while((m=regex.exec(v)))if(m[0].trim())out.push({start:m.index,end:m.index+m[0].length,old:m[0]});
  return out;
