@@ -564,4 +564,32 @@ $('resync-final').onclick=()=>{
 $('direction').onchange=save;
 $('review-filter').onchange=updateProgress;$('undo-decision').onclick=()=>stepHistory(undoStack,redoStack);$('redo-decision').onclick=()=>stepHistory(redoStack,undoStack);$('next-pending').onclick=nextPending;$('model').onchange=save;$('mode-offline').onclick=()=>setMode('offline');$('mode-ai').onclick=()=>setMode('ai');arrangeAssistant();bootstrap();initExtraTools();initTextImport();setMode(localStorage.getItem(MODE_STORAGE)||'offline');requestAnimationFrame(growAll);
 })();
+</script><script id="atelier-legacy-bridge">
+(()=>{'use strict';
+const KEY='tw-atelier-decision-handoff';
+function init(){
+ if(document.getElementById('atelier-bridge-action'))return;
+ const box=document.createElement('div');
+ box.id='atelier-bridge-action';
+ box.style.cssText='position:fixed;z-index:999;right:14px;bottom:14px;background:#fff;border:1px solid #aec0d3;box-shadow:0 7px 26px #1234;border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center';
+ const receive=document.createElement('button');receive.textContent='接收 Atelier 材料';
+ receive.style.cssText='background:#183c62;color:#fff;border:0;border-radius:7px;padding:8px 10px;cursor:pointer';
+ const link=document.createElement('a');link.href='./atelier.html';link.textContent='返回四阶段工作台 ↗';link.style.cssText='font-size:12px;color:#183c62';
+ box.append(receive,link);document.body.append(box);
+ receive.addEventListener('click',()=>{
+  const raw=localStorage.getItem(KEY);if(!raw){alert('没有待接收材料。请先在 Atelier 中点击「交给决策审校」。');return;}
+  let handoff;try{handoff=JSON.parse(raw)}catch{alert('材料格式错误');return;}
+  if(!handoff||typeof handoff.source!=='string'||typeof handoff.draft!=='string'||!handoff.source.trim()||!handoff.draft.trim()){alert('交接材料缺少原文或译文');return;}
+  const source=document.getElementById('source'),draft=document.getElementById('draft'),purpose=document.getElementById('purpose'),rules=document.getElementById('rules');
+  if(!source||!draft){alert('找不到审校输入区');return;}
+  if(!confirm('将 Atelier 材料填入当前审校项目？这会替换当前页面的原文及初译。请确认当前项目已备份，或先新建项目。'))return;
+  source.value=handoff.source;draft.value=handoff.draft;
+  if(purpose)purpose.value=handoff.purpose||'';
+  if(rules&&handoff.rules)rules.value=handoff.rules;
+  for(const el of [source,draft,purpose,rules])if(el)el.dispatchEvent(new Event('input',{bubbles:true}));
+  localStorage.removeItem(KEY);alert('材料已填入。请核对后运行差异比较或 AI 审校。');
+ });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 </script></body></html>
