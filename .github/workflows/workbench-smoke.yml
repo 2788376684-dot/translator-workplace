@@ -17,5 +17,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run regression checks
-        run: node "译者决策工作台_公开双模式版/tests/smoke.cjs"
+      - name: Check live Atelier entrypoints and embedded JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('译者决策工作台_公开双模式版')
+          home=(root/'index.html').read_text(encoding='utf-8')
+          wrapper=(root/'atelier.html').read_text(encoding='utf-8')
+          core=(root/'atelier-core.html').read_text(encoding='utf-8')
+          assert '/atelier.html' in home
+          assert '/atelier-core.html' in wrapper
+          for key in ['function sentenceReviewUnits(', 'function mergeReviewChoices(', 'function applyDocumentSource(', 'function ensureDraftDirection(', 'data-sentence-action', '向 AI 追问此处']:
+              assert key in core, key
+          start=core.index("<script>'use strict';(()=>")+len("<script>")
+          end=core.index("</script>",start)
+          Path('/tmp/atelier-test.js').write_text(core[start:end],encoding='utf-8')
+          PY
+          node --check /tmp/atelier-test.js
+          node --check '译者决策工作台_公开双模式版/api/chat.js'
+          node --check '译者决策工作台_公开双模式版/api/health.js'
+      - name: Check English and Chinese sentence segmentation
+        run: |
+          node - <<'JS'
+          const cases = [
+            ['en','Mr. Wang arrived. He left later.',2],
+            ['zh','我很开心。今天阳光很好。',2]
+          ];
+          for (const [lang,text,count] of cases) {
+            const got=[...new Intl.Segmenter(lang,{granularity:'sentence'}).segment(text)].length;
+            if(got!==count)throw Error(lang+' sentence segmentation: '+got+' instead of '+count);
+          }
+          JS
