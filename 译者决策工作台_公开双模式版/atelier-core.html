@@ -112,9 +112,44 @@ function resetFromSource(s){s.draftInput='';s.draft='';s.draftMeta=null;s.revInp
 function resetFromDraft(s){s.revInput='';s.revision='';s.revMeta=null;s.issues=[];s.final='';s.finalAt='';s.qa=null;s.chat=[];s.legacy=false;}
 function resetFromRevision(s){s.final='';s.finalAt='';s.qa=null;s.chat=[];s.legacy=false;}
 function setSource(next){const s=seg();if(next===s.source)return;if((s.draft||s.revision||s.final)&&!confirm('更改原文将清除本段的初稿、二稿和终稿。请先备份项目，确定继续？')){$('sourceEditor').value=s.source;return;}s.source=next;resetFromSource(s);persist();draw();}
-function renderSource(){if(proj().kind==='parameter')return renderParamSource();const s=seg();action(`<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn primary" id="toDraft">下一步：初稿 <span aria-hidden="true">→</span></button>`);$('stageContent').innerHTML=`<div class="columns"><div>${panel('本段原文',`<textarea class="editor-text source-cn" id="sourceEditor" placeholder="在这里粘贴或输入原文…" spellcheck="false">${E(s.source)}</textarea>`,'可直接修改')}</div><div>${panel('批量建立段落',`<div class="pane-content"><p class="panel-note" style="margin:0 0 11px">原文段落之间用空行分隔。导入 TXT / Word 后也可在此检查分段。</p><textarea class="field" id="bulkSource" style="width:100%;min-height:206px;border:1px solid #d7dce4;border-radius:8px;padding:11px 13px;resize:vertical;font:13px/1.8 'Songti SC',serif" placeholder="粘贴完整原文，段落之间留一个空行"></textarea><div class="more-tools" style="margin-top:11px"><button class="btn primary" id="splitSource">创建段落</button><span class="help">替换已有项目段落前会二次确认</span></div></div>`)}</div></div><div class="doc-footer"><span class="muted">原文修改后，下游译文将不再沿用。已完成译文可通过项目备份保留。</span></div>`;
- $('sourceEditor').addEventListener('input',e=>{if(!(s.draft||s.revision||s.final)){s.source=e.target.value;persist();}});$('sourceEditor').addEventListener('change',e=>setSource(e.target.value));$('sourceEditor').addEventListener('blur',e=>{if(e.target.value!==seg().source)setSource(e.target.value)});$('splitSource').onclick=()=>splitSource($('bulkSource').value);$('importText').onclick=chooseFile;$('sourceOCR').onclick=()=>$('quickOCR').click(); $('toDraft').onclick=()=>{if(!seg().source.trim()){toast('请先输入原文');return;}go('draft');};}
-function splitSource(content){const parts=content.trim().replace(/\r/g,'').split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);if(!parts.length)return toast('请先粘贴原文');let p=proj();if(p.segments.some(x=>x.source||x.draft||x.final)&&!confirm(`用 ${parts.length} 个新段落替换当前项目所有段落？已有版本将清除。`))return;p.segments=parts.map(newSeg);state.seg=p.segments[0].id;persist();draw();toast('已创建 '+parts.length+' 个段落');}
+const sourceBuffers={};
+function documentText(p){return p.segments.map(x=>x.source||'').join('\n\n');}
+function applyDocumentSource(content,quiet=false){
+ const p=proj(),parts=String(content).replace(/\r/g,'').trim().split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+ if(!parts.length){if(!quiet)toast('请输入原文');return false;}
+ const old=p.segments;const same=parts.length===old.length&&parts.every((t,i)=>t===old[i].source);
+ if(same){delete sourceBuffers[p.id];return true;}
+ const impact=old.some((x,i)=>(x.draft||x.draftInput||x.revision||x.revInput||x.final)&&parts[i]!==x.source);
+ if(impact&&quiet)return false;
+ if(impact&&!confirm('部分原文已有关联初稿、二稿或终稿。修改这些原文会清除对应段落的后续版本；未修改的段落保持不变。建议先导出项目备份。确认更新？'))return false;
+ const fresh=parts.map((t,i)=>{const prior=old[i];return prior&&prior.source===t?prior:newSeg(t)});
+ p.segments=fresh;
+ if(!fresh.some(x=>x.id===state.seg))state.seg=fresh[0].id;
+ delete sourceBuffers[p.id];persist();
+ if(!quiet){draw();toast('原文已保存，识别为 '+fresh.length+' 段');}
+ return true;
+}
+function renderSource(){
+ if(proj().kind==='parameter')return renderParamSource();
+ const p=proj();const val=sourceBuffers[p.id]??documentText(p);
+ action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn primary" id="toDraft">下一步：初稿 →</button>');
+ $('stageSub').textContent='在同一处输入或导入全文；段落之间留空行，保存后自动分段';
+ $('stageContent').innerHTML=panel('原文 · 全文输入',`<div class="pane-content"><p class="panel-note" style="margin:0 0 9px">粘贴全文或直接输入。段落之间留一个空行；保存后自动更新左侧段落列表。点击左侧段落，再进入初稿即可逐段翻译。</p><textarea class="editor-text source-cn" id="sourceEditor" spellcheck="false" style="width:100%;min-height:240px!important;max-height:70vh!important;resize:vertical" placeholder="在此输入或粘贴完整原文，段落之间留一个空行">${E(val)}</textarea><div class="more-tools" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary" id="applySource">保存原文并识别段落</button><span id="sourceDocStatus" class="muted">${p.segments.length} 段 · 保存后同步左侧列表</span></div></div>`)+ '<div class="doc-footer"><span class="muted">已有译稿的段落发生原文修改时会二次确认。内容没有变化的段落保留所有翻译版本。</span></div>';
+ const editor=$('sourceEditor'),msg=$('sourceDocStatus');
+ editor.addEventListener('input',()=>{
+   sourceBuffers[p.id]=editor.value;
+   msg.textContent='已编辑 · 点击保存原文并识别段落';
+   if(!p.segments.some(x=>x.draft||x.draftInput||x.revInput||x.revision||x.final)){
+      const parts=editor.value.replace(/\r/g,'').trim().split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+      if(parts.length===1&&p.segments.length===1){p.segments[0].source=parts[0];persist();}
+   }
+ });
+ $('applySource').onclick=()=>applyDocumentSource(editor.value);
+ $('importText').onclick=chooseFile;
+ $('sourceOCR').onclick=()=>$('quickOCR').click();
+ $('toDraft').onclick=()=>{if(!applyDocumentSource(editor.value))return;if(!seg().source.trim())return toast('请先输入原文');go('draft');};
+}
+function splitSource(content){return applyDocumentSource(content);}
 function baseContext(s){let p=proj();return `源语言：${p.sourceLang}。目标语言：${p.targetLang}。文体：${p.tone||'根据原文判断'}。项目要求：${p.instructions||'准确且自然'}。\n术语：${p.terms.map(t=>t.source+' → '+t.targets.join(' / ')).join('；')||'未指定'}。\n原文：\n${s.source}`;}
 const defaultDraftPrompt='请根据原文、指定术语和项目要求完成翻译。准确传递信息，保留文体与语气，直接给出完整译文，不附解释。';
 const defaultReviewPrompt='请逐句核对初稿与原文，优先纠正误译、漏译、指代、逻辑、文体及不自然搭配。只修改确有理由的问题，保留原文风格。为每处重要修改给出原文引用、初稿片段、修改片段和简短理由。';
@@ -146,7 +181,7 @@ function exportFile(format){if(proj().kind==='parameter')return paramExport(form
 async function saveJSON(){if(proj().kind==='parameter'&&$('paramFrame')){if(!await paramCapture(false))return;}const o={format:'TranslatorWorkplaceProject',version:4,project:proj()};if(proj().kind==='parameter'){try{o.parameterEngine=await paramDbGet(proj().id);}catch(e){toast('参数 OCR 原件未能读取：'+e.message);return;}if(!o.parameterEngine)toast('当前无 OCR 原件快照，备份仅含文字与版本记录');}download((proj().title||'translation')+'_project.json',JSON.stringify(o),'application/json');toast('项目备份已导出');}
 function download(name,content,mime='application/octet-stream'){const b=content instanceof Uint8Array?new Blob([content],{type:mime}):new Blob([content],{type:mime});const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2500);}
 async function importJSON(raw){let obj=JSON.parse(raw),p;if(obj?.format==='TranslatorWorkplaceProject'&&obj.version===4)p=obj.project;else if(obj?.version===4&&Array.isArray(obj.projects)){if(!confirm('导入完整工作台会覆盖当前所有项目，确定继续？'))return;state=obj;normalizeState();persist();draw();return;}else throw Error('不支持的备份格式');p.id=id();if(p.kind==='parameter'&&obj.parameterEngine){await paramDbPut(p.id,obj.parameterEngine);}p.title=(p.title||'导入项目')+'（导入）';p.mode=document.querySelector('[name=newMode]:checked')?.value||'local';state.projects.push(p);state.active=p.id;state.seg=p.segments[0].id;state.step='source';normalizeState();persist();draw();}
-function chooseFile(){let inp=$('fileInput');inp.value='';inp.accept='.txt,.docx';inp.onchange=async()=>{const f=inp.files?.[0];if(!f)return;try{if(f.size>12*1024*1024)throw Error('文件超过 12MB');const text=/\.docx$/i.test(f.name)?await docxToText(f):await f.text();$('bulkSource').value=text;toast('已读取文件，请检查分段后点击「创建段落」');}catch(e){toast('读取失败：'+e.message)}};inp.click();}
+function chooseFile(){let inp=$('fileInput');inp.value='';inp.accept='.txt,.docx';inp.onchange=async()=>{const f=inp.files?.[0];if(!f)return;try{if(f.size>12*1024*1024)throw Error('文件超过 12MB');const text=/\.docx$/i.test(f.name)?await docxToText(f):await f.text();$('sourceEditor').value=text;$('sourceEditor').dispatchEvent(new Event('input',{bubbles:true}));toast('文件已载入统一原文输入区；请检查并保存分段');}catch(e){toast('读取失败：'+e.message)}};inp.click();}
 function uploadBackup(){let inp=$('fileInput');inp.value='';inp.accept='.json';inp.onchange=async()=>{let f=inp.files?.[0];if(!f)return;try{await importJSON(await f.text());toast('项目导入成功');}catch(e){toast('导入失败：'+e.message)}};inp.click();}
 
 function handoffDecision(){const p=proj(),s=seg();const source=(s.source||'').trim(),draft=(s.revision||s.draft||s.draftInput||'').trim();if(!source||!draft){toast('请先填写原文与初稿或二稿，再进入决策审校');return;}const payload={version:1,at:new Date().toISOString(),title:p.title,source,draft,purpose:p.tone||'',rules:p.instructions||'',direction:p.sourceLang==='中文'?'zh-en':p.sourceLang==='英语'?'en-zh':'auto'};try{localStorage.setItem('tw-atelier-decision-handoff',JSON.stringify(payload));}catch(e){toast('浏览器存储不足，请先导出项目备份');return;}window.open('./','_blank','noopener');toast('已发送到决策审校；请在新窗口点击「接收 Atelier 材料」');}
