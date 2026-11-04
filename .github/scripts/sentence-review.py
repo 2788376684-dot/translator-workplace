@@ -2,6 +2,23 @@ from pathlib import Path
 p=Path("译者决策工作台_公开双模式版/atelier-core.html")
 s=p.read_text(encoding="utf-8")
 if "function sentenceReviewUnits(" in s:
+ old="if(typeof Intl.Segmenter==='function')return Array.from(new Intl.Segmenter(lang==='中文'?'zh':'en',{granularity:'sentence'}).segment(v),x=>({start:x.index,end:x.index+x.segment.length,old:x.segment})).filter(x=>x.old.trim());"
+ new="""if(typeof Intl.Segmenter==='function'){
+  const items=Array.from(new Intl.Segmenter(lang==='中文'?'zh':'en',{granularity:'sentence'}).segment(v),x=>({start:x.index,end:x.index+x.segment.length,old:x.segment})).filter(x=>x.old.trim());
+  if(lang==='中文')return items;
+  const combined=[];
+  const abbreviation=/(?:\\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|No|Vol|Fig|etc|vs|cf|pp|Inc)|\\b[A-Z])\\.\\s*$/i;
+  for(const item of items){
+   if(combined.length&&abbreviation.test(combined[combined.length-1].old)){
+    const last=combined[combined.length-1];last.old+=item.old;last.end=item.end;
+   }else combined.push(item);
+  }
+  return combined;
+ }"""
+ if old in s:
+  s=s.replace(old,new,1)
+  p.write_text(s,encoding="utf-8")
+  print("English abbreviation boundaries patched")
  old="html+='<section class=\"pane\"><div class=\"pane-content\"><p class=\"panel-note\">当前项目仍保存旧版成段审校数据。它们不会自动清除；重新建立逐句审校前请先导出备份。</p>';"
  new="html+='<section class=\"pane\"><div class=\"pane-content\"><p class=\"panel-note\">'+(ds.length?'当前项目保存了旧版审校决策。重新建立逐句审校前请先导出备份。':'当前尚无审校建议。可以点击上方“AI 逐句审校”，或者开始逐句人工审校。')+'</p>';"
  if old not in s:
