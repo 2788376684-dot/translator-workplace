@@ -18,6 +18,15 @@
        if(source)source.click();
      }
    }catch(e){status.textContent='工作台初始化失败，请刷新页面：'+e.message;return;}
+   // Apply focused review refinements inside the existing same-origin workbench.
+   // The original editing engine, storage, and AI workflows remain unchanged.
+   if(!d.getElementById('tw-review-loader')){
+     const patch=d.createElement('script');
+     patch.id='tw-review-loader';
+     patch.src='/atelier-review-enhancements.js';
+     patch.onerror=()=>console.warn('Review enhancement unavailable; original editor remains operational.');
+     d.head.appendChild(patch);
+   }
    app.classList.add('ready');status.hidden=true;
  });
 })();
