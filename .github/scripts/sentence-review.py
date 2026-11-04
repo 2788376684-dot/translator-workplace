@@ -2,7 +2,15 @@ from pathlib import Path
 p=Path("译者决策工作台_公开双模式版/atelier-core.html")
 s=p.read_text(encoding="utf-8")
 if "function sentenceReviewUnits(" in s:
- print("Already installed");raise SystemExit(0)
+ old="html+='<section class=\"pane\"><div class=\"pane-content\"><p class=\"panel-note\">当前项目仍保存旧版成段审校数据。它们不会自动清除；重新建立逐句审校前请先导出备份。</p>';"
+ new="html+='<section class=\"pane\"><div class=\"pane-content\"><p class=\"panel-note\">'+(ds.length?'当前项目保存了旧版审校决策。重新建立逐句审校前请先导出备份。':'当前尚无审校建议。可以点击上方“AI 逐句审校”，或者开始逐句人工审校。')+'</p>';"
+ if old not in s:
+  print("Review introductory text already updated")
+ else:
+  s=s.replace(old,new,1)
+  p.write_text(s,encoding="utf-8")
+  print("Review introductory text clarified")
+ raise SystemExit(0)
 a=s.index("function buildReviewDecisions(")
 b=s.index("function safeJson(raw){",a)
 code=r'''function sentenceReviewUnits(text,lang){
