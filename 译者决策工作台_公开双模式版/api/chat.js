@@ -11,15 +11,15 @@ function limited(ip){
  if(!state||now-state.start>60000){attemptWindow.set(ip,{start:now,count:1});return false}
  state.count++;return state.count>24;
 }
-const DEFAULT_ENDPOINT = process.env.AI_API_ENDPOINT || '';
-const DEFAULT_MODEL = process.env.AI_MODEL || '';
+const DEFAULT_ENDPOINT = process.env.AI_API_ENDPOINT || 'https://api.deepseek.com/v1/chat/completions';
+const DEFAULT_MODEL = process.env.AI_MODEL || 'deepseek-chat';
 const DEFAULT_KEY = process.env.AI_API_KEY || '';
 function fail(res,code,error,message,extra={}){if(message===undefined){message=error;error='REQUEST_FAILED';}return res.status(code).json({error:message,code: error,...extra});}
 module.exports = async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
   if(req.method!=='POST')return fail(res,405,'METHOD_NOT_ALLOWED','仅允许 POST');
-  if(process.env.CHAT_ENABLED!=='true'||!DEFAULT_KEY||!DEFAULT_ENDPOINT||!DEFAULT_MODEL)return fail(res,503,'CHAT_DISABLED','默认 AI 尚未完成配置，请联系管理员。');
+  if(process.env.CHAT_ENABLED==='false'||!DEFAULT_KEY)return fail(res,503,'CHAT_DISABLED','默认 AI 尚未完成配置，请联系管理员。');
   const origin=req.headers.origin;
   const host=req.headers.host;
   if(origin){try{if(new URL(origin).host!==host)return fail(res,403,'禁止跨站调用');}catch(e){return fail(res,403,'无效的来源');}}
