@@ -39,8 +39,8 @@ new="""     catch(err){
      }"""
 assert part.count(old)==1, 'singleton failure branch changed; patch aborted'
 part=part.replace(old,new,1)
-old2="""x.proposed=item.proposed;x.reason=item.reason;"""
-new2="""x.proposed=item.proposed;x.reason=item.reason;
+old2="""x.proposed=item.proposed.trim();x.reason=String(item.reason||'');"""
+new2="""x.proposed=item.proposed.trim();x.reason=String(item.reason||'');
     if(item.needsManualReview){x.choice='question';x.questionNote='AI 未能可靠返回当前句的审校建议，须人工核对。';}"""
 assert part.count(old2)==1
 part=part.replace(old2,new2,1)
