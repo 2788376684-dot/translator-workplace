@@ -1,0 +1,33 @@
+name: Fix AI review inconsistent sentence counts
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix-sentence-count.py'
+      - '.github/workflows/fix-sentence-count.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair mismatched AI response handling
+        run: python .github/scripts/fix-sentence-count.py
+      - name: Verify JavaScript and review regression tests
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          a=s.index("<script>'use strict';(()=>")+len("<script>")
+          Path('/tmp/core-sentence-check.js').write_text(s[a:s.index('</script>',a)])
+          PY
+          node --check /tmp/core-sentence-check.js
+          node --test "译者决策工作台_公开双模式版/tests/sentence-review-runner.test.cjs"
+      - name: Commit only validated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "译者决策工作台_公开双模式版/atelier-core.html"
+          git diff --cached --quiet || (git commit -m "Handle malformed AI sentence counts without losing review progress" && git push)

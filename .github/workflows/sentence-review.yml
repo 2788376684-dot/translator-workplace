@@ -1,0 +1,49 @@
+name: Rebuild sentence-level review in Atelier
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sentence-review.yml'
+      - '.github/scripts/sentence-review.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Patch sentence-level review
+        run: python3 .github/scripts/sentence-review.py
+      - name: Verify JavaScript and sentence review UI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text(encoding='utf-8')
+          assert 'function sentenceReviewUnits(' in s
+          assert 'function renderRevision()' in s
+          assert 'data-sentence-action' in s
+          assert '向 AI 追问此处' in s
+          assert 'function applyDocumentSource(' in s
+          assert 'function ensureDraftDirection(' in s
+          start=s.index("<script>'use strict';(()=>")+len("<script>")
+          end=s.index("</script>",start)
+          Path('/tmp/atelier-sentence.js').write_text(s[start:end],encoding='utf-8')
+          PY
+          node --check /tmp/atelier-sentence.js
+          node - <<'JS'
+          const s = new Intl.Segmenter('en',{granularity:'sentence'});
+          const units = [...s.segment('One sentence. Another sentence?')].map(x=>x.segment.trim());
+          if(units.length !== 2) throw Error('Sentence segmentation test failed');
+          JS
+      - name: Commit patched workspace
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '译者决策工作台_公开双模式版/atelier-core.html'
+          if ! git diff --cached --quiet; then
+            git commit -m "Present one sentence at a time for revision decisions"
+            git push
+          fi

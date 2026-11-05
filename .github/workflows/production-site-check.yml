@@ -1,0 +1,27 @@
+name: Verify production website assets
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/production-site-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live production pages and scripts
+        run: |
+          set -euo pipefail
+          BASE=https://translator-workplace.vercel.app
+          for name in index.html atelier.html atelier-core.html atelier-review-enhancements.js; do
+            curl --fail --location --silent --show-error --retry 2 --max-time 45 "$BASE/$name" -o "/tmp/$name"
+            echo "$name bytes $(wc -c </tmp/$name)"
+            test -s "/tmp/$name"
+          done
+          grep -q 'atelier-core.html' /tmp/atelier.html
+          grep -q 'sentenceAskInput' /tmp/atelier-core.html
+          grep -q '标为疑问' /tmp/atelier-core.html
+          grep -q 'tw-deletions' /tmp/atelier-review-enhancements.js
+          echo 'Production HTML and enhancement assets are reachable.'

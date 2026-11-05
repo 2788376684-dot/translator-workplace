@@ -1,0 +1,42 @@
+name: Production AI review request probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ai-review-api-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check complete 13-sentence AI review, four per batch
+        run: |
+          python3 - <<'PY'
+          import json,urllib.request,re
+          url='https://translator-workplace.vercel.app/api/chat'
+          sentences=[f'This is test sentence {i}.' for i in range(1,14)]
+          rows=[{'index':i,'initial':sentence,'source':sentence} for i,sentence in enumerate(sentences,1)]
+          system='You are a translation reviewer. Return only valid JSON in the form {"reviews":[{"index":1,"proposed":"complete suggested sentence","reason":"brief reason"}]}. Return exactly one result per input index, preserving the index and keeping the sentence complete. If no edit is needed, return it unchanged.'
+          completed=[]
+          for offset in range(0,len(rows),4):
+              part=rows[offset:offset+4]
+              prompt='Original source and translation context: short English test sentences.\nSentences to review:\n'+json.dumps(part,ensure_ascii=False)+'\nPlease review each sentence.'
+              body={'model':'agnes-2.5-flash','messages':[{'role':'system','content':system},{'role':'user','content':prompt}]}
+              data=json.dumps(body).encode('utf-8')
+              req=urllib.request.Request(url,data=data,headers={'Content-Type':'application/json','Origin':'https://translator-workplace.vercel.app'},method='POST')
+              with urllib.request.urlopen(req,timeout=55) as res:
+                  out=json.load(res).get('content','').strip()
+                  if out.startswith('```'):
+                      out=out.split('\n',1)[1].rsplit('```',1)[0].strip()
+                  result=json.loads(out)
+                  suggestions=result.get('reviews')
+                  assert isinstance(suggestions,list) and len(suggestions)==len(part),(offset,len(suggestions) if isinstance(suggestions,list) else 'invalid')
+                  indices=[int(item.get('index',-1)) for item in suggestions]
+                  assert sorted(indices)==[row['index'] for row in part],(offset,indices)
+                  completed.extend(suggestions)
+                  print('Batch:',offset//4+1,'HTTP',res.status,'reviewed',len(part),'sentences')
+          assert len(completed)==13
+          print('Live end-to-end 13-sentence request batches passed')
+          PY

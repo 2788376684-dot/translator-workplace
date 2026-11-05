@@ -17,5 +17,45 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run regression checks
-        run: node "译者决策工作台_公开双模式版/tests/smoke.cjs"
+      - name: Check live Atelier entrypoints and embedded JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('译者决策工作台_公开双模式版')
+          home=(root/'index.html').read_text(encoding='utf-8')
+          wrapper=(root/'atelier.html').read_text(encoding='utf-8')
+          core=(root/'atelier-core.html').read_text(encoding='utf-8')
+          assert '/atelier.html' in home
+          assert '/atelier-core.html' in wrapper
+          for key in ['function sentenceReviewUnits(', 'function mergeReviewChoices(', 'function applyDocumentSource(', 'function ensureDraftDirection(', 'data-sentence-action', '向 AI 追问此处']:
+              assert key in core, key
+          start=core.index("<script>'use strict';(()=>")+len("<script>")
+          end=core.index("</script>",start)
+          Path('/tmp/atelier-test.js').write_text(core[start:end],encoding='utf-8')
+          PY
+          node --check /tmp/atelier-test.js
+          node --check '译者决策工作台_公开双模式版/api/chat.js'
+          node --check '译者决策工作台_公开双模式版/api/health.js'
+      - name: Check English and Chinese sentence segmentation
+        run: |
+          node - <<'JS'
+          const fs=require('node:fs'),vm=require('node:vm');
+          const html=fs.readFileSync('译者决策工作台_公开双模式版/atelier-core.html','utf8');
+          const start=html.indexOf('function sentenceReviewUnits(');
+          const end=html.indexOf('function sentenceReviewReady(',start);
+          if(start<0||end<0)throw Error('Sentence segmentation function missing');
+          const split=vm.runInNewContext(html.slice(start,end)+';sentenceReviewUnits',{Intl});
+          const cases = [
+            ['英语','Mr. Wang arrived. He left later.',2],
+            ['英语','Dr. Smith arrived. Mrs. Wang left.',2],
+            ['中文','我很开心。今天阳光很好。',2]
+          ];
+          for(const [lang,source,count] of cases){
+            const parts=split(source,lang);
+            if(parts.length!==count||parts.map(x=>x.old).join('')!==source)
+              throw Error(lang+' segmentation failed: '+JSON.stringify(parts));
+          }
+          JS
+
+      - name: Regression test actual AI sentence review execution
+        run: node --test '译者决策工作台_公开双模式版/tests/sentence-review-runner.test.cjs'

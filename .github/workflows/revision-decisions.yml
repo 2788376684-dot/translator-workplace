@@ -1,0 +1,42 @@
+name: Integrate revision decisions
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/revision-decisions.yml'
+      - '.github/scripts/revision_decisions.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Integrate decisions in revision stage
+        run: python3 .github/scripts/revision_decisions.py
+      - name: Validate frontend script
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          assert 'function buildReviewDecisions(' in s
+          assert '接受建议' in s and '保留初译' in s and '自行改写' in s and '向 AI 追问此处' in s
+          assert 'id="openDecision"' not in s
+          start=s.index("<script>'use strict';(()=>")+len('<script>')
+          end=s.index('</script>',start)
+          Path('/tmp/revision-decisions.js').write_text(s[start:end])
+          PY
+          node --check /tmp/revision-decisions.js
+          node --test '译者决策工作台_公开双模式版/tests/smoke.cjs'
+      - name: Commit revised Atelier
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '译者决策工作台_公开双模式版/atelier-core.html'
+          if ! git diff --cached --quiet; then
+            git commit -m "Integrate translator decisions directly into second draft"
+            git push
+          fi

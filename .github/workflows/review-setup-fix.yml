@@ -1,0 +1,46 @@
+name: Repair review setup and verify AI readiness
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/review-setup-fix.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply isolated review setup fix
+        run: python .github/scripts/review-setup-fix.py
+      - name: Check JavaScript and regression tests
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          start=s.index("<script>'use strict';(()=>")+len("<script>")
+          Path('/tmp/workbench-review.js').write_text(s[start:s.index('</script>',start)])
+          assert 'reviewSetupOpen' in s
+          assert 'tw-review-only-settings' in s
+          PY
+          node --check /tmp/workbench-review.js
+          node --test "译者决策工作台_公开双模式版/tests/sentence-review-runner.test.cjs"
+      - name: Verify live AI health configuration (no secrets)
+        run: |
+          python3 - <<'PY'
+          import urllib.request,json
+          try:
+              req=urllib.request.Request('https://translator-workplace.vercel.app/api/health',headers={'User-Agent':'Review-Health-Check/1.0'})
+              with urllib.request.urlopen(req,timeout=20) as resp:
+                  data=json.load(resp)
+                  print('AI health: HTTP',resp.status,'configured_ready=',data.get('ready'))
+          except Exception as e:
+              print('AI health probe failed:',type(e).__name__,str(e)[:250])
+          PY
+      - name: Commit verified UI change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "译者决策工作台_公开双模式版/atelier-core.html"
+          git diff --cached --quiet || (git commit -m "Separate AI review setup from existing sentence decisions" && git push)

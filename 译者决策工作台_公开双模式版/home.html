@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Translator Workplace</title>
+<meta name="robots" content="noindex"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#596678;background:#f8f9fb}</style>
+</head><body><p>正在打开译者工作台…</p><script>
+(function () {
+  var route='/atelier.html';
+  try {
+    var raw=localStorage.getItem('tw-atelier-decision-handoff');
+    if(raw){
+      var data=JSON.parse(raw);
+      var age=Date.now()-Date.parse(data.at||'');
+      if(data.source && data.draft && Number.isFinite(age) && age>=0 && age<20*60*1000)route='/index.html';
+    }
+  }catch(e){}
+  location.replace(route);
+})();
+</script><noscript><a href="/atelier.html">进入译者工作台</a></noscript></body></html>

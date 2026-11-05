@@ -1,0 +1,35 @@
+name: Fix AI review rate limit and resume
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix-review-rate-limit.py'
+      - '.github/workflows/fix-review-rate-limit.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply isolated rate-limit fix
+        run: python .github/scripts/fix-review-rate-limit.py
+      - name: Run regression tests before commit
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          a=s.index("<script>'use strict';(()=>")+len("<script>")
+          Path('/tmp/atelier-rate-limit.js').write_text(s[a:s.index('</script>',a)])
+          assert 'reviewRateLimited' in s
+          assert 'reviewCheckpointKey' in s
+          PY
+          node --check /tmp/atelier-rate-limit.js
+          node --test "译者决策工作台_公开双模式版/tests/sentence-review-runner.test.cjs"
+      - name: Commit verified change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "译者决策工作台_公开双模式版/atelier-core.html"
+          git diff --cached --quiet || (git commit -m "Stop AI retry storms on rate limits and resume validated batches" && git push)
