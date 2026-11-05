@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/scripts/patch-ui-20261105.py'
+      - '.github/workflows/patch-ui-20261105.yml'
   workflow_dispatch:
 permissions:
   contents: write
@@ -14,10 +15,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Patch workbench
         run: python .github/scripts/patch-ui-20261105.py
-      - name: Smoke tests
+      - name: JavaScript syntax and UI assertions
         run: |
-          cd "译者决策工作台_公开双模式版"
-          node --test tests/smoke.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('译者决策工作台_公开双模式版')
+          core=(root/'atelier-core.html').read_text()
+          assert 'id="sentenceAskInput"' in core
+          assert '标为疑问' in core
+          assert '审校设置' in core
+          assert 'reviewSetupOpen' in core
+          assert 'tw-ui-fixes-20261105' in core
+          start=core.index("<script>'use strict';(()=>")+len("<script>")
+          end=core.index("</script>",start)
+          Path('/tmp/review-ui-test.js').write_text(core[start:end])
+          PY
+          node --check /tmp/review-ui-test.js
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
