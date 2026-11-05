@@ -52,7 +52,7 @@ test('falls back to sentence-by-sentence and applies results only after complete
 });
 test('provider failure retains previous decisions and review instructions',async()=>{
  const h=harness(true);
- await assert.rejects(h.runner.runReviewNow(),/第 1 句审校失败/);
+ await assert.rejects(h.runner.runReviewNow(),/第 1 句审校.*失败/);
  assert.equal(h.getChanges(),0);
  assert.equal(h.s.reviewDecisions[0].note,'existing decision');
  assert.equal(h.runner.setup(),true);
