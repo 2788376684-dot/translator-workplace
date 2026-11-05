@@ -1,21 +1,33 @@
 (()=>{'use strict';
 const css=[
 '@media(min-width:651px){.app:not(.parameter-view){grid-template-columns:166px minmax(0,1fr)!important}.sidebar{padding:15px 8px 10px!important}.logo{padding:1px 5px 20px!important}.workflow-label{margin-top:20px!important}.nav-step{padding:10px 8px!important;gap:6px}.topbar{height:56px!important;padding:0 18px!important}.main{padding:13px 17px 25px!important;max-width:none!important}.app:not(.parameter-view) .workgrid{grid-template-columns:minmax(0,1fr)!important;gap:9px!important}.app:not(.parameter-view) .segments{display:flex!important;align-items:center;gap:8px;padding:5px 9px;min-height:46px;overflow:visible}.app:not(.parameter-view) .segments-head{height:auto;min-width:74px;border:0;padding:0 4px;gap:7px}.app:not(.parameter-view) .segments-head .icon-btn{width:25px;height:25px}.app:not(.parameter-view) .segment-list{display:flex;align-items:center;flex:1;min-height:0;max-height:74px;overflow:auto;padding:0;gap:5px}.app:not(.parameter-view) .segment-item{flex:0 0 auto;width:156px;max-width:180px;margin:0;padding:6px 9px}.app:not(.parameter-view) .segment-item strong{margin-bottom:2px}.app:not(.parameter-view) .segment-item small{-webkit-line-clamp:1}.app:not(.parameter-view) .segment-foot{border:0;padding:0 3px;gap:5px}.app:not(.parameter-view) .segment-foot #segmentCount{display:none}.app:not(.parameter-view) .segment-foot .text-btn{font-size:10px}}',
-'#stageContent:has(.tw-card) .summary-panel{padding:10px 14px}#stageContent:has(.tw-card) .pane-content{padding:16px 20px!important}#stageContent:has(.tw-card) .pane:has(.source-ref){max-width:1100px;margin:auto}.tw-card .source-ref{background:#f7f9fc;border:1px solid #e3eaf2;border-radius:10px;padding:13px 16px;margin:0 0 8px;color:#293443}.tw-card .source-ref strong{font-size:11px;color:#627184;margin:0 0 7px}.tw-card .source-ref div{max-height:none;overflow:visible;font-size:16px;line-height:1.85}.tw-card .readbox{font-size:18px!important;line-height:1.72!important;max-height:none!important;min-height:0!important;overflow:visible!important;white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0!important}.tw-card .tw-diff{background:#fbfcfe;border:1px solid #dce5f0;border-radius:10px;padding:12px 15px!important}.tw-card .tw-diff ins,.tw-card .tw-diff del{border-radius:3px;padding:1px 2px}.tw-card .tw-diff ins{background:#ccefdc;color:#125e39;text-decoration:none}.tw-card .tw-diff del{background:#ffebe8;color:#9f3b35;text-decoration:line-through}.tw-card .tw-align{margin:0 0 14px;color:#697584;font-size:11px}.tw-card .tw-align summary{cursor:pointer;width:fit-content}.tw-card .tw-fields{display:flex;gap:9px;flex-wrap:wrap;align-items:center;padding:9px 0}.tw-card .tw-fields select{font-size:12px;max-width:230px;padding:5px;background:#fff;border:1px solid #dae0e8;border-radius:6px}.tw-card .pane-content>.review-options:has([data-sentence-action]) .btn{font-size:13px;padding:9px 12px}@media(max-width:650px){.tw-card .readbox{font-size:16px!important}.tw-card .source-ref div{font-size:15px}#stageContent:has(.tw-card) .pane-content{padding:12px!important}}'
+'.tw-card .tw-diff{white-space:pre-wrap!important;overflow-wrap:anywhere}.tw-card .tw-diff ins{box-decoration-break:clone;-webkit-box-decoration-break:clone}.tw-card .tw-deletions{font:13px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;border-top:1px dashed #e2e8f0;margin-top:12px;padding-top:8px;color:#687586;white-space:pre-wrap}.tw-card .tw-deletions del{margin-left:4px}.tw-card .panel-note{font-size:14px!important;line-height:1.75!important}#stageContent:has(.tw-card) .summary-panel{padding:10px 14px}#stageContent:has(.tw-card) .pane-content{padding:16px 20px!important}#stageContent:has(.tw-card) .pane:has(.source-ref){max-width:1100px;margin:auto}.tw-card .source-ref{background:#f7f9fc;border:1px solid #e3eaf2;border-radius:10px;padding:13px 16px;margin:0 0 8px;color:#293443}.tw-card .source-ref strong{font-size:11px;color:#627184;margin:0 0 7px}.tw-card .source-ref div{max-height:none;overflow:visible;font-size:16px;line-height:1.85}.tw-card .readbox{font-size:18px!important;line-height:1.72!important;max-height:none!important;min-height:0!important;overflow:visible!important;white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0!important}.tw-card .tw-diff{background:#fbfcfe;border:1px solid #dce5f0;border-radius:10px;padding:12px 15px!important}.tw-card .tw-diff ins,.tw-card .tw-diff del{border-radius:3px;padding:1px 2px}.tw-card .tw-diff ins{background:#ccefdc;color:#125e39;text-decoration:none}.tw-card .tw-diff del{background:#ffebe8;color:#9f3b35;text-decoration:line-through}.tw-card .tw-align{margin:0 0 14px;color:#697584;font-size:11px}.tw-card .tw-align summary{cursor:pointer;width:fit-content}.tw-card .tw-fields{display:flex;gap:9px;flex-wrap:wrap;align-items:center;padding:9px 0}.tw-card .tw-fields select{font-size:12px;max-width:230px;padding:5px;background:#fff;border:1px solid #dae0e8;border-radius:6px}.tw-card .pane-content>.review-options:has([data-sentence-action]) .btn{font-size:13px;padding:9px 12px}@media(max-width:650px){.tw-card .readbox{font-size:16px!important}.tw-card .source-ref div{font-size:15px}#stageContent:has(.tw-card) .pane-content{padding:12px!important}}'
 ].join('\n');
 const st=document.createElement('style');st.id='tw-review-enhancements';st.textContent=css;document.head.append(st);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 function diff(a,b){
  const tk=t=>String(t).match(/\s+|[\p{L}\p{N}]+|[^\p{L}\p{N}\s]/gu)||[];
- const x=tk(a),y=tk(b),n=x.length,m=y.length;
- if(n*m>85000)return '<del>'+esc(a)+'</del><ins>'+esc(b)+'</ins>';
+ const oldTokens=tk(a),newTokens=tk(b),n=oldTokens.length,m=newTokens.length;
+ if(a===b)return esc(b);
+ if(n*m>85000)return '<ins>'+esc(b)+'</ins><div class="tw-deletions">原有内容：<del>'+esc(a)+'</del></div>';
  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
- for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=x[i]===y[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
- let i=0,j=0,out='',buf='',type='';
- function flush(){if(!buf)return;out+=type==='add'?'<ins>'+esc(buf)+'</ins>':type==='del'?'<del>'+esc(buf)+'</del>':esc(buf);buf='';}
- function add(t,v){if(type!==t){flush();type=t;}buf+=v;}
- while(i<n||j<m){if(i<n&&j<m&&x[i]===y[j]){add('eq',x[i]);i++;j++;}else if(j<m&&(i===n||dp[i][j+1]>dp[i+1][j]))add('add',y[j++]);else add('del',x[i++]);}
- flush();return out;
+ for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)
+  dp[i][j]=oldTokens[i]===newTokens[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+ let i=0,j=0,output='',removed=[];
+ while(i<n||j<m){
+  if(i<n&&j<m&&oldTokens[i]===newTokens[j]){
+   output+=esc(newTokens[j]);i++;j++;
+  }else if(j<m&&(i===n||dp[i][j+1]>dp[i+1][j])){
+   const t=newTokens[j++];
+   output+=t.trim()?'<ins>'+esc(t)+'</ins>':esc(t);
+  }else{
+   removed.push(oldTokens[i++]);
+  }
+ }
+ const deletion=removed.join('').trim();
+ // Preserve exactly the revised translation's spaces and punctuation in the main line.
+ // Removed content is listed separately so it cannot join neighbouring English words.
+ return output+(deletion?'<div class="tw-deletions"><span>删去：</span><del>'+esc(deletion)+'</del></div>':'');
 }
 function sentences(raw,lang){
  const v=String(raw||'');if(!v.trim())return [];
