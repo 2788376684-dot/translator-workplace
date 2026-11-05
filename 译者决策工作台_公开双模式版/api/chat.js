@@ -12,18 +12,18 @@ function limited(ip){
  state.count++;return state.count>24;
 }
 const ALLOWED_MODELS = new Set(['agnes-2.5-flash','agnes-3.0-flash']);
-function fail(res,code,message){return res.status(code).json({error:message});}
+function fail(res,code,error,message,extra={}){if(message===undefined){message=error;error='REQUEST_FAILED';}return res.status(code).json({error:message,code: error,...extra});}
 module.exports = async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
-  if(req.method!=='POST')return fail(res,405,'仅允许 POST');
-  if(process.env.CHAT_ENABLED!=='true'||!process.env.AGNES_API_KEY)return fail(res,503,'在线 AI 尚未启用，您可以使用离线编辑模式。');
+  if(req.method!=='POST')return fail(res,405,'METHOD_NOT_ALLOWED','仅允许 POST');
+  if(process.env.CHAT_ENABLED!=='true'||!process.env.AGNES_API_KEY)return fail(res,503,'CHAT_DISABLED','在线 AI 尚未启用，您可以使用离线编辑模式。');
   const origin=req.headers.origin;
   const host=req.headers.host;
   if(origin){try{if(new URL(origin).host!==host)return fail(res,403,'禁止跨站调用');}catch(e){return fail(res,403,'无效的来源');}}
   if(process.env.SITE_ACCESS_CODE&&!safeCode(req.headers['x-workspace-access'],process.env.SITE_ACCESS_CODE))return fail(res,401,'在线 AI 需要访问码，请向网站管理员索取。');
   const ip=String(req.headers['x-real-ip']||req.headers['x-forwarded-for']||'unknown').split(',')[0].trim().slice(0,128);
-  if(limited(ip))return fail(res,429,'请求较频繁，请一分钟后重试。');
+  if(limited(ip)){res.setHeader('Retry-After','60');return fail(res,429,'RATE_LIMIT_LOCAL','请求较频繁，请一分钟后重试。',{retryAfter:60});}
   const length=Number(req.headers['content-length']||0);
   if(length>26000)return fail(res,413,'文本过长，请分段处理（单次最多约 25KB）。');
   let body;try{body=typeof req.body==='string'?JSON.parse(req.body):req.body;}catch(e){return fail(res,400,'请求不是有效 JSON');}
