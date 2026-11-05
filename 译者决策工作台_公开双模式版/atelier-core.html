@@ -377,7 +377,7 @@ function ensureDraftDirection(source){
  return p.sourceLang+' → '+p.targetLang;
 }
 async function runDraft(){const s=seg(),text=$('draftPrompt').value.trim();if(!text)return toast('请输入本次 AI Prompt');let sid=s.id,pid=proj().id;await withBusy('生成初稿',async()=>{const direction=ensureDraftDirection(s.source);const out=await api([{role:'system',content:'你是专业译员。必须按照 '+direction+' 的方向翻译。必须输出目标语言，禁止原样复述原文或同语言润色。只返回译文。'},{role:'user',content:`${baseContext(s)}\n\n本次 Prompt：\n${text}\n\n最终译文使用目标语言：${proj().targetLang}。`}],.35);if(proj().id!==pid||seg().id!==sid)return;if(s.source.trim().length>=12&&out.trim()===s.source.trim())throw new Error('AI 返回内容与原文相同，已阻止保存。请核对翻译方向');s.draftInput=out;s.draftOrigin='AI 生成 · '+state.settings.model;s.draftPromptUsed=text;persist();draw();toast('初稿已生成，请核对后锁定');});}
-async function runReviewNow(){reviewSetupOpen=false;
+async function runReviewNow(){
  const s=seg(),units=sentenceReviewUnits(s.draft,proj().targetLang);
  if(!units.length)return toast('初稿为空');
  if((s.reviewDecisions||[]).some(x=>x.choice!=='pending')&&!confirm('重新分析将重置未锁定的审校决策。请先导出备份。确认继续？'))return;
@@ -386,15 +386,39 @@ async function runReviewNow(){reviewSetupOpen=false;
  const rows=units.map((x,i)=>({index:i+1,initial:x.old.trim(),source:aligned?src[i].old.trim():null}));
  const pid=proj().id,sid=s.id;
  await withBusy('AI 逐句审校',async()=>{
-  const raw=await api([{role:'system',content:'你是资深翻译审校员。仅输出有效 JSON 对象，形如 {"reviews":[{"index":1,"proposed":"该句完整建议译文","reason":"修改依据"}]}。必须对输入的每一句返回一条，index 从 1 连续编号。每条 proposed 仅包含当前句的完整建议译文。没有修改也必须返回原句，理由可为空。不得遗漏、合并或新增数组项目。忠实原文，不补造事实。'},{role:'user',content:baseContext(s)+'\n逐句初译：\n'+JSON.stringify(rows)+'\n'+(aligned?'源语句数相同，可作为定位参考，但须核对语义。':'源语与译文句数不同，禁止假设逐句严格对应，须核对完整原文。')+'\n审校要求：'+promptText}],.15);
-  const data=safeJson(raw),items=data.reviews;
-  if(!Array.isArray(items)||items.length!==units.length)throw Error('AI 返回句数不一致，原有审校数据已保留');
+  async function requestBatch(part){
+  const raw=await api([{role:'system',content:'你是资深翻译审校员。仅输出有效 JSON 对象，形如 {"reviews":[{"index":1,"proposed":"该句完整建议译文","reason":"修改依据"}]}。必须对输入的每一句返回一条，index 从 1 连续编号。每条 proposed 仅包含当前句的完整建议译文。没有修改也必须返回原句，理由可为空。不得遗漏、合并或新增数组项目。忠实原文，不补造事实。'},{role:'user',content:baseContext(s)+'\n逐句初译：\n'+JSON.stringify(part)+'\n'+(aligned?'源语句数相同，可作为定位参考，但须核对语义。':'源语与译文句数不同，禁止假设逐句严格对应，须核对完整原文。')+'\n审校要求：'+promptText}],.15);
+  const data=safeJson(raw);
+  const items=Array.isArray(data)?data:(data.reviews||data.sentences);
+  if(!Array.isArray(items)||items.length!==part.length)throw Error('AI 返回句数不一致');
   const lookup=new Map();
-  for(const x of items){const n=Number(x.index);if(!Number.isInteger(n)||n<1||n>units.length||lookup.has(n)||typeof x.proposed!=='string'||!x.proposed.trim())throw Error('AI 返回编号重复或缺少建议，请重试');lookup.set(n,x);}
-  if(lookup.size!==units.length)throw Error('AI 句子编号不完整');
+  for(let i=0;i<items.length;i++){
+   const item=items[i],idx=Number(item.index??part[i].index);
+   const proposed=item.proposed??item.revised??item.translation;
+   if(!part.some(row=>row.index===idx)||lookup.has(idx)||typeof proposed!=='string'||!proposed.trim())
+    throw Error('AI 返回编号或建议译文不完整');
+   lookup.set(idx,{proposed:proposed.trim(),reason:String(item.reason||'')});
+  }
+  if(lookup.size!==part.length)throw Error('AI 编号缺失');
+  return part.map(row=>lookup.get(row.index));
+  }
+  const combined=[];
+  for(let i=0;i<rows.length;i+=4){
+   const part=rows.slice(i,i+4);
+   try{combined.push(...await requestBatch(part));}
+   catch(e){
+    for(const row of part){
+     try{combined.push(...await requestBatch([row]));}
+     catch(err){throw Error('第 '+row.index+' 句审校失败：'+err.message+'。原有审校决定未被覆盖。');}
+    }
+   }
+   if(proj().id!==pid||seg().id!==sid)return;
+  }
+  if(combined.length!==units.length)throw Error('AI 返回内容不完整，原有审校决定未被覆盖');
   if(proj().id!==pid||seg().id!==sid)return;
+  reviewSetupOpen=false;
   startSentenceReview(s);
-  for(let i=0;i<units.length;i++){const x=s.reviewDecisions[i],item=lookup.get(i+1);x.proposed=item.proposed.trim();x.reason=String(item.reason||'');}
+  for(let i=0;i<units.length;i++){const x=s.reviewDecisions[i],item=combined[i];x.proposed=item.proposed.trim();x.reason=String(item.reason||'');}
   s.reviewPromptUsed=promptText;s.issues=[];persist();draw();toast('已生成 '+units.length+' 句审校建议，请逐句决策');
  });
 }
