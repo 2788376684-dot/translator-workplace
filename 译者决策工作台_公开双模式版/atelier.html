@@ -1,33 +1,66 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Translator Workplace · Atelier</title>
-<style>html,body{height:100%;margin:0;overflow:hidden;background:#f8f9fb}#app{display:block;width:100%;height:100%;border:0;visibility:hidden}#status{position:fixed;inset:0;display:grid;place-items:center;font:13px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#607083}#app.ready{visibility:visible}#status[hidden]{display:none}</style>
-</head><body><div id="status">正在打开翻译工作台…</div>
-<iframe id="app" src="/atelier-core.html" title="Translator Workplace · Atelier" allow="clipboard-read; clipboard-write"></iframe>
+<style>
+html,body{height:100%;margin:0;background:#f8f9fb}
+#app{display:block;width:100%;height:100%;border:0}
+#status{position:fixed;inset:0;display:grid;place-items:center;background:#f8f9fb;color:#607083;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;z-index:2}
+#status[hidden]{display:none}
+#status p{margin:0 0 14px}
+#status a{color:#1266d6}
+</style>
+</head>
+<body>
+<div id="status" role="status"><div><p id="message">正在打开翻译工作台…</p><p><a href="/atelier-core.html">直接进入工作台</a></p></div></div>
+<iframe id="app" title="Translator Workplace · Atelier" allow="clipboard-read; clipboard-write"></iframe>
 <script>
 (function(){
- const app=document.getElementById('app'),status=document.getElementById('status');
- app.addEventListener('load',()=>{
-   try{
-     const d=app.contentDocument;
-     if(!d)throw new Error('无法读取工作台');
-     const packed=d.getElementById('week8-packed');
-     const paramFrame=d.getElementById('paramFrame');
-     if(paramFrame&&packed){
-       const source=d.querySelector('[data-step="source"]');
-       if(source)source.click();
-     }
-   }catch(e){status.textContent='工作台初始化失败，请刷新页面：'+e.message;return;}
-   // Apply focused review refinements inside the existing same-origin workbench.
-   // The original editing engine, storage, and AI workflows remain unchanged.
-   if(!d.getElementById('tw-review-loader')){
-     const patch=d.createElement('script');
-     patch.id='tw-review-loader';
-     patch.src='/atelier-review-enhancements.js';
-     patch.onerror=()=>console.warn('Review enhancement unavailable; original editor remains operational.');
-     d.head.appendChild(patch);
-   }
-   app.classList.add('ready');status.hidden=true;
- });
+'use strict';
+const app=document.getElementById('app');
+const status=document.getElementById('status');
+const message=document.getElementById('message');
+let finished=false;
+function show(){
+ if(finished)return;
+ finished=true;
+ status.hidden=true;
+ try{
+  const d=app.contentDocument;
+  if(!d)return;
+  const packed=d.getElementById('week8-packed');
+  const paramFrame=d.getElementById('paramFrame');
+  if(paramFrame&&packed){
+   const source=d.querySelector('[data-step="source"]');
+   if(source)source.click();
+  }
+  if(!d.getElementById('tw-review-loader')){
+   const patch=d.createElement('script');
+   patch.id='tw-review-loader';
+   patch.src='/atelier-review-enhancements.js';
+   patch.onerror=()=>console.warn('Review enhancement unavailable; original editor remains operational.');
+   d.head.appendChild(patch);
+  }
+ }catch(e){console.warn('Atelier enhancement unavailable:',e);}
+}
+app.addEventListener('load',show);
+app.addEventListener('error',()=>{
+ message.textContent='页面加载失败，请点击下方链接直接进入工作台。';
+});
+app.src='/atelier-core.html';
+setTimeout(()=>{
+ if(!finished){
+  message.textContent='工作台加载时间较长。可以点击下方链接直接进入工作台。';
+  // Avoid permanently obscuring an already rendered frame.
+  try{
+   const d=app.contentDocument;
+   if(d && d.body && (d.getElementById('week8-packed') || d.querySelector('.app'))){show();return;}
+  }catch(e){}
+ }
+},6000);
 })();
-</script></body></html>
+</script>
+</body>
+</html>
