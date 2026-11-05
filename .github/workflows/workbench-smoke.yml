@@ -56,3 +56,6 @@ jobs:
               throw Error(lang+' segmentation failed: '+JSON.stringify(parts));
           }
           JS
+
+      - name: Regression test actual AI sentence review execution
+        run: node --test '译者决策工作台_公开双模式版/tests/sentence-review-runner.test.cjs'
