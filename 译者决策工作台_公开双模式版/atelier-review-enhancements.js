@@ -85,8 +85,6 @@ function enhance(){
   sels[0].addEventListener('change',store);sels[1].addEventListener('change',store);
   details.append(summary,fields);el.after(details);
  }
- const boxes=pane.querySelectorAll('.readbox');
- if(boxes.length>=2){const original=boxes[0].textContent.trim(),suggested=boxes[1].textContent.trim();boxes[1].classList.add('tw-diff');if(original!==suggested)boxes[1].innerHTML=diff(original,suggested);}
  card.classList.add('tw-card');el.dataset.twDone='1';
 }
 const stage=document.querySelector('#stageContent');let pending=0;
