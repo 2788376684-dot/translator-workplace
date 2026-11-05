@@ -38,7 +38,7 @@ function harness(failAll=false,malformedAt=0,rescueMalformed=false,options={}){
     throw Error('Missing review rows');
    }
    const part=JSON.parse(match[1]);
-   if(failAll||part.length>1)throw Error('Simulated provider shape failure');
+   if(failAll||(part.length>1&&!options.allowBatchSuccess))throw Error('Simulated provider shape failure');
    if(malformedAt && part[0].index===malformedAt)return JSON.stringify({reviews:[{index:malformedAt,proposed:'One'},{index:malformedAt+1,proposed:'Two'}]});
    return JSON.stringify({reviews:part.map(x=>({index:x.index,proposed:x.initial+' improved',reason:'test'}))});
   },
@@ -83,14 +83,14 @@ test('repeated malformed model output is flagged for human review',async()=>{
 
 test('429 stops retries and saves partial review checkpoint',async()=>{
  const storage=new Map();
- const broken=harness(false,0,false,{storage,limitAfter:2});
+ const broken=harness(false,0,false,{storage,limitAfter:2,allowBatchSuccess:true});
  await assert.rejects(broken.runner.runReviewNow(),/已保存 4/);
  assert.equal(broken.getCalls(),2);
  assert.equal(broken.getChanges(),0);
  assert.equal(storage.size,1);
  const checkpoint=JSON.parse([...storage.values()][0]);
  assert.equal(checkpoint.items.length,4);
- const resumed=harness(false,0,false,{storage});
+ const resumed=harness(false,0,false,{storage,allowBatchSuccess:true});
  await resumed.runner.runReviewNow();
  assert.equal(resumed.getCalls(),1);
  assert.equal(resumed.getChanges(),1);
