@@ -1,0 +1,39 @@
+name: Production AI review request probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ai-review-api-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live AI request with non-user test sentence
+        run: |
+          python3 - <<'PY'
+          import json,urllib.request,urllib.error
+          url='https://translator-workplace.vercel.app/api/chat'
+          system='Return only valid JSON: {"reviews":[{"index":1,"proposed":"A test sentence.","reason":"No changes needed"}]}'
+          user='Review one sentence: [{"index":1,"initial":"A test sentence.","source":"A test sentence."}]'
+          data=json.dumps({'model':'agnes-2.5-flash','messages':[{'role':'system','content':system},{'role':'user','content':user}]}).encode('utf-8')
+          req=urllib.request.Request(url,data=data,headers={'Content-Type':'application/json','Origin':'https://translator-workplace.vercel.app'},method='POST')
+          try:
+              with urllib.request.urlopen(req,timeout=55) as res:
+                  body=json.load(res)
+                  content=body.get('content','')
+                  print('AI HTTP:',res.status,'response_characters:',len(content))
+                  assert isinstance(content,str) and content.strip(),'Empty model response'
+                  clean=content.strip()
+                  if clean.startswith('```'):
+                      clean=clean.split('\n',1)[1].rsplit('```',1)[0].strip()
+                  parsed=json.loads(clean)
+                  reviews=parsed.get('reviews')
+                  assert isinstance(reviews,list) and len(reviews)==1
+                  print('AI review request validated: one well-formed JSON review.')
+          except urllib.error.HTTPError as e:
+              print('AI request rejected with HTTP',e.code,'reason:',e.read().decode('utf-8','replace')[:300])
+              raise
+          PY
