@@ -92,4 +92,82 @@ if(stage){
  const observer=new MutationObserver(()=>{const el=stage.querySelector('.source-ref');if(el&&!el.dataset.twDone){clearTimeout(pending);pending=setTimeout(enhance,340);}});
  observer.observe(stage,{childList:true,subtree:true});setTimeout(enhance,360);
 }
+
+/* OCR preview: keep the original image legible while preserving selectable OCR data. */
+(function installCleanOcrPreview(){
+ const STYLE_ID='tw-ocr-clean-preview';
+ const css=document.createElement('style');
+ css.id=STYLE_ID;
+ css.textContent=`
+ .tw-ocr-clean .tw-ocr-detection-overlay{opacity:0!important;pointer-events:none!important}
+ .tw-ocr-clean .tw-ocr-detection-overlay *{pointer-events:none!important}
+ .tw-ocr-preview-switch{margin-left:8px;padding:5px 10px;border:1px solid #bccddd;border-radius:7px;background:#fff;color:#355268;font:12px/1.4 inherit;cursor:pointer}
+ .tw-ocr-preview-switch:focus-visible{outline:2px solid #2470d6;outline-offset:2px}
+ `;
+ document.head.append(css);
+ const colorIsOverlay=(value)=>{
+  const v=String(value||'').replace(/\s+/g,'').toLowerCase();
+  if(!v||v==='transparent')return false;
+  const m=v.match(/^rgba?\((\d+),(\d+),(\d+)/);
+  if(!m)return /#(?:0[78]a|0[89]b|1[09ab]a)[0-9a-f]{3}/.test(v);
+  const [r,g,b]=m.slice(1).map(Number);
+  return g>85&&g>r*1.15&&b>r*1.05&&g<210;
+ };
+ function getPanel(){
+  const headings=[...document.querySelectorAll('h1,h2,h3,h4,h5,.panel-title,.pane-title,strong')];
+  const heading=headings.find(e=>e.textContent.trim()==='原页与位置');
+  if(!heading)return null;
+  let node=heading;
+  for(let i=0;i<6&&node;i++,node=node.parentElement){
+   if(node.querySelector('img,canvas')&&node.querySelectorAll('*').length>7)return {panel:node,heading};
+  }
+  return null;
+ }
+ function overlayCandidates(panel){
+  const images=[...panel.querySelectorAll('img,canvas')];
+  if(!images.length)return [];
+  const results=[];
+  for(const el of panel.querySelectorAll('*')){
+   if(el.closest('.tw-ocr-preview-switch')||el.matches('img,canvas'))continue;
+   const cs=getComputedStyle(el);
+   if(cs.position!=='absolute'&&cs.position!=='fixed')continue;
+   const r=el.getBoundingClientRect();
+   if(r.width<2||r.height<2)continue;
+   if(!images.some(im=>{const t=im.getBoundingClientRect();return r.left<t.right&&r.right>t.left&&r.top<t.bottom&&r.bottom>t.top}))continue;
+   const stroked=el.matches('svg')||el.querySelector('svg');
+   const colored=['borderTopColor','borderLeftColor','borderRightColor','borderBottomColor','outlineColor'].some(k=>colorIsOverlay(cs[k]));
+   if(stroked||colored)results.push(el);
+  }
+  // Hide only top-level overlay layers, never the underlying scanned image.
+  return results.filter(el=>!results.some(parent=>parent!==el&&parent.contains(el)));
+ }
+ function attach(){
+  const found=getPanel();if(!found)return;
+  const {panel,heading}=found;
+  if(!panel.dataset.twOcrPreview){
+   panel.dataset.twOcrPreview='clean';
+   panel.classList.add('tw-ocr-clean');
+   const button=document.createElement('button');
+   button.type='button';button.className='tw-ocr-preview-switch';
+   button.textContent='显示识别框';
+   button.setAttribute('aria-pressed','false');
+   button.addEventListener('click',()=>{
+    const clean=panel.classList.toggle('tw-ocr-clean');
+    button.textContent=clean?'显示识别框':'隐藏识别框';
+    button.setAttribute('aria-pressed',String(!clean));
+   });
+   heading.insertAdjacentElement('afterend',button);
+  }
+  for(const el of overlayCandidates(panel))el.classList.add('tw-ocr-detection-overlay');
+ }
+ let pending=false;
+ const observer=new MutationObserver(()=>{
+  if(pending)return;
+  pending=true;
+  requestAnimationFrame(()=>{pending=false;attach();});
+ });
+ observer.observe(document.body,{subtree:true,childList:true});
+ attach();
+})();
+
 })();
