@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'atelier-core.html'),'utf8');
 const start=html.indexOf('async function runReviewNow(){');
 const end=html.indexOf('async function askAI(){',start);
 assert.ok(start>0&&end>start,'Review runner is present');
-function harness(failAll=false){
+function harness(failAll=false,malformedAt=0,rescueMalformed=false){
  const draft='One. Two. Three. Four. Five.';
  const s={id:'s1',source:draft,draft,reviewDecisions:[{choice:'pending',note:'existing decision'}]};
  const p={id:'p1',sourceLang:'英语',targetLang:'英语'};
@@ -23,9 +23,16 @@ function harness(failAll=false){
    calls++;
    const user=messages[1].content;
    const match=user.match(/逐句初译：\n(\[[^\n]+\])/);
-   if(!match)throw Error('Missing review rows');
+   if(!match){
+    if(user.includes('只审校以下这一句')){
+     if(rescueMalformed)return JSON.stringify({reviews:[{proposed:'Bad one'},{proposed:'Bad two'}]});
+     return JSON.stringify({proposed:'One corrected sentence.',reason:'Context checked'});
+    }
+    throw Error('Missing review rows');
+   }
    const part=JSON.parse(match[1]);
    if(failAll||part.length>1)throw Error('Simulated provider shape failure');
+   if(malformedAt && part[0].index===malformedAt)return JSON.stringify({reviews:[{index:malformedAt,proposed:'One'},{index:malformedAt+1,proposed:'Two'}]});
    return JSON.stringify({reviews:part.map(x=>({index:x.index,proposed:x.initial+' improved',reason:'test'}))});
   },
   startSentenceReview:()=>{changes++;s.reviewDecisions=split(s.draft).map(x=>({old:x.old,choice:'pending',proposed:x.old,reason:''}));},
@@ -49,4 +56,20 @@ test('provider failure retains previous decisions and review instructions',async
  assert.equal(h.getChanges(),0);
  assert.equal(h.s.reviewDecisions[0].note,'existing decision');
  assert.equal(h.runner.setup(),true);
+});
+
+test('mismatched single-sentence response retries a standalone JSON object',async()=>{
+ const h=harness(false,2,false);
+ await h.runner.runReviewNow();
+ assert.equal(h.getChanges(),1);
+ assert.equal(h.s.reviewDecisions[1].proposed,'One corrected sentence.');
+ assert.equal(h.s.reviewDecisions[1].choice,'pending');
+});
+test('repeated malformed model output is flagged for human review',async()=>{
+ const h=harness(false,2,true);
+ await h.runner.runReviewNow();
+ assert.equal(h.getChanges(),1);
+ assert.equal(h.s.reviewDecisions[1].choice,'question');
+ assert.equal(h.s.reviewDecisions[1].proposed.trim(),'Two.');
+ assert.match(h.s.reviewDecisions[1].reason,/人工核对/);
 });
