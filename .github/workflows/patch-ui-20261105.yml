@@ -1,0 +1,26 @@
+name: Apply requested translator UI fixes
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/patch-ui-20261105.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch workbench
+        run: python .github/scripts/patch-ui-20261105.py
+      - name: Smoke tests
+        run: |
+          cd "译者决策工作台_公开双模式版"
+          node --test tests/smoke.cjs
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "译者决策工作台_公开双模式版/atelier-core.html"
+          git diff --cached --quiet || (git commit -m "Improve inline review questions, final layout and export" && git push)
