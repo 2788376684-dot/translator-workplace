@@ -422,24 +422,45 @@ async function runReviewNow(){
    if(typeof proposed!=='string'||!proposed.trim())throw Error('AI 单句结果缺少完整建议译文');
    return {proposed:proposed.trim(),reason:String(item.reason||'')};
   }
-  const combined=[];
-  for(let i=0;i<rows.length;i+=4){
+  // The server or upstream provider may return HTTP 429. Do not multiply
+  // that response into four further singleton requests.
+  const reviewRateLimited=e=>/429|限制请求|请求较频繁|限流|rate.limit|too many requests/i.test(String(e?.message||e));
+  const reviewCheckpointKey='tw-ai-review-checkpoint-v1:'+pid+':'+sid;
+  const reviewSignature=JSON.stringify([s.draft,s.source,promptText,proj().sourceLang,proj().targetLang]);
+  let restored=[];
+  try{
+   if(typeof localStorage!=='undefined'){
+    const saved=JSON.parse(localStorage.getItem(reviewCheckpointKey)||'null');
+    if(saved?.signature===reviewSignature&&Array.isArray(saved?.items)&&saved.items.length<=rows.length&&saved.items.every(x=>x&&typeof x.proposed==='string'&&x.proposed.trim()))restored=saved.items;
+   }
+  }catch(e){restored=[];}
+  const combined=restored.slice();
+  function remember(){
+   try{if(typeof localStorage!=='undefined')localStorage.setItem(reviewCheckpointKey,JSON.stringify({signature:reviewSignature,items:combined}));}catch(e){}
+  }
+  function rateLimitedError(e){
+   return Error('Agnes 当前限制 AI 请求。已保存 '+combined.length+' / '+rows.length+' 句已校验结果，请稍后再点击“开始 AI 逐句审校”继续。'+(e?.message?' '+e.message:''));
+  }
+  for(let i=combined.length;i<rows.length;i=combined.length){
    const part=rows.slice(i,i+4);
-   try{combined.push(...await requestBatch(part));}
+   try{combined.push(...await requestBatch(part));remember();}
    catch(e){
+    if(reviewRateLimited(e))throw rateLimitedError(e);
     for(const row of part){
-     try{combined.push(...await requestBatch([row]));}
+     try{combined.push(...await requestBatch([row]));remember();}
      catch(err){
+      if(reviewRateLimited(err))throw rateLimitedError(err);
       // Network, authentication and upstream errors must remain visible.
       // Only model-output shape errors may be converted into a pending
       // manual-review item, never silently accepted as an AI edit.
       const shapeError=/返回句数|编号|JSON|译文不完整|建议译文/.test(err.message);
       if(!shapeError)throw Error('第 '+row.index+' 句审校请求失败：'+err.message+'。原有审校决定未被覆盖。');
-      try{combined.push(await requestStandalone(row));}
+      try{combined.push(await requestStandalone(row));remember();}
       catch(rescueError){
+       if(reviewRateLimited(rescueError))throw rateLimitedError(rescueError);
        if(!/JSON|建议译文/.test(rescueError.message))
         throw Error('第 '+row.index+' 句审校请求失败：'+rescueError.message+'。原有审校决定未被覆盖。');
-       combined.push({proposed:row.initial,reason:'此句 AI 返回格式异常，尚未完成审校。请人工核对或重新运行 AI 审校。',needsManualReview:true});
+       combined.push({proposed:row.initial,reason:'此句 AI 返回格式异常，尚未完成审校。请人工核对或重新运行 AI 审校。',needsManualReview:true});remember();
       }
      }
     }
@@ -452,7 +473,9 @@ async function runReviewNow(){
   startSentenceReview(s);
   for(let i=0;i<units.length;i++){const x=s.reviewDecisions[i],item=combined[i];x.proposed=item.proposed.trim();x.reason=String(item.reason||'');
     if(item.needsManualReview){x.choice='question';x.questionNote='AI 未能可靠返回当前句的审校建议，须人工核对。';}}
-  s.reviewPromptUsed=promptText;s.issues=[];persist();draw();const unresolved=combined.filter(x=>x.needsManualReview).length;toast(unresolved?'已生成审校记录，其中 '+unresolved+' 句需人工复核，原句未被擅自改写':'已生成 '+units.length+' 句审校建议，请逐句决策');
+  s.reviewPromptUsed=promptText;s.issues=[];persist();
+  try{if(typeof localStorage!=='undefined')localStorage.removeItem(reviewCheckpointKey);}catch(e){}
+  draw();const unresolved=combined.filter(x=>x.needsManualReview).length;toast(unresolved?'已生成审校记录，其中 '+unresolved+' 句需人工复核，原句未被擅自改写':'已生成 '+units.length+' 句审校建议，请逐句决策');
  });
 }
 async function askAI(){let s=seg(),question=$('chatInput').value.trim();if(!question)return toast('请输入问题');let sid=s.id,pid=proj().id;const msgs=s.chat.slice(-10).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}));s.chat.push({role:'user',text:question});$('chatInput').value='';$('chatLog').innerHTML=chatHtml(s);$('chatLog').scrollTop=$('chatLog').scrollHeight;persist();await withBusy('AI 追问',async()=>{const txt=await api([{role:'system',content:`你是专业翻译顾问。根据原文、初稿、二稿与当前终稿回答问题，不要擅自改写终稿。\n${baseContext(s)}\n初稿：${s.draft}\n二稿：${s.revision}\n当前终稿：${s.final}`},...msgs,{role:'user',content:question}],.3);if(proj().id!==pid||seg().id!==sid)return;s.chat.push({role:'assistant',text:txt});persist();$('chatLog').innerHTML=chatHtml(s);$('chatLog').scrollTop=$('chatLog').scrollHeight;});}
