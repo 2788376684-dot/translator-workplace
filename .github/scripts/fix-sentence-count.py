@@ -48,3 +48,5 @@ part=part.replace("""persist();draw();toast('已生成 '+units.length+' 句审�
 s=s[:a]+part+s[b:]
 p.write_text(s,encoding='utf-8')
 print('AI shape mismatch now retries with an isolated single-sentence JSON object and explicitly flags unresolved suggestions')
+
+# Re-apply with updated review regression expectations.
