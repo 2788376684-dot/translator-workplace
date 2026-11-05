@@ -11,13 +11,16 @@ function limited(ip){
  if(!state||now-state.start>60000){attemptWindow.set(ip,{start:now,count:1});return false}
  state.count++;return state.count>24;
 }
-const ALLOWED_MODELS = new Set(['agnes-2.5-flash','agnes-3.0-flash']);
+const DEFAULT_ENDPOINT = process.env.AI_API_ENDPOINT || 'https://api.agnes-ai.cn/v1/chat/completions';
+const DEFAULT_MODEL = process.env.AI_MODEL || 'agnes-2.5-flash';
+const DEFAULT_KEY = process.env.AI_API_KEY || process.env.AGNES_API_KEY;
+const ALLOWED_MODELS = new Set(['agnes-2.5-flash','agnes-3.0-flash', DEFAULT_MODEL]);
 function fail(res,code,error,message,extra={}){if(message===undefined){message=error;error='REQUEST_FAILED';}return res.status(code).json({error:message,code: error,...extra});}
 module.exports = async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
   if(req.method!=='POST')return fail(res,405,'METHOD_NOT_ALLOWED','仅允许 POST');
-  if(process.env.CHAT_ENABLED!=='true'||!process.env.AGNES_API_KEY)return fail(res,503,'CHAT_DISABLED','在线 AI 尚未启用，您可以使用离线编辑模式。');
+  if(process.env.CHAT_ENABLED!=='true'||!DEFAULT_KEY)return fail(res,503,'CHAT_DISABLED','在线 AI 尚未启用，您可以使用离线编辑模式。');
   const origin=req.headers.origin;
   const host=req.headers.host;
   if(origin){try{if(new URL(origin).host!==host)return fail(res,403,'禁止跨站调用');}catch(e){return fail(res,403,'无效的来源');}}
@@ -36,8 +39,8 @@ module.exports = async function handler(req,res){
   const total=messages.reduce((a,m)=>a+m.content.length,0);
   if(total>18000)return fail(res,413,'上下文过长，请缩短材料或新建对话。');
   try{
-    const upstream=await fetch('https://api.agnes-ai.cn/v1/chat/completions',{
-      method:'POST',headers:{'Authorization':'Bearer '+process.env.AGNES_API_KEY,'Content-Type':'application/json'},
+    const upstream=await fetch(DEFAULT_ENDPOINT,{
+      method:'POST',headers:{'Authorization':'Bearer '+DEFAULT_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({model,messages,stream:false}),signal:AbortSignal.timeout(47000)
     });
     if(!upstream.ok){
