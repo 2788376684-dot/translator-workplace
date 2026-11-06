@@ -74,7 +74,7 @@ function show(){
   // No mutation of persisted state, OCR geometry, or translation content.
   if(!d.getElementById('transhelper-theme')){
    const theme=d.createElement('link');
-   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=4';
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=5';
    theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
    d.head.appendChild(theme);
   }
@@ -87,7 +87,7 @@ function show(){
   if(!d.getElementById('transhelper-workflow-ui-loader')){
    const workflow=d.createElement('script');
    workflow.id='transhelper-workflow-ui-loader';
-   workflow.src='/transhelper-workflow-ui.js?v=2';
+   workflow.src='/transhelper-workflow-ui.js?v=3';
    workflow.onerror=()=>console.warn('Optional Transhelper UI refinement unavailable.');
    d.head.appendChild(workflow);
   }
@@ -101,7 +101,7 @@ function show(){
   if(!d.getElementById('transhelper-quick-actions-style')){
    const sheet=d.createElement('link');
    sheet.id='transhelper-quick-actions-style';
-   sheet.rel='stylesheet';sheet.href='/transhelper-quick-actions.css?v=1';
+   sheet.rel='stylesheet';sheet.href='/transhelper-quick-actions.css?v=2';
    sheet.onerror=()=>console.warn('Quick actions theme unavailable.');
    d.head.appendChild(sheet);
   }
@@ -111,6 +111,20 @@ function show(){
    quick.src='/transhelper-quick-actions.js?v=1';
    quick.onerror=()=>console.warn('Quick actions unavailable; original AI and backup controls remain accessible.');
    d.head.appendChild(quick);
+  }
+  if(!d.getElementById('transhelper-export-scope-style')){
+   const sheet=d.createElement('link');
+   sheet.id='transhelper-export-scope-style';
+   sheet.rel='stylesheet';sheet.href='/transhelper-export-scope.css?v=1';
+   sheet.onerror=()=>console.warn('Export scope styling unavailable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('transhelper-export-scope-loader')){
+   const scope=d.createElement('script');
+   scope.id='transhelper-export-scope-loader';
+   scope.src='/transhelper-export-scope.js?v=1';
+   scope.onerror=()=>console.warn('Optional export scope chooser unavailable; native exports remain accessible.');
+   d.head.appendChild(scope);
   }
   if(!d.getElementById('tw-week8-safety-loader')){
    const enhancement=d.createElement('script');
