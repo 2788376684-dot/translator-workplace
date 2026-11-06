@@ -11,7 +11,7 @@ let mode='view',selected=-1,drag=null,undo=[],redo=[];
 const cp=()=>strokes.map(s=>({...s}));const save=()=>{try{d.defaultView.localStorage.setItem(key,JSON.stringify(strokes))}catch{}};
 const checkpoint=()=>{undo.push(cp());if(undo.length>100)undo.shift();redo=[]};
 function button(t,fn){const b=d.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',fn);bar.append(b);return b}
-const modes={};function setMode(m){mode=m;selected=-1;overlay.classList.toggle('editing',m!=='view');position();note.textContent=m==='view'?'点击补横线或补竖线后，在左侧原图上点击添加。':m==='select'?'在左侧原图上拖动橙色校正线。':'已选择补'+(m==='h'?'横':'竖')+'线，请在左侧原图任意位置点击。';Object.keys(modes).forEach(k=>modes[k].setAttribute('aria-pressed',String(k===m)));draw()}
+const modes={};function setMode(m){mode=m;selected=-1;overlay.classList.toggle('editing',m!=='view');base.style.outline=m==='view'?'':'2px dashed #e17a22';base.style.outlineOffset='2px';position();note.textContent=m==='view'?'点击补横线或补竖线后，在左侧原图上点击添加。':m==='select'?'在左侧原图上拖动橙色校正线。':'已选择补'+(m==='h'?'横':'竖')+'线，请在左侧原图任意位置点击。';Object.keys(modes).forEach(k=>modes[k].setAttribute('aria-pressed',String(k===m)));draw()}
 modes.view=button('查看',()=>setMode('view'));modes.h=button('＋ 补横线',()=>setMode('h'));modes.v=button('＋ 补竖线',()=>setMode('v'));modes.select=button('选择／拖动',()=>setMode('select'));
 const del=button('删除选中',()=>{if(selected<0)return;checkpoint();strokes.splice(selected,1);selected=-1;save();draw()});
 const back=button('撤销',()=>{if(!undo.length)return;redo.push(cp());strokes=undo.pop();selected=-1;save();draw()});
@@ -42,9 +42,54 @@ toggleTools(false);
 function position(){const r=base.getBoundingClientRect();Object.assign(overlay.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',display:r.width>50?'block':'none'})}
 function coord(e){const r=overlay.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
 function draw(){svg.replaceChildren();const hitSurface=d.createElementNS('http://www.w3.org/2000/svg','rect');hitSurface.setAttribute('x','0');hitSurface.setAttribute('y','0');hitSurface.setAttribute('width','100%');hitSurface.setAttribute('height','100%');hitSurface.setAttribute('fill','transparent');hitSurface.setAttribute('pointer-events','all');svg.append(hitSurface);for(let i=0;i<strokes.length;i++){const s=strokes[i],a=d.createElementNS('http://www.w3.org/2000/svg','line'),p=(s.at*100)+'%';const attrs=s.axis==='h'?{x1:'0%',x2:'100%',y1:p,y2:p}:{x1:p,x2:p,y1:'0%',y2:'100%'};for(const k in attrs)a.setAttribute(k,attrs[k]);if(i===selected)a.classList.add('selected');svg.append(a);if(mode==='select'){const hit=a.cloneNode();hit.setAttribute('class','hit');hit.dataset.index=i;svg.append(hit)}}del.disabled=selected<0;back.disabled=!undo.length;forward.disabled=!redo.length}
-overlay.addEventListener('pointerdown',e=>{if(mode==='view'||e.button!==0)return;const p=coord(e);if(mode==='select'){const idx=e.target.dataset?.index;selected=idx===undefined?-1:Number(idx);if(selected>=0){checkpoint();drag=e.pointerId;overlay.setPointerCapture(e.pointerId)}}else{checkpoint();strokes.push({axis:mode,at:mode==='h'?p.y:p.x});selected=strokes.length-1;save()}draw();e.preventDefault()});
-overlay.addEventListener('pointermove',e=>{if(drag!==e.pointerId||selected<0)return;const p=coord(e),s=strokes[selected];s.at=s.axis==='h'?p.y:p.x;draw()});
-function release(e){if(drag!==e.pointerId)return;drag=null;save();draw()}overlay.addEventListener('pointerup',release);overlay.addEventListener('pointercancel',release);
+// Capture pointer input at document level: OCR image may be covered by a separate annotation layer.
+// Do not depend on SVG hit-testing, which is unreliable in the nested Safari iframe.
+overlay.style.setProperty('pointer-events','none','important');
+svg.style.pointerEvents='none';
+let moved=false;
+function inImage(e){
+ const r=base.getBoundingClientRect();
+ return r.width>50&&r.height>50&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+}
+function imagePoint(e){
+ const r=base.getBoundingClientRect();
+ return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)),w:r.width,h:r.height};
+}
+function nearestLine(p){
+ let best=-1,dist=12;
+ strokes.forEach((line,i)=>{
+  const px=line.axis==='h'?Math.abs(line.at-p.y)*p.h:Math.abs(line.at-p.x)*p.w;
+  if(px<dist){best=i;dist=px;}
+ });
+ return best;
+}
+function pointerStart(e){
+ if(mode==='view'||e.button!==0||dock.contains(e.target)||!inImage(e))return;
+ const p=imagePoint(e);
+ if(mode==='select'){
+  selected=nearestLine(p);
+  if(selected>=0){checkpoint();drag=e.pointerId;moved=false;}
+ }else{
+  checkpoint();strokes.push({axis:mode,at:mode==='h'?p.y:p.x});
+  selected=strokes.length-1;save();
+  note.textContent='已添加第 '+strokes.length+' 条校正线；可继续点击补线，或选择／拖动调整。';
+ }
+ draw();
+ e.preventDefault();e.stopPropagation();
+}
+function pointerMove(e){
+ if(drag!==e.pointerId||selected<0)return;
+ const p=imagePoint(e),line=strokes[selected];if(!line)return;
+ line.at=line.axis==='h'?p.y:p.x;moved=true;draw();e.preventDefault();
+}
+function pointerEnd(e){
+ if(drag!==e.pointerId)return;
+ drag=null;if(moved){save();draw();}
+}
+d.addEventListener('pointerdown',pointerStart,true);
+d.addEventListener('pointermove',pointerMove,true);
+d.addEventListener('pointerup',pointerEnd,true);
+d.addEventListener('pointercancel',pointerEnd,true);
 d.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(d.activeElement?.tagName)||d.activeElement?.isContentEditable)return;if(mode==='select'&&selected>=0&&['Delete','Backspace'].includes(e.key)){e.preventDefault();del.click()}else if(mode!=='view'&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();(e.shiftKey?forward:back).click()}else if(e.key==='Escape')setMode('view')});
 d.addEventListener('scroll',position,true);d.defaultView.addEventListener('resize',position);if(d.defaultView.ResizeObserver)new d.defaultView.ResizeObserver(position).observe(base);known.set(d,{position});setMode('view');position();
 }
