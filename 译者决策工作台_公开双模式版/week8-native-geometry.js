@@ -57,7 +57,7 @@ function install(doc){
   }
   const g=data.geometry,words=data.ocr.words;
   const xLimit=g.x0+Math.min(150,(g.x1-g.x0)*.16);
-  const leftNotes=words.filter(w=>w.bbox&&w.bbox.x0>=g.x0-30&&w.bbox.x0<xLimit&&w.bbox.y0>g.ys[1]&&/^\\[\\d{1,2}\\]/.test(String(w.text||''))).sort((a,b)=>a.bbox.y0-b.bbox.y0);
+  const leftNotes=words.filter(w=>w.bbox&&w.bbox.x0>=g.x0-30&&w.bbox.x0<xLimit&&w.bbox.y0>g.ys[1]&&/^\[\d{1,2}\]/.test(String(w.text||''))).sort((a,b)=>a.bbox.y0-b.bbox.y0);
   const footer=words.filter(w=>w.bbox&&w.bbox.x0<xLimit+70&&/^Technical$/i.test(String(w.text||''))).sort((a,b)=>a.bbox.y0-b.bbox.y0)[0];
   if(!leftNotes.length||!footer||footer.bbox.y0<=leftNotes[0].bbox.y0)return false;
   const firstNote=leftNotes[0].bbox.y0,lastWord=Math.max(...leftNotes.map(w=>w.bbox.y1));
