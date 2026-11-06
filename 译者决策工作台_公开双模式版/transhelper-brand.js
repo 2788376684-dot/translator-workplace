@@ -20,6 +20,13 @@ function apply(){
  const logo=document.querySelector('.logo');
  if(logo){
   replaceBrandText(logo);
+  // Some legacy shells use only a symbolic logo or a Chinese title.
+  // Ensure the new product name is visible without rewriting controls.
+  if(!(logo.textContent||'').includes('Transhelper')){
+   const title=document.createElement('span');
+   title.className='th-brand-wordmark';title.textContent='Transhelper';
+   logo.appendChild(title);
+  }
   if(!logo.querySelector('.th-brand-mark')){
    const mark=document.createElement('span');
    mark.className='th-brand-mark';mark.textContent='T';mark.setAttribute('aria-hidden','true');
