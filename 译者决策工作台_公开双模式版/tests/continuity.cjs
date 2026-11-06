@@ -8,7 +8,7 @@ const script=readFileSync(join(__dirname,'..','tw-continuity-guard.js'),'utf8');
 function fixture(raw){
  const listeners={};let writes=0;
  class Node {
-  constructor(tag){this.tagName=tag;this.children=[];this.hidden=false;this.className='';this.textContent='';this.dataset={};}
+  constructor(tag){this.tagName=tag;this.children=[];this.hidden=false;this.className='';this.textContent='';this.dataset={};this.classList={add(){},remove(){},toggle(){}};}
   append(...nodes){this.children.push(...nodes);}
   replaceChildren(...nodes){this.children=[...nodes];}
   insertBefore(node){this.children.push(node);}
