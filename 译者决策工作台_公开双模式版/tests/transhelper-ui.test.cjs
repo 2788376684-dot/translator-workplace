@@ -36,3 +36,39 @@ test('legacy project storage and workflows are unchanged by rebranding',()=>{
   assert.ok(wrapper.includes(path),'legacy enhancement removed: '+path);
  }
 });
+
+
+test('brand mount replaces all legacy icons and old wordmark exactly once',()=>{
+ const vm=require('node:vm');
+ function element(tag){
+  return {
+   tagName:tag,children:[],className:'',dataset:{},attributes:{},
+   append(...v){this.children.push(...v)},
+   replaceChildren(...v){this.children=[...v]},
+   setAttribute(k,v){this.attributes[k]=v},
+   querySelector(s){return s==='.th-brand-shell'?this.children.find(x=>x.className==='th-brand-shell')||null:null}
+  };
+ }
+ const sidebar=element('aside'),logo=element('div');
+ logo.children=[element('i'),element('i'),element('span')];
+ const doc={
+  title:'Old title',
+  querySelector:s=>s.includes('.logo')?logo:s==='.sidebar'?sidebar:null,
+  createElement:element
+ };
+ let callback=null;
+ const win={addEventListener:(type,fn)=>{if(type==='pageshow')callback=fn}};
+ vm.runInNewContext(brand,{window:win,document:doc,MutationObserver:class{observe(){} constructor(){}}});
+ assert.equal(doc.title,'Transhelper · Translation Workspace');
+ assert.equal(logo.children.length,1);
+ assert.equal(logo.children[0].className,'th-brand-shell');
+ assert.equal(logo.children[0].children.length,2);
+ assert.equal(logo.children[0].children[1].children[0].textContent,'Transhelper');
+ callback();
+ assert.equal(logo.children.length,1,'reapplying must not add duplicate marks');
+});
+test('brand never scans or rewrites user translations',()=>{
+ assert.doesNotMatch(brand,/createTreeWalker|\.innerText\s*=|localStorage/);
+ assert.match(brand,/replaceChildren\(buildBrand\(document\)\)/);
+ assert.doesNotMatch(brand,/Translator Workplace/);
+});
