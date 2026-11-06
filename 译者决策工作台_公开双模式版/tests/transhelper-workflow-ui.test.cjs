@@ -28,8 +28,10 @@ test('export arrow is removed only from delivery action labels',()=>{
 test('project and AI settings triggers have equal dimensions',()=>{
  assert.match(code,/includes\('项目设置'\)/);
  assert.match(code,/getElementById\('openAISettings'\)/);
+ assert.match(code,/includes\('导入项目'\)/);
+ assert.match(code,/setProperty\('height','36px','important'\)/);
  assert.match(styles,/\.th-settings-trigger/);
- assert.match(styles,/width:112px!important;min-width:112px!important;max-width:112px!important/);
+ assert.match(styles,/width:92px!important;min-width:92px!important;max-width:92px!important/);
 });
 test('UI patch stays outside the translator core and does not hide the existing tools',()=>{
  assert.match(shell,/transhelper-workflow-ui\.js/);
