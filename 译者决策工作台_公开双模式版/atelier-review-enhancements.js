@@ -99,7 +99,7 @@ if(stage){
  const css=document.createElement('style');
  css.id=STYLE_ID;
  css.textContent=`
- .tw-ocr-clean .tw-ocr-detection-overlay{opacity:0!important;pointer-events:none!important}
+ .tw-ocr-clean .tw-ocr-detection-overlay{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
  .tw-ocr-clean .tw-ocr-detection-overlay *{pointer-events:none!important}
  .tw-ocr-preview-switch{margin-left:8px;padding:5px 10px;border:1px solid #bccddd;border-radius:7px;background:#fff;color:#355268;font:12px/1.4 inherit;cursor:pointer}
  .tw-ocr-preview-switch:focus-visible{outline:2px solid #2470d6;outline-offset:2px}
@@ -118,27 +118,38 @@ if(stage){
   const heading=headings.find(e=>e.textContent.trim()==='原页与位置');
   if(!heading)return null;
   let node=heading;
-  for(let i=0;i<6&&node;i++,node=node.parentElement){
+  for(let i=0;i<9&&node;i++,node=node.parentElement){
    if(node.querySelector('img,canvas')&&node.querySelectorAll('*').length>7)return {panel:node,heading};
   }
   return null;
  }
  function overlayCandidates(panel){
-  const images=[...panel.querySelectorAll('img,canvas')];
-  if(!images.length)return [];
+  const images=[...panel.querySelectorAll('img')].filter(e=>e.getBoundingClientRect().width>100);
+  const canvases=[...panel.querySelectorAll('canvas')].filter(e=>e.getBoundingClientRect().width>100);
+  const bases=images.length?images:canvases.slice(0,1);
+  if(!bases.length)return [];
+  const overlaps=(e)=>{const r=e.getBoundingClientRect();return r.width>2&&r.height>2&&bases.some(im=>{const t=im.getBoundingClientRect();return r.left<t.right&&r.right>t.left&&r.top<t.bottom&&r.bottom>t.top})};
   const results=[];
   for(const el of panel.querySelectorAll('*')){
-   if(el.closest('.tw-ocr-preview-switch')||el.matches('img,canvas'))continue;
+   if(el.matches('img,button,input,select,textarea')||el.closest('.tw-ocr-preview-switch'))continue;
+   if(el.contains(bases[0])||bases.includes(el))continue;
+   if(!overlaps(el))continue;
    const cs=getComputedStyle(el);
-   if(cs.position!=='absolute'&&cs.position!=='fixed')continue;
-   const r=el.getBoundingClientRect();
-   if(r.width<2||r.height<2)continue;
-   if(!images.some(im=>{const t=im.getBoundingClientRect();return r.left<t.right&&r.right>t.left&&r.top<t.bottom&&r.bottom>t.top}))continue;
-   const stroked=el.matches('svg')||el.querySelector('svg');
+   // OCR vectors and secondary drawing canvases are always presentation layers.
+   if(el.matches('svg') || (el.matches('canvas')&&!bases.includes(el))){
+    results.push(el);continue;
+   }
+   const abs=cs.position==='absolute'||cs.position==='fixed';
+   if(!abs)continue;
+   const name=String(el.className&&typeof el.className==='string'?el.className:'').toLowerCase();
+   const role=String(el.getAttribute('data-type')||'').toLowerCase();
    const colored=['borderTopColor','borderLeftColor','borderRightColor','borderBottomColor','outlineColor'].some(k=>colorIsOverlay(cs[k]));
-   if(stroked||colored)results.push(el);
+   const marked=/ocr|overlay|highlight|bbox|bounding|detect|region|word-box|line-box|text-box|table-box/.test(name+' '+role);
+   const bordered=parseFloat(cs.borderTopWidth)>0||parseFloat(cs.outlineWidth)>0;
+   // Include small transparent OCR text hitboxes; exclude control panels.
+   if(colored||marked||(bordered&&el.getBoundingClientRect().width<600&&el.children.length===0))results.push(el);
   }
-  // Hide only top-level overlay layers, never the underlying scanned image.
+  // Suppress only recognition annotations, never the scanned page itself.
   return results.filter(el=>!results.some(parent=>parent!==el&&parent.contains(el)));
  }
  function attach(){
