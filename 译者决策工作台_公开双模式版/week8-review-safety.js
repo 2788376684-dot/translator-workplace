@@ -11,6 +11,24 @@ function setup(w){
  const style=D.createElement('style');
  style.textContent='.tw-safe-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 9px;padding:8px 10px;border:1px solid #d2e2e6;border-radius:6px;background:#f5fafa;font:13px system-ui}.tw-safe-strip button{padding:6px 9px;border:1px solid #b7cbd3;border-radius:5px;background:white;cursor:pointer;font:inherit}.tw-safe-strip strong{margin-right:auto}.tw-safe-strip small{flex-basis:100%;color:#60737b}.tw-status-button{font:11px system-ui;border:1px solid #cad9d9;border-radius:5px;padding:3px 5px;cursor:pointer;background:#fff;color:#39535c}.tw-status-button[data-v=checked]{background:#e3f4ea;color:#17633e}.tw-status-button[data-v=issue]{background:#fff1df;color:#905e19}.tw-diff-dialog{max-width:min(780px,94vw);width:740px;max-height:84vh;overflow:auto;border:1px solid #b9ccd2;border-radius:10px;padding:18px;background:white;color:#263d47;box-shadow:0 16px 40px #0003;font:13px/1.55 system-ui}.tw-diff-dialog::backdrop{background:#132d3977}.tw-diff-dialog table{width:100%;border-collapse:collapse;table-layout:fixed}.tw-diff-dialog th,.tw-diff-dialog td{border:1px solid #d5e0e4;padding:7px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}.tw-diff-dialog footer{display:flex;justify-content:flex-end;gap:9px;margin-top:12px}.tw-diff-dialog button{padding:7px 12px;cursor:pointer}.tw-diff-dialog .primary{background:#087d79;color:white}';
  D.head.append(style);
+ // Preserve side-by-side original image and editable OCR result inside the embedded Week8 frame.
+ // Week8's <=1050px media query otherwise collapses the two panels into a vertical stack.
+ const layoutStyle=D.createElement('style');
+ layoutStyle.id='tw-ocr-side-by-side-layout';
+ layoutStyle.textContent=`
+ .layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr)!important;align-items:start!important;gap:12px!important}
+ .layout>.panel{min-width:0!important}
+ .layout>.sourcepanel{position:sticky!important;top:12px!important;align-self:start!important}
+ .layout .viewer{max-height:72vh!important;overflow:auto!important}
+ .layout .viewer canvas{max-width:100%!important}
+ @media(max-width:760px){
+   main{overflow-x:auto!important}
+   .layout{min-width:780px!important}
+   .layout>.sourcepanel{position:relative!important;top:0!important}
+ }
+ `;
+ D.head.append(layoutStyle);
+
  const bar=D.createElement('div');bar.className='tw-safe-strip';
  const title=D.createElement('strong'),hint=D.createElement('small');hint.textContent='选中右侧单元格会定位左侧原图；点击原图也可跳转右侧。';
  const jump=D.createElement('button');jump.textContent='定位当前格';jump.type='button';
