@@ -1,0 +1,59 @@
+/* Transhelper quick actions · independent accessory, no core layout changes. */
+.th-quick-dock{
+ position:fixed;right:24px;bottom:24px;z-index:8500;
+ width:220px;max-width:calc(100vw - 24px);
+ display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+ pointer-events:none;
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif;
+}
+.th-quick-dock>*{pointer-events:auto}
+.th-quick-toggle{
+ flex:0 0 48px;width:48px;height:48px;border:1px solid rgba(0,0,0,.13);
+ border-radius:16px;background:#1d1d1f;color:#fff;
+ display:grid;place-items:center;cursor:pointer;outline-offset:4px;
+ box-shadow:0 8px 24px rgba(15,18,28,.2),inset 0 1px rgba(255,255,255,.16);
+ transition:transform .24s cubic-bezier(.2,1,.3,1),box-shadow .2s ease,background .2s ease;
+}
+.th-quick-toggle svg{width:23px;height:23px;transition:transform .24s ease}
+.th-quick-open .th-quick-toggle svg{transform:rotate(45deg)}
+.th-quick-toggle:hover{background:#35353a;box-shadow:0 10px 26px #16192143}
+.th-quick-toggle:active{transform:scale(.96)}
+.th-quick-menu{
+ width:100%;box-sizing:border-box;padding:6px;background:rgba(255,255,255,.98);
+ border:1px solid #e0e2e9;border-radius:15px;
+ box-shadow:0 14px 42px #19233428,0 2px 10px #1923340c;
+ backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+ transform-origin:bottom right;animation:th-quick-enter .22s cubic-bezier(.2,1,.3,1) both;
+}
+.th-quick-menu[hidden],.th-quick-message[hidden],.th-quick-action[hidden]{display:none!important}
+.th-quick-action{
+ width:100%;display:flex;align-items:center;gap:11px;
+ box-sizing:border-box;border:0;border-radius:10px;background:transparent;
+ color:#25262a;min-height:43px;padding:8px 12px;text-align:left;
+ font:590 12px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+ cursor:pointer;transition:background .16s ease,color .16s ease;
+}
+.th-quick-action:hover,.th-quick-action:focus-visible{background:#f0f4fa;color:#005fbb}
+.th-quick-action-icon{width:20px;height:20px;flex:0 0 20px;color:#646b75}
+.th-quick-action-icon svg{width:20px;height:20px;display:block}
+.th-quick-message{
+ padding:9px 11px;border-radius:9px;background:#fff;border:1px solid #e1e5ea;
+ color:#4b5666;box-shadow:0 6px 18px #19233417;font-size:12px;line-height:1.55;
+}
+.th-quick-toggle:focus-visible,.th-quick-action:focus-visible{
+ outline:3px solid #0071e36b!important;outline-offset:3px!important;
+}
+.th-quick-dock-ready #openStageAI{display:none!important}
+.th-quick-dock-ready #th-ai-progress{bottom:92px!important;right:24px!important}
+@keyframes th-quick-enter{
+ from{opacity:0;transform:translateY(8px) scale(.975)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:650px){
+ .th-quick-dock{right:13px;bottom:13px}
+ .th-quick-dock-ready #th-ai-progress{bottom:76px!important;right:13px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .th-quick-toggle,.th-quick-toggle svg,.th-quick-action{transition:none!important}
+ .th-quick-menu{animation:none!important}
+}
