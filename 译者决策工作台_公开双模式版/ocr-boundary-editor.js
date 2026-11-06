@@ -21,11 +21,11 @@ button('导入校正',()=>{const input=d.createElement('input');input.type='file
 button('清除校正',()=>{if(!strokes.length||!d.defaultView.confirm('清除本张图片的全部手动校正线？'))return;checkpoint();strokes=[];selected=-1;save();draw()});
 const note=d.createElement('small');note.textContent='橙色为手动校正线，原始绿色 OCR 框保留。点击补线、拖动校正；更改仅影响校正图层，暂不改写 OCR 单元格数据。';bar.append(note);
 // Keep all editor controls out of the application's own grid/flex layout.
-bar.style.cssText='position:fixed!important;left:12px;bottom:58px;z-index:2147480001;width:min(660px,calc(100vw - 24px));max-height:180px;overflow:auto;box-sizing:border-box;margin:0!important;display:none;';
+bar.style.cssText='position:fixed!important;right:12px;top:56px;z-index:2147480001;width:min(660px,calc(100vw - 24px));max-height:min(230px,45vh);overflow:auto;box-sizing:border-box;margin:0!important;display:none;box-shadow:0 4px 18px #0002;';
 d.body.append(bar);
-const launcher=d.createElement('button');launcher.type='button';launcher.textContent='表格线编辑';
+const launcher=d.createElement('button');launcher.type='button';launcher.textContent='✎ 表格线编辑';
 launcher.setAttribute('aria-expanded','false');
-launcher.style.cssText='position:fixed!important;left:12px;bottom:12px;z-index:2147480002;border:1px solid #aac5e3;border-radius:8px;background:#fff;color:#245582;padding:8px 12px;font:12px system-ui;box-shadow:0 2px 10px #0002;cursor:pointer;';
+launcher.style.cssText='position:fixed!important;right:12px;top:10px;z-index:2147480002;border:1px solid #1266d6;border-radius:8px;background:#1266d6;color:#fff;padding:8px 14px;font:600 13px system-ui;box-shadow:0 2px 10px #0002;cursor:pointer;white-space:nowrap;';
 launcher.addEventListener('click',()=>{const show=bar.style.display==='none';bar.style.display=show?'flex':'none';launcher.setAttribute('aria-expanded',String(show));if(!show)setMode('view');});
 d.body.append(launcher);
 function position(){const r=base.getBoundingClientRect();Object.assign(overlay.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',display:r.width>50?'block':'none'})}
