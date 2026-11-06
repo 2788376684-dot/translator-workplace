@@ -1,0 +1,50 @@
+(()=>{
+'use strict';
+const done=new WeakSet();
+function api(w){try{return w.eval('({doc:()=>doc(),selection:()=>selected,cellRect,rawAt,deriveNotes,rebuild,selectCell})')}catch{return null}}
+const norm=x=>String(x??'').replace(/\s+/g,' ').trim();
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+function setup(w){
+ const D=w.document,viewer=D.getElementById('viewer'),editor=D.getElementById('editor'),rebuild=D.getElementById('rebuild-grid');
+ if(!viewer||!editor||!rebuild||done.has(D))return;
+ const n=api(w);if(!n)return;done.add(D);
+ const style=D.createElement('style');
+ style.textContent='.tw-safe-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 9px;padding:8px 10px;border:1px solid #d2e2e6;border-radius:6px;background:#f5fafa;font:13px system-ui}.tw-safe-strip button{padding:6px 9px;border:1px solid #b7cbd3;border-radius:5px;background:white;cursor:pointer;font:inherit}.tw-safe-strip strong{margin-right:auto}.tw-safe-strip small{flex-basis:100%;color:#60737b}.tw-status-button{font:11px system-ui;border:1px solid #cad9d9;border-radius:5px;padding:3px 5px;cursor:pointer;background:#fff;color:#39535c}.tw-status-button[data-v=checked]{background:#e3f4ea;color:#17633e}.tw-status-button[data-v=issue]{background:#fff1df;color:#905e19}.tw-diff-dialog{max-width:min(780px,94vw);width:740px;max-height:84vh;overflow:auto;border:1px solid #b9ccd2;border-radius:10px;padding:18px;background:white;color:#263d47;box-shadow:0 16px 40px #0003;font:13px/1.55 system-ui}.tw-diff-dialog::backdrop{background:#132d3977}.tw-diff-dialog table{width:100%;border-collapse:collapse;table-layout:fixed}.tw-diff-dialog th,.tw-diff-dialog td{border:1px solid #d5e0e4;padding:7px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}.tw-diff-dialog footer{display:flex;justify-content:flex-end;gap:9px;margin-top:12px}.tw-diff-dialog button{padding:7px 12px;cursor:pointer}.tw-diff-dialog .primary{background:#087d79;color:white}';
+ D.head.append(style);
+ const bar=D.createElement('div');bar.className='tw-safe-strip';
+ const title=D.createElement('strong'),hint=D.createElement('small');hint.textContent='选中右侧单元格会定位左侧原图；点击原图也可跳转右侧。';
+ const jump=D.createElement('button');jump.textContent='定位当前格';jump.type='button';
+ const next=D.createElement('button');next.textContent='下一待核对';next.type='button';
+ bar.append(title,jump,next,hint);editor.before(bar);
+ const dialog=D.createElement('dialog');dialog.className='tw-diff-dialog';D.body.append(dialog);
+ let mark={},key='',busy=false;
+ function project(){return n.doc()}
+ function load(){let d=project();if(!d)return;let k='tw-review-status-v2:'+d.id+':'+(d.ocr?.recognizedAt||d.image?.length||'');if(k===key)return;key=k;try{mark=JSON.parse(w.localStorage.getItem(k)||'{}')}catch{mark={}}}
+ function save(){try{w.localStorage.setItem(key,JSON.stringify(mark))}catch{}}
+ function locate(){const s=n.selection(),d=project(),canvas=D.getElementById('source-canvas');if(!s||!d||!canvas)return;const rect=n.cellRect(s.r,s.c),zoom=canvas.getBoundingClientRect();viewer.scrollTo({left:Math.max(0,(rect.x0+rect.x1)*zoom.width/(2*d.width)-viewer.clientWidth/2),top:Math.max(0,(rect.y0+rect.y1)*zoom.height/(2*d.height)-viewer.clientHeight/2),behavior:'smooth'});hint.textContent='已定位第'+(s.r+1)+'行、第'+(s.c+1)+'列；原图中青色高亮对应当前格。'}
+ function decorate(){const d=project();if(!d)return;load();let checked=0,issue=0;for(let r=0;r<d.rows.length;r++)for(let c=0;c<3;c++){let k=r+','+c;if(mark[k]==='checked')checked++;if(mark[k]==='issue')issue++;}title.textContent='逐格核对 '+checked+'/'+(d.rows.length*3)+(issue?' · 待修正 '+issue:'');
+ for(const cell of D.querySelectorAll('#editor td[data-cell]')){let k=cell.dataset.cell,b=cell.querySelector('.tw-status-button');if(!b){b=D.createElement('button');b.type='button';b.className='tw-status-button';b.title='待核对 → 已核对 → 需修正';cell.querySelector('.celllabel')?.append(b);b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();let values=['pending','checked','issue'];mark[k]=values[(values.indexOf(mark[k]||'pending')+1)%3];save();let [r,c]=k.split(',').map(Number);n.selectCell(r,c);decorate();locate()})}b.dataset.v=mark[k]||'pending';b.textContent=mark[k]==='checked'?'✓ 已核对':mark[k]==='issue'?'! 需修正':'○ 待核对';}
+ }
+ jump.onclick=locate;next.onclick=()=>{const d=project(),s=n.selection();if(!d?.rows?.length)return;load();let start=s?s.r*3+s.c+1:0;for(let i=0;i<d.rows.length*3;i++){let v=(start+i)%(d.rows.length*3),r=Math.floor(v/3),c=v%3;if(mark[r+','+c]!=='checked'){n.selectCell(r,c);D.querySelector('#editor [data-cell="'+r+','+c+'"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});locate();return}}hint.textContent='所有参数格已核对。'};
+ editor.addEventListener('focusin',e=>{if(e.target.matches('textarea[data-row]'))w.setTimeout(locate,40)},true);
+ D.getElementById('source-canvas').addEventListener('pointerup',()=>w.setTimeout(()=>{let s=n.selection();if(s)D.querySelector('#editor [data-cell="'+s.r+','+s.c+'"]')?.scrollIntoView({block:'nearest',behavior:'smooth'})},60));
+ function proposal(){let d=project(),g=d.geometry,xs=[g.x0,...g.cols,g.x1],rows=[];for(let r=0;r<g.ys.length-2;r++)rows.push([0,1,2].map(c=>n.rawAt({x0:xs[c],x1:xs[c+1],y0:g.ys[r+1],y1:g.ys[r+2]})));return {rows,notes:n.deriveNotes()}}
+ function preview(){
+  let d=project();if(!d?.ocr||busy)return;let nextData;try{nextData=proposal()}catch(e){hint.textContent='差异预览失败：'+e.message;return}
+  const changes=[];let same=0;for(let r=0;r<Math.max(d.rows.length,nextData.rows.length);r++)for(let c=0;c<3;c++){let old=norm(d.rows[r]?.source[c]),now=norm(nextData.rows[r]?.[c]);if(old===now)same++;else changes.push([r+1,c+1,old,now])}
+  let notesDiff=JSON.stringify(d.notes.map(x=>[x.mark,norm(x.source)]))!==JSON.stringify(nextData.notes.map(x=>[x.mark,norm(x.source)]));
+  let rows=changes.slice(0,50).map(v=>'<tr><td>'+v[0]+' / '+v[1]+'</td><td>'+esc(v[2]||'（空）')+'</td><td>'+esc(v[3]||'（空）')+'</td></tr>').join('');
+  dialog.innerHTML='<h3>重新分表 · 差异确认</h3><p>保持不变 '+same+' 格；将变化 '+changes.length+' 格。'+(notesDiff?'注释归格也会变化。':'')+'</p><p style="color:#8a611c">重新分表可能重置已编辑的中文。系统默认保留原文未变化的对应格译文。原文变化的格请重新校对。</p>'+(rows?'<div style="overflow:auto;max-height:300px"><table><thead><tr><th>行 / 列</th><th>当前原文</th><th>新归格原文</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p>当前单元格原文未发生变化。</p>')+'<label style="display:block;margin-top:12px"><input id="tw-preserve" type="checkbox" checked> 保留原文未变化的格内已有中文及匹配注释</label><footer><button id="tw-cancel" type="button">取消</button><button id="tw-accept" type="button" class="primary">确认重新分表</button></footer>';
+  dialog.querySelector('#tw-cancel').onclick=()=>dialog.close();
+  dialog.querySelector('#tw-accept').onclick=()=>{if(busy)return;busy=true;const keep=dialog.querySelector('#tw-preserve').checked,rowsBefore=d.rows.map(r=>({source:r.source.slice(),target:r.target.slice()})),notesBefore=d.notes.map(x=>({mark:x.mark,source:x.source,zh:x.zh,rowId:x.rowId,models:x.models.slice()}));
+   try{n.rebuild(false);if(keep){d.rows.forEach((r,i)=>r.source.forEach((v,c)=>{if(rowsBefore[i]&&norm(rowsBefore[i].source[c])===norm(v))r.target[c]=rowsBefore[i].target[c]}));for(const note of d.notes){let old=notesBefore.find(o=>o.mark===note.mark&&norm(o.source)===norm(note.source));if(old){note.zh=old.zh;note.rowId=old.rowId;note.models=old.models}}try{w.eval('renderEditor();renderNotes();renderPreview();refreshRequest();draw()')}catch{}}mark={};save();dialog.close();w.setTimeout(decorate,80);hint.textContent='分表已更新；原文发生变化的单元格请重新核对。'}
+   catch(e){hint.textContent='重新分表失败：'+e.message}finally{busy=false}};
+  dialog.showModal();
+ }
+ rebuild.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();preview()},true);
+ const observe=new w.MutationObserver(()=>w.requestAnimationFrame(decorate));observe.observe(editor,{childList:true});
+ w.setInterval(decorate,2600);decorate();
+}
+function scan(){const seen=new Set();function visit(d){if(!d||seen.has(d))return;seen.add(d);try{setup(d.defaultView)}catch(e){console.warn('Week8 safety:',e)}for(const f of d.querySelectorAll('iframe')){try{visit(f.contentDocument)}catch{}if(!f.dataset.twSafeWatch){f.dataset.twSafeWatch='1';f.addEventListener('load',scan)}}}visit(document)}
+scan();setInterval(scan,1800);
+})();
