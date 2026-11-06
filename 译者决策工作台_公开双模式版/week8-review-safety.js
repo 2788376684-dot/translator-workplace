@@ -6,14 +6,18 @@ const norm=x=>String(x??'').replace(/\s+/g,' ').trim();
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 // Restore edited text by verified OCR source, including rows shifted by resegmentation.
 // Repeated identical OCR cells are only matched when their original row is unambiguous.
+// Restore edited text by unique OCR source, including rows displaced by resegmentation.
+// For repeated text, require an unambiguous whole-row match; never guess after movement.
 function preserveTranslationCells(before,after){
+ const signature=row=>[0,1,2].map(c=>norm(row.source?.[c])).join('\u001e');
+ const layoutUnchanged=before.length===after.length&&before.every((row,i)=>signature(row)===signature(after[i]));
  const keyed=new Map();
  before.forEach((row,i)=>{
   for(let c=0;c<3;c++){
    const source=norm(row.source?.[c]),target=row.target?.[c];
    if(!source||typeof target!=='string'||!target.trim()||norm(target)===source)continue;
    const key=c+'\u001f'+source,items=keyed.get(key)||[];
-   items.push({i,value:target,used:false});keyed.set(key,items);
+   items.push({i,rowSignature:signature(row),value:target,used:false});keyed.set(key,items);
   }
  });
  let restored=0,ambiguous=0;
@@ -21,12 +25,19 @@ function preserveTranslationCells(before,after){
   if(!Array.isArray(row.source)||!Array.isArray(row.target))return;
   for(let c=0;c<3;c++){
    const source=norm(row.source[c]),current=row.target[c];
-   // A new, independently edited translation always wins.
    if(!source||(typeof current==='string'&&current.trim()&&norm(current)!==source))continue;
    const available=(keyed.get(c+'\u001f'+source)||[]).filter(x=>!x.used);
    if(!available.length)continue;
-   const atRow=available.filter(x=>x.i===i);
-   const selected=atRow.length===1?atRow[0]:available.length===1?available[0]:null;
+   let selected=null;
+   if(available.length===1)selected=available[0];
+   else{
+    const fullRowMatches=available.filter(x=>x.rowSignature===signature(row));
+    if(fullRowMatches.length===1)selected=fullRowMatches[0];
+    else if(layoutUnchanged){
+     const sameRow=available.filter(x=>x.i===i);
+     if(sameRow.length===1)selected=sameRow[0];
+    }
+   }
    if(!selected){ambiguous++;continue;}
    row.target[c]=selected.value;selected.used=true;restored++;
   }
