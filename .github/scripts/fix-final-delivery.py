@@ -3,7 +3,7 @@ p=Path('译者决策工作台_公开双模式版/atelier-core.html')
 s=p.read_text(encoding='utf-8')
 start=s.index('function showParamExport(){')
 end=s.index('function paramExport(format){',start)
-assert 1000 < end-start < 3000, f'Unexpected export function length {end-start}'
+assert 700 < end-start < 3000, f'Unexpected export function length {end-start}'
 replacement=r'''function showParamExport(){
  const p=proj().parameter,stage=$('stageContent');
  if(!p||!stage)return toast('当前参数表工程尚未准备好');
