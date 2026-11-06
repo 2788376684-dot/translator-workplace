@@ -38,13 +38,15 @@ function show(){
     if(source)source.click();
    }
   };
-  if(!d.getElementById('tw-week8-import-guard-loader')){
-   const guard=d.createElement('script');
-   guard.id='tw-week8-import-guard-loader';
-   guard.src='/week8-import-guard.js';
-   guard.onload=openSource;
-   guard.onerror=()=>{console.warn('Week8 import guard unavailable.');openSource();};
-   d.head.appendChild(guard);
+  // Install the persistence guard BEFORE the source step creates the OCR iframe.
+  // Invalid old IndexedDB snapshots remain stored and are never forwarded to TW_RESTORE.
+  if(!d.getElementById('tw-week8-restore-safety-loader')){
+   const restoreGuard=d.createElement('script');
+   restoreGuard.id='tw-week8-restore-safety-loader';
+   restoreGuard.src='/week8-restore-safety.js';
+   restoreGuard.onload=openSource;
+   restoreGuard.onerror=()=>{console.warn('OCR snapshot restore guard unavailable.');openSource();};
+   d.head.appendChild(restoreGuard);
   }else openSource();
   if(!d.getElementById('tw-review-loader')){
    const patch=d.createElement('script');
