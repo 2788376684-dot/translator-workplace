@@ -56,7 +56,7 @@ function settingsButtons(){
  const elements=[...header.querySelectorAll('button,[role="button"],a.btn')];
  const project=elements.find(e=>norm(e.textContent).includes('项目设置'));
  const ai=doc.getElementById('openAISettings')||
-  elements.find(e=>/^AI\\s*设置$/i.test(norm(e.textContent)));
+  elements.find(e=>/^AI\s*设置$/i.test(norm(e.textContent)));
  if(!project||!ai||!header.contains(ai))return;
  for(const b of [project,ai]){
   b.classList.add('th-settings-trigger');
