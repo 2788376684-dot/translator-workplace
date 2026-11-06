@@ -58,7 +58,7 @@ function clearTimers(){
 }
 function start(label,waiting=true){
  clearTimers();
- active={id:++serial,label:labelFor(label),targetSentences:D.querySelectorAll('[data-sentence-jump]').length,started:Date.now(),requests:0,replies:0,
+ active={id:++serial,label:labelFor(label),targetSentences:D.querySelectorAll?.('[data-sentence-jump]')?.length||0,started:Date.now(),requests:0,replies:0,
   inflight:0,failures:0,networkSeen:false,latestError:''};
  setPhase('starting','已收到操作，正在启动 AI 请求…');
  if(waiting){
