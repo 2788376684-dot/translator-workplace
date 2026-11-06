@@ -92,7 +92,16 @@ function install(doc){
   if(key===repairKey)return;
   repairKey=key;
   if(repairGeometry(true)){
-   notice.textContent='检测到注释或页脚被三列网格穿过，已校正显示边界。原有文字未覆盖；必要时按边界重新分表。';
+   // Rebuild source assignment only for untouched literal drafts. Preserve all human or AI revisions.
+   const pristine=data.manualEdits===0&&(!data.provenance||['尚未编辑','字面词表初稿'].includes(data.provenance.kind));
+   if(pristine&&typeof doc.defaultView.rebuild==='function'){
+    try{doc.defaultView.rebuild(false);
+     notice.textContent='已修复参数三列、跨列注释及独立页脚，并使用 Week8 原生功能重新分表。';
+    }catch(e){console.warn('Week8 geometry rebuild:',e);
+     notice.textContent='已修复三列边界，重新分表未完成；请点击“按边界重新分表”。';}
+   }else{
+    notice.textContent='已修复注释与页脚边界。为保护已有译文，未覆盖内容；请核对后按边界重新分表。';
+   }
   }
  }
  const repairTimer=doc.defaultView.setInterval(autoRepair,1800);
