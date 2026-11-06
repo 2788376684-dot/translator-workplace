@@ -1,0 +1,27 @@
+name: Diagnose OCR and revision workflow
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-ocr-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print tightly scoped review code
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          for pattern in ['issueHtml','function renderParamRevision','function showSentenceReview','function renderParam','function runReviewNow','function runReview','function draw','parameter-view','paramFrame','审校']:
+            matches=list(re.finditer(re.escape(pattern),s))
+            print('\n===',pattern,'count',len(matches))
+            for m in matches[:12]:
+              p=m.start()
+              print('OFFSET',p,'LINE',s.count('\n',0,p)+1,'CONTEXT:',s[max(0,p-380):min(len(s),p+720)].replace('\n','\\n'))
+          PY
