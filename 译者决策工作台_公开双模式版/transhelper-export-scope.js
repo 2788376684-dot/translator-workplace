@@ -127,7 +127,7 @@ function zipStore(entries){
  const u16=(v)=>[v&255,(v>>>8)&255],u32=(v)=>[v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
  function add(bytes){parts.push(bytes);offset+=bytes.length}
  for(const [name,body] of entries){
-  const nameBytes=enc.encode(name),bytes=enc.encode(body),crc=crc32(bytes),start=offset;
+  const nameBytes=enc.encode(name),bytes=body instanceof Uint8Array?body:enc.encode(body),crc=crc32(bytes),start=offset;
   add(Uint8Array.from([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
    ...u32(crc),...u32(bytes.length),...u32(bytes.length),...u16(nameBytes.length),...u16(0)]));
   add(nameBytes);add(bytes);
@@ -209,7 +209,8 @@ function renderScope(){
     if(format==='zip')download(name+'.zip',zipStore([
      [name+'.txt',lines(archive)],
      [name+'.html',exportHtml(archive)],
-     [name+'.json',JSON.stringify(archive,null,2)]
+     [name+'.json',JSON.stringify(archive,null,2)],
+     [name+'.docx',docxArchive(archive)]
     ]),'application/zip');
    }catch(e){console.error('Transhelper archive export:',e);alert('完整档案导出失败：'+String(e?.message||e));}
   });
