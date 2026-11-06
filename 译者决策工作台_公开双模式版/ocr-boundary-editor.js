@@ -26,7 +26,18 @@ d.body.append(bar);
 const launcher=d.createElement('button');launcher.type='button';launcher.textContent='✎ 表格线编辑';
 launcher.setAttribute('aria-expanded','false');
 launcher.style.cssText='position:fixed!important;right:12px;top:10px;z-index:2147480002;border:1px solid #1266d6;border-radius:8px;background:#1266d6;color:#fff;padding:8px 14px;font:600 13px system-ui;box-shadow:0 2px 10px #0002;cursor:pointer;white-space:nowrap;';
-launcher.addEventListener('click',()=>{const show=bar.style.display==='none';bar.style.display=show?'flex':'none';launcher.setAttribute('aria-expanded',String(show));if(!show)setMode('view');});
+let opened=false;
+function toggleTools(force){
+ opened=typeof force==='boolean'?force:!opened;
+ bar.style.setProperty('display',opened?'flex':'none','important');
+ bar.style.setProperty('visibility',opened?'visible':'hidden','important');
+ bar.style.setProperty('pointer-events',opened?'auto':'none','important');
+ launcher.setAttribute('aria-expanded',String(opened));
+ launcher.textContent=opened?'✕ 收起表格线工具':'✎ 表格线编辑';
+ if(!opened)setMode('view');
+}
+launcher.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleTools();});
+toggleTools(false);
 d.body.append(launcher);
 function position(){const r=base.getBoundingClientRect();Object.assign(overlay.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',display:r.width>50?'block':'none'})}
 function coord(e){const r=overlay.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
