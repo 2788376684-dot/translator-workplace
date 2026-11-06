@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Translator Workplace · Atelier</title>
+<title>Transhelper · Workspace</title>
 <style>
-html,body{height:100%;margin:0;background:#f8f9fb}
+html,body{height:100%;margin:0;background:#f5f5f7}
 #app{display:block;width:100%;height:100%;border:0}
-#status{position:fixed;inset:0;display:grid;place-items:center;background:#f8f9fb;color:#607083;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;z-index:2}
+#status{position:fixed;inset:0;display:grid;place-items:center;background:#f5f5f7;color:#607083;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;z-index:2}
 #status[hidden]{display:none}
 #status p{margin:0 0 14px}
 #status a{color:#1266d6}
 </style>
 </head>
 <body>
-<div id="status" role="status"><div><p id="message">正在打开翻译工作台…</p><p><a href="/atelier-core.html">直接进入工作台</a></p></div></div>
-<iframe id="app" title="Translator Workplace · Atelier" allow="clipboard-read; clipboard-write"></iframe>
+<div id="status" role="status"><div><p id="message">正在打开 Transhelper…</p><p><a href="/atelier-core.html">直接进入工作台</a></p></div></div>
+<iframe id="app" title="Transhelper · Workspace" allow="clipboard-read; clipboard-write"></iframe>
 <script>
 (function(){
 'use strict';
@@ -69,6 +69,20 @@ function show(){
    continuity.src='/tw-continuity-guard.js';
    continuity.onerror=()=>console.warn('Workspace recovery unavailable; native editor and exports remain operational.');
    d.head.appendChild(continuity);
+  }
+  // Load the optional theme after the existing enhancement scripts.
+  // No mutation of persisted state, OCR geometry, or translation content.
+  if(!d.getElementById('transhelper-theme')){
+   const theme=d.createElement('link');
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css';
+   theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
+   d.head.appendChild(theme);
+  }
+  if(!d.getElementById('transhelper-brand-loader')){
+   const brand=d.createElement('script');
+   brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js';
+   brand.onerror=()=>console.warn('Transhelper branding unavailable.');
+   d.head.appendChild(brand);
   }
   if(!d.getElementById('tw-week8-safety-loader')){
    const enhancement=d.createElement('script');
