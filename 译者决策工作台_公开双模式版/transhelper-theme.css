@@ -1,0 +1,139 @@
+/* Transhelper · interface system
+   Presentation-only layer. No workflow selectors or visibility changes to OCR tools. */
+:root{
+  color-scheme:light;
+  --th-ink:#1d1d1f;--th-secondary:#6e6e73;--th-blue:#0071e3;
+  --th-blue-dark:#0066cc;--th-line:#e5e5ea;--th-surface:#fff;
+  --th-canvas:#f5f5f7;--th-ease:cubic-bezier(.22,1,.36,1);
+}
+html{scroll-behavior:smooth}
+body{color:var(--th-ink);background:var(--th-canvas);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.app{background:var(--th-canvas)!important;color:var(--th-ink)}
+/* Navigation is compact, consistent, and never competes with the reading surface. */
+@media(min-width:651px){
+ .app:not(.parameter-view){grid-template-columns:188px minmax(0,1fr)!important}
+ .sidebar{padding:19px 11px 15px!important}
+ .app:not(.parameter-view) .main{padding:23px clamp(20px,3vw,48px) 48px!important}
+ .app:not(.parameter-view) .workgrid{gap:13px!important}
+}
+.sidebar{background:#fbfbfd!important;border-right:1px solid var(--th-line)!important;
+  color:var(--th-ink)!important}
+.logo{position:relative;padding:9px 8px 25px!important;letter-spacing:-.035em}
+.logo strong,.logo b,.logo .brand-name,.th-brand-wordmark{
+ font-weight:720!important;letter-spacing:-.045em!important;color:var(--th-ink)!important;
+ font-size:20px!important}
+.logo .th-brand-mark{display:inline-flex;align-items:center;justify-content:center;
+ background:linear-gradient(145deg,#252528,#55545b);width:31px;height:31px;
+ border-radius:10px;margin-right:8px;color:white;font-size:17px;
+ font-weight:700;letter-spacing:-.09em;box-shadow:0 3px 9px #17181c1d;
+ vertical-align:middle;user-select:none}
+.sidebar .workflow-label,.workflow-label{font-size:10px!important;font-weight:680!important;
+ letter-spacing:.075em!important;text-transform:uppercase;color:#8a8a91!important}
+.nav-step{border-radius:10px!important;transition:background .18s ease,color .18s ease,transform .24s var(--th-ease)}
+.nav-step:hover{background:#ececf0!important;transform:translateX(2px)}
+.nav-step.active,.nav-step[aria-current="step"],.nav-step[aria-selected="true"]{
+ background:#e7f0fe!important;color:#075ca9!important}
+.nav-step.active:hover,.nav-step[aria-current="step"]:hover{background:#deebff!important}
+.sidebar .side-bottom{border-color:var(--th-line)!important}
+.topbar{background:#ffffffeb!important;backdrop-filter:saturate(170%) blur(22px);
+ -webkit-backdrop-filter:saturate(170%) blur(22px);border-bottom:1px solid #e8e8ed!important;
+ color:var(--th-ink)!important}
+.topbar .muted,.topbar small,.meta,.muted{color:var(--th-secondary)}
+/* Deliberately restrained title hierarchy, generous space for actual text. */
+#stageCaption{font-size:11px!important;font-weight:700;letter-spacing:.11em!important;
+ color:#86868b!important}
+#stageTitle{font-size:clamp(27px,2.7vw,36px)!important;line-height:1.12!important;
+ font-weight:740!important;letter-spacing:-.055em!important}
+#stageSub{font-size:13px!important;line-height:1.65;color:var(--th-secondary)!important}
+.main,.stage,.stage-content{min-width:0}
+.workgrid{min-width:0}
+.segments{background:#fff!important;border:1px solid var(--th-line)!important;
+ border-radius:15px!important;box-shadow:0 3px 16px #20212406}
+.segment-item{border-radius:10px!important;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.segment-item:hover{background:#f5f6f9!important}
+.segment-item.active,.segment-item[aria-selected="true"]{
+ background:#edf5ff!important;border-color:#b4d6ff!important}
+.pane,.summary-panel,.doc-footer,.panel,.mini-callout,.export-panel,
+.chat-item,.source-ref{
+ border-radius:16px!important;
+}
+.pane,.summary-panel,.doc-footer{
+ background:var(--th-surface)!important;border:1px solid var(--th-line)!important;
+ box-shadow:0 5px 22px #17171b07,0 1px 3px #17171b04!important}
+.pane-top{padding:16px 20px!important;border-bottom:1px solid #ededf0!important;
+ background:transparent!important}
+.pane-top strong{font-size:13px!important;font-weight:690!important;letter-spacing:-.01em}
+.pane-content{padding:19px 20px!important}
+.readbox,.source-ref div{color:#29292d!important;letter-spacing:.005em;line-height:1.8}
+.source-ref{background:#f8f9fb!important;border:1px solid #e9eaf0!important}
+.tw-card .source-ref{border-radius:12px!important}
+.tw-card .tw-diff{background:#fcfcfd!important;border-color:#e6e8ed!important}
+.final-layout,.review-layout,.draft-layout{gap:15px!important}
+/* Buttons: tactile feedback without layout-moving hover effects. */
+button,.btn,.text-btn,.icon-btn{font-family:inherit}
+.btn,button.btn,.icon-btn,.text-btn{
+ transition:background-color .17s ease,border-color .17s ease,
+ color .17s ease,box-shadow .2s ease,transform .22s var(--th-ease)}
+.btn:not(.primary){background:#f5f5f7;border-color:#e6e6eb;color:#303039}
+.btn:not(.primary):hover{background:#eaeaf0;border-color:#d5d7df}
+.btn.primary,button.primary,.btn-primary{
+ background:var(--th-blue)!important;border-color:var(--th-blue)!important;
+ color:white!important;box-shadow:0 2px 7px #0071e31a}
+.btn.primary:hover,button.primary:hover,.btn-primary:hover{
+ background:var(--th-blue-dark)!important;border-color:var(--th-blue-dark)!important;
+ box-shadow:0 4px 12px #0071e32b!important;transform:translateY(-1px)}
+.btn:active,button.primary:active,.nav-step:active{transform:scale(.985)!important}
+.btn:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,
+ textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{
+ outline:3px solid #0071e35c!important;outline-offset:2px!important}
+.btn:disabled,button:disabled{opacity:.52;transform:none!important;cursor:not-allowed!important}
+/* Reading and editing areas remain the visual priority. */
+input:not([type="checkbox"]):not([type="radio"]),textarea,select{
+ border-radius:10px;accent-color:var(--th-blue)}
+textarea,.editor-text{
+ background:#fff!important;color:#202026!important;line-height:1.78!important;
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif!important}
+textarea:focus,input:focus,select:focus{
+ border-color:#86b9fa!important;box-shadow:0 0 0 3px #0071e314!important}
+.chat-entry{border-color:var(--th-line)!important}
+.chat-log{scroll-behavior:smooth}
+.chat-item{background:#f6f6f8!important;border:1px solid #efeff2!important}
+.chat-item.user{background:#eaf3ff!important;border-color:#d9eaff!important}
+.doc-footer{margin-top:15px}
+.summary-panel strong{letter-spacing:-.01em}
+.export-preview{background:#fbfbfc!important}
+details>summary{cursor:pointer}
+a{color:var(--th-blue)}
+::selection{background:#cfe4ff;color:#1d1d1f}
+/* Motion is reserved for newly composed work surfaces, not OCR geometry. */
+@keyframes th-surface-enter{
+ from{opacity:.55;transform:translateY(7px)}
+ to{opacity:1;transform:translateY(0)}
+}
+#stageContent>.pane,#stageContent>.summary-panel,#stageContent>.final-layout,
+#stageContent>.review-layout,#stageContent>.draft-layout{
+ animation:th-surface-enter .46s var(--th-ease) both}
+@media(hover:hover){
+ .pane:not(:has(textarea:focus)):hover{
+  box-shadow:0 8px 24px #17171b09,0 1px 3px #17171b05!important}
+}
+@media(max-width:850px){
+ #stageTitle{font-size:27px!important}
+ .pane-content{padding:14px!important}
+ .pane-top{padding:13px 14px!important}
+}
+@media(max-width:650px){
+ .main{padding:16px 12px 28px!important}
+ .topbar{backdrop-filter:none;-webkit-backdrop-filter:none}
+ .logo{padding:8px 5px 13px!important}
+ .segments{border-radius:12px!important}
+ .pane,.summary-panel,.doc-footer{border-radius:12px!important}
+}
+/* Respect both OS accessibility setting and user-initiated OCR interactions. */
+@media(prefers-reduced-motion:reduce){
+ html,.chat-log{scroll-behavior:auto!important}
+ *,*::before,*::after{animation-duration:.01ms!important;
+ animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
