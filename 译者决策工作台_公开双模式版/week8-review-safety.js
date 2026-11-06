@@ -4,6 +4,35 @@ const done=new WeakSet();
 function api(w){try{return w.eval('({doc:()=>doc(),selection:()=>selected,cellRect,rawAt,deriveNotes,rebuild,selectCell})')}catch{return null}}
 const norm=x=>String(x??'').replace(/\s+/g,' ').trim();
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+// Restore edited text by verified OCR source, including rows shifted by resegmentation.
+// Repeated identical OCR cells are only matched when their original row is unambiguous.
+function preserveTranslationCells(before,after){
+ const keyed=new Map();
+ before.forEach((row,i)=>{
+  for(let c=0;c<3;c++){
+   const source=norm(row.source?.[c]),target=row.target?.[c];
+   if(!source||typeof target!=='string'||!target.trim()||norm(target)===source)continue;
+   const key=c+'\u001f'+source,items=keyed.get(key)||[];
+   items.push({i,value:target,used:false});keyed.set(key,items);
+  }
+ });
+ let restored=0,ambiguous=0;
+ after.forEach((row,i)=>{
+  if(!Array.isArray(row.source)||!Array.isArray(row.target))return;
+  for(let c=0;c<3;c++){
+   const source=norm(row.source[c]),current=row.target[c];
+   // A new, independently edited translation always wins.
+   if(!source||(typeof current==='string'&&current.trim()&&norm(current)!==source))continue;
+   const available=(keyed.get(c+'\u001f'+source)||[]).filter(x=>!x.used);
+   if(!available.length)continue;
+   const atRow=available.filter(x=>x.i===i);
+   const selected=atRow.length===1?atRow[0]:available.length===1?available[0]:null;
+   if(!selected){ambiguous++;continue;}
+   row.target[c]=selected.value;selected.used=true;restored++;
+  }
+ });
+ return {restored,ambiguous};
+}
 function setup(w){
  const D=w.document,viewer=D.getElementById('viewer'),editor=D.getElementById('editor'),rebuild=D.getElementById('rebuild-grid');
  if(!viewer||!editor||!rebuild||done.has(D))return;
@@ -52,11 +81,34 @@ function setup(w){
   const changes=[];let same=0;for(let r=0;r<Math.max(d.rows.length,nextData.rows.length);r++)for(let c=0;c<3;c++){let old=norm(d.rows[r]?.source[c]),now=norm(nextData.rows[r]?.[c]);if(old===now)same++;else changes.push([r+1,c+1,old,now])}
   let notesDiff=JSON.stringify(d.notes.map(x=>[x.mark,norm(x.source)]))!==JSON.stringify(nextData.notes.map(x=>[x.mark,norm(x.source)]));
   let rows=changes.slice(0,50).map(v=>'<tr><td>'+v[0]+' / '+v[1]+'</td><td>'+esc(v[2]||'（空）')+'</td><td>'+esc(v[3]||'（空）')+'</td></tr>').join('');
-  dialog.innerHTML='<h3>重新分表 · 差异确认</h3><p>保持不变 '+same+' 格；将变化 '+changes.length+' 格。'+(notesDiff?'注释归格也会变化。':'')+'</p><p style="color:#8a611c">重新分表可能重置已编辑的中文。系统默认保留原文未变化的对应格译文。原文变化的格请重新校对。</p>'+(rows?'<div style="overflow:auto;max-height:300px"><table><thead><tr><th>行 / 列</th><th>当前原文</th><th>新归格原文</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p>当前单元格原文未发生变化。</p>')+'<label style="display:block;margin-top:12px"><input id="tw-preserve" type="checkbox" checked> 保留原文未变化的格内已有中文及匹配注释</label><footer><button id="tw-cancel" type="button">取消</button><button id="tw-accept" type="button" class="primary">确认重新分表</button></footer>';
+  dialog.innerHTML='<h3>重新分表 · 差异确认</h3><p>保持不变 '+same+' 格；将变化 '+changes.length+' 格。'+(notesDiff?'注释归格也会变化。':'')+'</p><p style="color:#8a611c">重新分表可能重置已编辑的中文。系统会尝试根据未变化的原文恢复已编辑中文；遇到重复且无法确定归属的单元格，将保留待人工核对。</p>'+(rows?'<div style="overflow:auto;max-height:300px"><table><thead><tr><th>行 / 列</th><th>当前原文</th><th>新归格原文</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p>当前单元格原文未发生变化。</p>')+'<label style="display:block;margin-top:12px"><input id="tw-preserve" type="checkbox" checked> 保留原文未变化的格内已有中文及匹配注释</label><footer><button id="tw-cancel" type="button">取消</button><button id="tw-accept" type="button" class="primary">确认重新分表</button></footer>';
   dialog.querySelector('#tw-cancel').onclick=()=>dialog.close();
-  dialog.querySelector('#tw-accept').onclick=()=>{if(busy)return;busy=true;const keep=dialog.querySelector('#tw-preserve').checked,rowsBefore=d.rows.map(r=>({source:r.source.slice(),target:r.target.slice()})),notesBefore=d.notes.map(x=>({mark:x.mark,source:x.source,zh:x.zh,rowId:x.rowId,models:x.models.slice()}));
-   try{n.rebuild(false);if(keep){d.rows.forEach((r,i)=>r.source.forEach((v,c)=>{if(rowsBefore[i]&&norm(rowsBefore[i].source[c])===norm(v))r.target[c]=rowsBefore[i].target[c]}));for(const note of d.notes){let old=notesBefore.find(o=>o.mark===note.mark&&norm(o.source)===norm(note.source));if(old){note.zh=old.zh;note.rowId=old.rowId;note.models=old.models}}try{w.eval('renderEditor();renderNotes();renderPreview();refreshRequest();draw()')}catch{}}mark={};save();dialog.close();w.setTimeout(decorate,80);hint.textContent='分表已更新；原文发生变化的单元格请重新核对。'}
-   catch(e){hint.textContent='重新分表失败：'+e.message}finally{busy=false}};
+  dialog.querySelector('#tw-accept').onclick=()=>{
+   if(busy)return;
+   busy=true;
+   const keep=dialog.querySelector('#tw-preserve').checked;
+   const rowsBefore=d.rows.map(r=>({source:Array.isArray(r.source)?r.source.slice():[],target:Array.isArray(r.target)?r.target.slice():[]}));
+   const notesBefore=d.notes.map(x=>({mark:x.mark,source:x.source,zh:x.zh,models:Array.isArray(x.models)?x.models.slice():[]}));
+   try{
+    n.rebuild(false);
+    let preserved={restored:0,ambiguous:0};
+    if(keep){
+     preserved=preserveTranslationCells(rowsBefore,d.rows);
+     for(const note of d.notes){
+      const old=notesBefore.find(o=>o.mark===note.mark&&norm(o.source)===norm(note.source));
+      if(old){
+       if(!norm(note.zh)&&typeof old.zh==='string')note.zh=old.zh;
+       if(old.models.length)note.models=old.models.slice();
+       // Keep the newly calculated rowId: the old location may no longer exist.
+      }
+     }
+     try{w.eval('renderEditor();renderNotes();renderPreview();refreshRequest();draw()')}catch(e){console.warn('Week8 display refresh:',e)}
+    }
+    mark={};save();dialog.close();w.setTimeout(decorate,80);
+    hint.textContent='分表已更新。'+(keep?'已安全恢复 '+preserved.restored+' 格已编辑译文。':'')+(preserved.ambiguous?'有 '+preserved.ambiguous+' 格原文重复，无法可靠匹配，请人工核对。':'')+'原文变化的单元格仍需重新核对。';
+   }catch(e){hint.textContent='重新分表失败：'+(e?.message||String(e))}
+   finally{busy=false}
+  };
   dialog.showModal();
  }
  rebuild.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();preview()},true);
