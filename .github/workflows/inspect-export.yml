@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/inspect-export.yml'
+      - '.github/scripts/inspect-export.py'
   workflow_dispatch:
 permissions:
   contents: write
