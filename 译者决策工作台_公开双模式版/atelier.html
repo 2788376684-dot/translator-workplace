@@ -74,13 +74,13 @@ function show(){
   // No mutation of persisted state, OCR geometry, or translation content.
   if(!d.getElementById('transhelper-theme')){
    const theme=d.createElement('link');
-   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css';
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=2';
    theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
    d.head.appendChild(theme);
   }
   if(!d.getElementById('transhelper-brand-loader')){
    const brand=d.createElement('script');
-   brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js';
+   brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js?v=2';
    brand.onerror=()=>console.warn('Transhelper branding unavailable.');
    d.head.appendChild(brand);
   }
