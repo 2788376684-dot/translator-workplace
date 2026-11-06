@@ -1,0 +1,42 @@
+name: Fix final delivery reveal
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix-final-delivery.py'
+      - '.github/workflows/fix-final-delivery.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix the parameter export reveal
+        run: python3 .github/scripts/fix-final-delivery.py
+      - name: Verify JavaScript syntax and export wiring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          a=s.index('function showParamExport(){')
+          b=s.index('function paramExport(format){',a)
+          fn=s[a:b]
+          assert "section.id='paramDeliveryOptions'" in fn
+          assert "stage.insertBefore(section" in fn
+          assert "section.hidden=false" in fn
+          assert "paramExport(b.dataset.pExport)" in fn
+          assert "setAttribute('aria-expanded','false')" in s
+          assert "onclick=()=>{try{showParamExport();" in s
+          start=s.index("<script>'use strict';(()=>")+len("<script>")
+          end=s.index("</script>",start)
+          Path('/tmp/final-delivery-check.js').write_text(s[start:end])
+          PY
+          node --check /tmp/final-delivery-check.js
+      - name: Commit verified change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '译者决策工作台_公开双模式版/atelier-core.html'
+          git diff --cached --quiet || (git commit -m 'Reveal parameter export options only after delivery click' && git push)
