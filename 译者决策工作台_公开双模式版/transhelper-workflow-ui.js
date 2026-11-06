@@ -50,27 +50,31 @@ function exportLabel(){
  }
 }
 function settingsButtons(){
- // Only visible top/sidebar settings launchers, excluding modal fields or project text.
- const els=[...doc.querySelectorAll('button,.btn,[role="button"]')].filter(el=>{
-  if(el.closest('#stageContent,dialog,[role="dialog"],.modal'))return false;
-  const text=norm(el.textContent);
-  return text==='项目设置'||text==='AI 设置'||text==='AI设置';
- });
- const project=els.find(e=>norm(e.textContent)==='项目设置');
- const ai=els.find(e=>/^AI\s*设置$/i.test(norm(e.textContent)));
- if(!project||!ai)return;
- // Equal footprint even when the native controls have different content lengths.
+ // Match the actual header controls, including the leading gear icon on 项目设置.
+ const header=doc.querySelector('.topbar');
+ if(!header)return;
+ const elements=[...header.querySelectorAll('button,[role="button"],a.btn')];
+ const project=elements.find(e=>norm(e.textContent).includes('项目设置'));
+ const ai=doc.getElementById('openAISettings')||
+  elements.find(e=>/^AI\\s*设置$/i.test(norm(e.textContent)));
+ if(!project||!ai||!header.contains(ai))return;
  for(const b of [project,ai]){
   b.classList.add('th-settings-trigger');
-  b.style.boxSizing='border-box';
-  b.style.minHeight='36px';
-  b.style.width='104px';
-  b.style.minWidth='104px';
-  b.style.maxWidth='104px';
-  b.style.padding='7px 10px';
-  b.style.display='inline-flex';
-  b.style.alignItems='center';
-  b.style.justifyContent='center';
+  b.style.setProperty('box-sizing','border-box','important');
+  b.style.setProperty('width','112px','important');
+  b.style.setProperty('min-width','112px','important');
+  b.style.setProperty('max-width','112px','important');
+  b.style.setProperty('height','42px','important');
+  b.style.setProperty('min-height','42px','important');
+  b.style.setProperty('max-height','42px','important');
+  b.style.setProperty('padding','0 11px','important');
+  b.style.setProperty('display','inline-flex','important');
+  b.style.setProperty('justify-content','center','important');
+  b.style.setProperty('align-items','center','important');
+  b.style.setProperty('gap','5px','important');
+  b.style.setProperty('font-size','12px','important');
+  b.style.setProperty('white-space','nowrap','important');
+  b.setAttribute('data-th-equal-settings','true');
  }
 }
 function run(){
