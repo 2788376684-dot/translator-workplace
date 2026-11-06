@@ -1,0 +1,26 @@
+name: Translator Workplace regression
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 译者决策工作台_公开双模式版
+    steps:
+      - name: Checkout reviewed sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check JavaScript syntax
+        run: |
+          node --version
+          for file in atelier-review-enhancements.js tw-continuity-guard.js week8-review-safety.js week8-native-geometry.js week8-restore-safety.js api/chat.js; do
+            node --check "$file"
+          done
+      - name: Run native regression tests
+        run: node --test tests/*.cjs
