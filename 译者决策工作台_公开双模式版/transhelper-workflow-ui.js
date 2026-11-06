@@ -50,28 +50,29 @@ function exportLabel(){
  }
 }
 function settingsButtons(){
- // Match the actual header controls, including the leading gear icon on 项目设置.
  const header=doc.querySelector('.topbar');
  if(!header)return;
  const elements=[...header.querySelectorAll('button,[role="button"],a.btn')];
  const project=elements.find(e=>norm(e.textContent).includes('项目设置'));
  const ai=doc.getElementById('openAISettings')||
-  elements.find(e=>/^AI\s*设置$/i.test(norm(e.textContent)));
- if(!project||!ai||!header.contains(ai))return;
- for(const b of [project,ai]){
+   elements.find(e=>/^AI\s*设置$/i.test(norm(e.textContent)));
+ const imported=elements.find(e=>norm(e.textContent).includes('导入项目'));
+ if(!project||!ai||!imported||![project,ai,imported].every(el=>header.contains(el)))return;
+ for(const b of [project,ai,imported]){
   b.classList.add('th-settings-trigger');
   b.style.setProperty('box-sizing','border-box','important');
-  b.style.setProperty('width','112px','important');
-  b.style.setProperty('min-width','112px','important');
-  b.style.setProperty('max-width','112px','important');
-  b.style.setProperty('height','42px','important');
-  b.style.setProperty('min-height','42px','important');
-  b.style.setProperty('max-height','42px','important');
-  b.style.setProperty('padding','0 11px','important');
+  b.style.setProperty('width','92px','important');
+  b.style.setProperty('min-width','92px','important');
+  b.style.setProperty('max-width','92px','important');
+  b.style.setProperty('flex','0 0 92px','important');
+  b.style.setProperty('height','36px','important');
+  b.style.setProperty('min-height','36px','important');
+  b.style.setProperty('max-height','36px','important');
+  b.style.setProperty('padding','0 7px','important');
   b.style.setProperty('display','inline-flex','important');
   b.style.setProperty('justify-content','center','important');
   b.style.setProperty('align-items','center','important');
-  b.style.setProperty('gap','5px','important');
+  b.style.setProperty('gap','4px','important');
   b.style.setProperty('font-size','12px','important');
   b.style.setProperty('white-space','nowrap','important');
   b.setAttribute('data-th-equal-settings','true');
