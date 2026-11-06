@@ -43,6 +43,13 @@ function show(){
    patch.onerror=()=>console.warn('Review enhancement unavailable; original editor remains operational.');
    d.head.appendChild(patch);
   }
+  if(!d.getElementById('tw-week8-geometry-loader')){
+   const geometry=d.createElement('script');
+   geometry.id='tw-week8-geometry-loader';
+   geometry.src='/week8-native-geometry.js';
+   geometry.onerror=()=>console.warn('Native Week8 geometry controls unavailable.');
+   d.head.appendChild(geometry);
+  }
  }catch(e){console.warn('Atelier enhancement unavailable:',e);}
 }
 app.addEventListener('load',show);
