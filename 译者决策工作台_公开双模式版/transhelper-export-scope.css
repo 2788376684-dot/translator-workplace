@@ -14,3 +14,8 @@
 #stageContent .export-row[hidden],#stageContent .th-archive-export-row[hidden],#stageContent p.muted[hidden]{display:none!important}
 @media(max-width:650px){.th-export-scope-options{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.th-export-scope-options label{transition:none!important}}
+
+.th-export-advanced{margin-top:13px;padding:9px 12px;border:1px solid #e6e9ef;border-radius:10px;background:#fafbfc}
+.th-export-advanced summary{cursor:pointer;color:#616c7b;font-size:12px;line-height:1.6}
+.th-export-advanced-row{display:flex;flex-wrap:wrap;gap:8px;padding:11px 0 3px}
+.th-export-advanced[hidden]{display:none!important}
