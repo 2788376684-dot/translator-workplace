@@ -58,7 +58,7 @@ function clearTimers(){
 }
 function start(label,waiting=true){
  clearTimers();
- active={id:++serial,label:labelFor(label),started:Date.now(),requests:0,replies:0,
+ active={id:++serial,label:labelFor(label),targetSentences:D.querySelectorAll('[data-sentence-jump]').length,started:Date.now(),requests:0,replies:0,
   inflight:0,failures:0,networkSeen:false,latestError:''};
  setPhase('starting','已收到操作，正在启动 AI 请求…');
  if(waiting){
@@ -76,7 +76,7 @@ function start(label,waiting=true){
 }
 function counts(){
  const elapsed=Math.max(0,Math.floor((Date.now()-active.started)/1000));
- return '已响应 '+active.replies+' 次请求 · 正在等待 '+active.inflight+' 次 · 运行 '+elapsed+' 秒';
+ return (active.label.includes('审校')&&active.targetSentences?'审校对象 '+active.targetSentences+' 句 · ':'')+'已响应 '+active.replies+' 次模型请求 · 正在等待 '+active.inflight+' 次 · 运行 '+elapsed+' 秒';
 }
 function updateRunning(){
  if(!active)return;
