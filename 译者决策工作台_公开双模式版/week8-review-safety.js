@@ -119,10 +119,10 @@ function setup(w){
   function update(){
    const entry=history[Number(selector.value)]||history[history.length-1],parts=[];
    for(const row of entry.rows||[])for(const cell of row.cells||[]){
-    parts.push('第 '+row.row+' 行 / 第 '+cell.column+' 列\\n原文：'+cell.source+'\\n原译：'+cell.translation);
+    parts.push('第 '+row.row+' 行 / 第 '+cell.column+' 列\n原文：'+cell.source+'\n原译：'+cell.translation);
    }
-   for(const note of entry.notes||[])parts.push('注释 '+String(note.mark||'')+'\\n原文：'+String(note.source||'')+'\\n原译：'+String(note.translation||''));
-   content.value=parts.join('\\n\\n');
+   for(const note of entry.notes||[])parts.push('注释 '+String(note.mark||'')+'\n原文：'+String(note.source||'')+'\n原译：'+String(note.translation||''));
+   content.value=parts.join('\n\n');
   }
   selector.value=String(history.length-1);selector.addEventListener('change',update);update();
   const foot=D.createElement('footer'),close=D.createElement('button');close.type='button';close.textContent='关闭';close.addEventListener('click',()=>dialog.close());foot.append(close);
