@@ -243,4 +243,143 @@ if(stage){
  scan();
 })();
 
+
+/* Parameter drafting: separate immutable OCR text from editable Chinese draft. */
+(function installParameterDraftClarity(){
+ const wired=new WeakSet();
+ const cssText=String.raw\`
+ .tw-translation-source{font:12px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#677789;margin:4px 0 7px}
+ .tw-translation-source b{font-weight:650;color:#455a70}
+ .tw-translation-status{display:inline-block;margin-left:7px;font-size:11px;padding:2px 6px;border-radius:6px;background:#fff1df;color:#94611c}
+ .tw-translation-status.done{background:#e8f6ed;color:#24734b}
+ .tw-translation-input{background:#fff!important}
+ .tw-translation-input.tw-untranslated{border-color:#e8bd83!important;box-shadow:inset 3px 0 #eab56d!important}
+ .tw-parameter-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;background:#f5f8fc;border:1px solid #dce6f1;border-radius:9px;font:12px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+ .tw-parameter-toolbar button{border:1px solid #b8cce5;border-radius:7px;background:#fff;color:#24588b;padding:7px 11px;cursor:pointer;font-weight:600}
+ .tw-parameter-toolbar .tw-parameter-progress{color:#66768a}
+ \`;
+ const glossary=[
+ [/^measurement\s*range$/i,'测量范围'],
+ [/^accuracy$/i,'精度'],
+ [/^resolution$/i,'分辨率'],
+ [/^repeatability$/i,'重复性'],
+ [/^operating\s*temperature$/i,'工作温度'],
+ [/^storage\s*temperature$/i,'储存温度'],
+ [/^temperature\s*range$/i,'温度范围'],
+ [/^humidity$/i,'湿度'],
+ [/^relative\s*humidity$/i,'相对湿度'],
+ [/^power\s*supply$/i,'电源'],
+ [/^power\s*consumption$/i,'功耗'],
+ [/^dimensions?$/i,'尺寸'],
+ [/^weight$/i,'重量'],
+ [/^response\s*time$/i,'响应时间'],
+ [/^output$/i,'输出'],
+ [/^input$/i,'输入'],
+ [/^display$/i,'显示'],
+ [/^model$/i,'型号'],
+ [/^specifications?$/i,'技术参数'],
+ [/^measurement\s*accuracy$/i,'测量精度'],
+ [/^sensor\s*type$/i,'传感器类型']
+ ];
+ function normalized(s){return String(s||'').replace(/\s+/g,' ').trim();}
+ function translateKnown(s){
+  const v=normalized(s);
+  if(!v)return '';
+  for(const [re,zh] of glossary)if(re.test(v))return zh;
+  // Numeric parameter cells are retained as numbers and units, with normalized interval spacing.
+  if(/^[+\-−~～≈]?\s*[\d.]+\s*(?:to|至|[-–—~～])\s*[+\-−]?\s*[\d.]+\s*(?:°\s?[CF]|%|mm|cm|mA|A|V|W|Hz|kHz|kg|g)?$/i.test(v)){
+   return v.replace(/(\d)\s*to\s*(?=[+\-−]?\s*\d)/gi,'$1 至 ').replace(/\s*°\s*([CF])/gi,' °$1').replace(/([+\-−])\s+(?=\d)/g,'$1');
+  }
+  if(/^[\s\d.+\-−~～≈()%°CFmAVWHzkKg/%]+$/.test(v))return v;
+  return '';
+ }
+ function sourceFor(input){
+  const cell=input.closest('td,th');
+  if(!cell)return '';
+  const candidates=[...cell.querySelectorAll('*')].filter(el=>el!==input&&!el.contains(input)&&!el.closest('.tw-translation-source')&&!el.closest('.tw-parameter-toolbar')&&!el.closest('textarea,input'));
+  const strings=candidates.map(el=>normalized(el.textContent)).filter(Boolean);
+  const shortest=strings.filter(s=>s.length<350).sort((a,b)=>a.length-b.length);
+  return shortest[0]||'';
+ }
+ function attach(doc){
+  if(!doc?.body)return;
+  const all=[...doc.querySelectorAll('textarea')];
+  const title=doc.body.innerText||'';
+  if(!/参数逐格翻译|参数表格翻译|锁定表格初稿/.test(title))return;
+  const inputs=all.filter(el=>el.closest('td,th'));
+  if(inputs.length<2)return;
+  let changed=false;
+  for(const el of inputs){
+   if(wired.has(el))continue;
+   const source=sourceFor(el);
+   if(!source)continue;
+   wired.add(el);changed=true;
+   const parent=el.parentElement;
+   const label=doc.createElement('div');label.className='tw-translation-source';
+   const sourceLabel=doc.createElement('b');sourceLabel.textContent='OCR 英文原文（只读）： ';
+   const originalText=doc.createElement('span');originalText.textContent=source;
+   label.append(sourceLabel,originalText);
+   const caption=doc.createElement('div');caption.className='tw-translation-source';
+   const captionTitle=doc.createElement('b');captionTitle.textContent='中文译文（可编辑）';
+   const status=doc.createElement('span');status.className='tw-translation-status';
+   caption.append(captionTitle,status);
+   parent.insertBefore(label,el);parent.insertBefore(caption,el);
+   el.classList.add('tw-translation-input');
+   el.dataset.twOcrOriginal=source;
+   el.setAttribute('aria-label','中文译文（可编辑），英文原文：'+source);
+   el.placeholder='在这里输入中文译文';
+   function update(){
+    const value=normalized(el.value),untranslated=!value||value===normalized(source);
+    status.textContent=untranslated?'待翻译':'已编辑 · 请校对';
+    status.classList.toggle('done',!untranslated);
+    el.classList.toggle('tw-untranslated',untranslated);
+   }
+   el.addEventListener('input',update);update();
+  }
+  if(!changed||doc.getElementById('tw-parameter-toolbar'))return;
+  const style=doc.createElement('style');style.id='tw-parameter-clarity-style';style.textContent=cssText;doc.head.append(style);
+  const toolbar=doc.createElement('div');toolbar.className='tw-parameter-toolbar';toolbar.id='tw-parameter-toolbar';
+  const action=doc.createElement('button');action.type='button';action.textContent='批量生成术语与数值初稿';
+  const progress=doc.createElement('span');progress.className='tw-parameter-progress';
+  progress.textContent='原文保留只读；未匹配术语的单元格需人工翻译。';
+  toolbar.append(action,progress);
+  const table=inputs[0].closest('table');
+  (table?.parentElement||inputs[0].parentElement).insertBefore(toolbar,table||inputs[0]);
+  action.addEventListener('click',()=>{
+   let done=0,pending=0;
+   for(const el of doc.querySelectorAll('textarea.tw-translation-input')){
+    const source=el.dataset.twOcrOriginal||'';
+    if(normalized(el.value)&&normalized(el.value)!==normalized(source))continue; // never overwrite revisions
+    const draft=translateKnown(source);
+    if(draft){el.value=draft;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));done++;}
+    else pending++;
+   }
+   progress.textContent='已生成 '+done+' 格初稿；'+pending+' 格未匹配，需人工翻译。请校对后再进入二稿。';
+  });
+ }
+ function bind(doc){
+  if(!doc?.body)return;
+  attach(doc);
+  if(doc.documentElement.dataset.twDraftObserver)return;
+  doc.documentElement.dataset.twDraftObserver='1';
+  let scheduled=false;
+  new MutationObserver(()=>{if(scheduled)return;scheduled=true;setTimeout(()=>{scheduled=false;attach(doc);scan();},250);})
+   .observe(doc.body,{childList:true,subtree:true});
+ }
+ function scan(){
+  const docs=[document];
+  for(const f of document.querySelectorAll('iframe')){
+   try{if(f.contentDocument)docs.push(f.contentDocument);}catch{}
+  }
+  for(const doc of [...docs]){
+   bind(doc);
+   for(const f of doc.querySelectorAll('iframe')){
+    try{if(f.contentDocument)bind(f.contentDocument);}catch{}
+    if(!f.dataset.twDraftLoad){f.dataset.twDraftLoad='1';f.addEventListener('load',scan);}
+   }
+  }
+ }
+ scan();setInterval(scan,2500);
+})();
+
 })();
