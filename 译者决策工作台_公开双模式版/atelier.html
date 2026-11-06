@@ -74,7 +74,7 @@ function show(){
   // No mutation of persisted state, OCR geometry, or translation content.
   if(!d.getElementById('transhelper-theme')){
    const theme=d.createElement('link');
-   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=2';
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=3';
    theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
    d.head.appendChild(theme);
   }
@@ -83,6 +83,13 @@ function show(){
    brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js?v=2';
    brand.onerror=()=>console.warn('Transhelper branding unavailable.');
    d.head.appendChild(brand);
+  }
+  if(!d.getElementById('transhelper-workflow-ui-loader')){
+   const workflow=d.createElement('script');
+   workflow.id='transhelper-workflow-ui-loader';
+   workflow.src='/transhelper-workflow-ui.js?v=1';
+   workflow.onerror=()=>console.warn('Optional Transhelper UI refinement unavailable.');
+   d.head.appendChild(workflow);
   }
   if(!d.getElementById('tw-week8-safety-loader')){
    const enhancement=d.createElement('script');
