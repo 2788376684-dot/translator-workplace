@@ -247,7 +247,7 @@ if(stage){
 /* Parameter drafting: separate immutable OCR text from editable Chinese draft. */
 (function installParameterDraftClarity(){
  const wired=new WeakSet();
- const cssText=String.raw\`
+ const cssText=String.raw`
  .tw-translation-source{font:12px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#677789;margin:4px 0 7px}
  .tw-translation-source b{font-weight:650;color:#455a70}
  .tw-translation-status{display:inline-block;margin-left:7px;font-size:11px;padding:2px 6px;border-radius:6px;background:#fff1df;color:#94611c}
@@ -257,7 +257,7 @@ if(stage){
  .tw-parameter-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;background:#f5f8fc;border:1px solid #dce6f1;border-radius:9px;font:12px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
  .tw-parameter-toolbar button{border:1px solid #b8cce5;border-radius:7px;background:#fff;color:#24588b;padding:7px 11px;cursor:pointer;font-weight:600}
  .tw-parameter-toolbar .tw-parameter-progress{color:#66768a}
- \`;
+ `;
  const glossary=[
  [/^measurement\s*range$/i,'测量范围'],
  [/^accuracy$/i,'精度'],
