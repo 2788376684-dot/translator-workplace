@@ -13,7 +13,7 @@ test('review navigation is placed first without recreating existing jump buttons
  assert.match(code,/querySelectorAll\('\[data-sentence-jump\]'\)/);
  assert.match(code,/stage\.insertBefore\(nav,target\)/);
  assert.match(code,/aria-current/);
- assert.match(code,/\.th-current-sentence/);
+ assert.match(code,/classList\.add\('th-current-sentence'\)/);
  assert.ok(!code.includes('cloneNode('));
  assert.ok(!code.includes('replaceChildren('));
  assert.ok(!code.includes('localStorage'));
