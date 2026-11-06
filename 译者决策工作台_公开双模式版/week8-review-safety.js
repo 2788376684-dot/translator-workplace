@@ -105,16 +105,28 @@ function setup(w){
  archive.addEventListener('click',()=>{
   const d=project(),history=d?loadRebuildHistory(w,d.id):[];
   if(!history.length){hint.textContent='当前项目暂无分表前的人工译文记录。';return}
-  const entry=history[history.length-1],parts=[];
-  for(const row of entry.rows||[])for(const cell of row.cells||[]){
-   parts.push('第 '+row.row+' 行 / 第 '+cell.column+' 列\n原文：'+cell.source+'\n原译：'+cell.translation);
+  const heading=D.createElement('h3');heading.textContent='重新分表前的人工译文记录';
+  const description=D.createElement('p');description.textContent='仅保存本浏览器最近三次重新分表前的人工译文。原 OCR 工程仍使用工作台自带的导入与导出功能。';
+  const label=D.createElement('label');label.textContent='选择记录： ';
+  const selector=D.createElement('select');selector.setAttribute('aria-label','选择历史译文记录');
+  history.forEach((entry,i)=>{
+   const option=D.createElement('option');option.value=String(i);
+   option.textContent=new Date(entry.savedAt).toLocaleString('zh-CN',{hour12:false})+' · 第 '+(i+1)+' 份';
+   selector.append(option);
+  });
+  label.append(selector);
+  const content=D.createElement('textarea');content.readOnly=true;content.style.cssText='width:100%;box-sizing:border-box;min-height:250px;max-height:50vh;padding:9px;resize:vertical;white-space:pre-wrap;font:13px/1.6 sans-serif';
+  function update(){
+   const entry=history[Number(selector.value)]||history[history.length-1],parts=[];
+   for(const row of entry.rows||[])for(const cell of row.cells||[]){
+    parts.push('第 '+row.row+' 行 / 第 '+cell.column+' 列\\n原文：'+cell.source+'\\n原译：'+cell.translation);
+   }
+   for(const note of entry.notes||[])parts.push('注释 '+String(note.mark||'')+'\\n原文：'+String(note.source||'')+'\\n原译：'+String(note.translation||''));
+   content.value=parts.join('\\n\\n');
   }
-  for(const note of entry.notes||[])parts.push('注释 '+String(note.mark||'')+'\n原文：'+String(note.source||'')+'\n原译：'+String(note.translation||''));
-  const heading=D.createElement('h3');heading.textContent='最近一次重新分表前的人工译文';
-  const description=D.createElement('p');description.textContent='记录时间：'+new Date(entry.savedAt).toLocaleString('zh-CN',{hour12:false})+'。最近三次记录保留在此浏览器，可选择并复制下方文字。';
-  const content=D.createElement('textarea');content.readOnly=true;content.value=parts.join('\n\n');content.style.cssText='width:100%;box-sizing:border-box;min-height:250px;max-height:50vh;padding:9px;resize:vertical;white-space:pre-wrap;font:13px/1.6 sans-serif';
+  selector.value=String(history.length-1);selector.addEventListener('change',update);update();
   const foot=D.createElement('footer'),close=D.createElement('button');close.type='button';close.textContent='关闭';close.addEventListener('click',()=>dialog.close());foot.append(close);
-  dialog.replaceChildren(heading,description,content,foot);dialog.showModal();
+  dialog.replaceChildren(heading,description,label,content,foot);dialog.showModal();
  });
  let mark={},key='',busy=false;
  function project(){return n.doc()}
