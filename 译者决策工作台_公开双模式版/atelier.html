@@ -43,13 +43,6 @@ function show(){
    patch.onerror=()=>console.warn('Review enhancement unavailable; original editor remains operational.');
    d.head.appendChild(patch);
   }
-  if(!d.getElementById('tw-ocr-editor-loader')){
-   const editor=d.createElement('script');
-   editor.id='tw-ocr-editor-loader';
-   editor.src='/ocr-boundary-editor.js';
-   editor.onerror=()=>console.warn('OCR boundary editor unavailable.');
-   d.head.appendChild(editor);
-  }
  }catch(e){console.warn('Atelier enhancement unavailable:',e);}
 }
 app.addEventListener('load',show);
