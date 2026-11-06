@@ -175,6 +175,48 @@ a{color:var(--th-blue)}
  .logo .th-brand-name{font-size:17px!important}
  .logo .th-brand-tagline{font-size:7px!important}
 }
+
+/* Review usability: one compact sentence navigator above the review summary.
+   The native sentence buttons and click handlers are preserved. */
+#stageContent>.th-sentence-nav{
+ order:-1;margin:0 0 12px!important;padding:8px 13px!important;
+ background:#fff!important;border:1px solid #e5e5ea!important;
+ border-radius:13px!important;box-shadow:0 2px 8px #1d1d1f08!important;
+ position:relative;z-index:1;max-width:none!important;
+}
+#stageContent>.th-sentence-nav .review-options{
+ display:flex!important;align-items:center!important;gap:6px!important;
+ flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;
+ scrollbar-width:thin;scroll-behavior:smooth;padding:3px 1px 5px;
+}
+#stageContent>.th-sentence-nav .review-options>.muted{
+ flex:0 0 auto;position:sticky;left:0;z-index:1;
+ font-size:12px!important;font-weight:650!important;
+ padding:6px 12px 6px 4px;background:#fff;
+ color:#6e6e73!important;white-space:nowrap;
+}
+#stageContent>.th-sentence-nav [data-sentence-jump]{
+ flex:0 0 auto;min-width:39px!important;min-height:33px!important;
+ padding:5px 10px!important;line-height:1.25!important;
+ border-radius:9px!important;font-variant-numeric:tabular-nums;
+}
+#stageContent>.th-sentence-nav [data-sentence-jump].th-current-sentence{
+ box-shadow:0 0 0 2px #0071e328!important;font-weight:700!important;
+}
+.th-settings-trigger{
+ box-sizing:border-box!important;min-height:36px!important;
+ width:104px!important;min-width:104px!important;max-width:104px!important;
+ padding:7px 10px!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ line-height:1.4!important;white-space:nowrap!important;
+ font-size:12px!important;font-weight:590!important;border-radius:9px!important;
+}
+@media(max-width:650px){
+ #stageContent>.th-sentence-nav{padding:7px 9px!important;margin-bottom:10px!important}
+ #stageContent>.th-sentence-nav [data-sentence-jump]{min-width:35px!important}
+ .th-settings-trigger{width:94px!important;min-width:94px!important;max-width:94px!important}
+}
+
 /* Respect both OS accessibility setting and user-initiated OCR interactions. */
 @media(prefers-reduced-motion:reduce){
  html,.chat-log{scroll-behavior:auto!important}
