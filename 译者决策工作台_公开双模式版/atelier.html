@@ -74,7 +74,7 @@ function show(){
   // No mutation of persisted state, OCR geometry, or translation content.
   if(!d.getElementById('transhelper-theme')){
    const theme=d.createElement('link');
-   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=3';
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=4';
    theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
    d.head.appendChild(theme);
   }
@@ -87,9 +87,16 @@ function show(){
   if(!d.getElementById('transhelper-workflow-ui-loader')){
    const workflow=d.createElement('script');
    workflow.id='transhelper-workflow-ui-loader';
-   workflow.src='/transhelper-workflow-ui.js?v=1';
+   workflow.src='/transhelper-workflow-ui.js?v=2';
    workflow.onerror=()=>console.warn('Optional Transhelper UI refinement unavailable.');
    d.head.appendChild(workflow);
+  }
+  if(!d.getElementById('transhelper-ai-progress-loader')){
+   const progress=d.createElement('script');
+   progress.id='transhelper-ai-progress-loader';
+   progress.src='/transhelper-ai-progress.js?v=1';
+   progress.onerror=()=>console.warn('AI progress display unavailable; original AI actions remain operational.');
+   d.head.appendChild(progress);
   }
   if(!d.getElementById('tw-week8-safety-loader')){
    const enhancement=d.createElement('script');
