@@ -181,4 +181,66 @@ if(stage){
  attach();
 })();
 
+
+/* Apply the clean preview to the actual OCR engine iframe (#paramFrame).
+   Its document is built from gzip srcdoc after the outer Atelier loads. */
+(function installNestedOcrLayerFix(){
+ const observed=new WeakSet();
+ function bind(frame){
+  if(!frame||observed.has(frame))return;
+  observed.add(frame);
+  function ready(){
+   let doc;
+   try{doc=frame.contentDocument;if(!doc?.body)return;}catch{return;}
+   if(doc.getElementById('tw-ocr-native-clean'))return;
+   const css=doc.createElement('style');
+   css.id='tw-ocr-native-clean';
+   css.textContent=`
+    body.tw-ocr-native-clean .tw-ocr-annotation{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+    #tw-ocr-native-toggle{padding:6px 10px;border:1px solid #b9cadc;border-radius:6px;background:white;color:#244b6b;cursor:pointer;font-size:12px;line-height:1.4;margin:5px}
+   `;
+   doc.head.append(css);
+   doc.body.classList.add('tw-ocr-native-clean');
+   let enabled=true,scheduled=false;
+   function refresh(){
+    scheduled=false;
+    const elements=[...doc.body.querySelectorAll('img,canvas')];
+    const pictures=elements.filter(el=>{const r=el.getBoundingClientRect();return r.width>220&&r.height>150});
+    const base=pictures.find(el=>el.tagName==='IMG')||pictures[0];
+    if(!base)return;
+    const rect=base.getBoundingClientRect();
+    const intersects=(r)=>r.width>1&&r.height>1&&r.right>rect.left&&r.left<rect.right&&r.bottom>rect.top&&r.top<rect.bottom;
+    const candidates=[];
+    for(const el of doc.body.querySelectorAll('*')){
+     if(el===base||el.contains(base)||el.closest('#tw-ocr-native-toggle')||el.closest('button'))continue;
+     const tag=el.tagName.toLowerCase(),style=doc.defaultView.getComputedStyle(el),r=el.getBoundingClientRect();
+     if(!intersects(r))continue;
+     const name=String(typeof el.className==='string'?el.className:'').toLowerCase();
+     const role=String(el.getAttribute('data-type')||'').toLowerCase();
+     const mark=/ocr|bbox|box-overlay|overlay|detect|recognition|selection|word-box|table-line|cell-box|polygon|highlight|bounding/.test(name+' '+role);
+     const pos=style.position==='absolute'||style.position==='fixed';
+     const line=tag==='line'||tag==='rect'||tag==='polygon'||tag==='polyline'||tag==='path';
+     // Actual recognition drawing, including SVG table-grid shapes and word boxes.
+     if(tag==='svg'||tag==='canvas'&&el!==base||pos&&(mark||line||style.borderTopStyle==='solid'||style.outlineStyle==='solid'))candidates.push(el);
+    }
+    for(const el of candidates.filter(el=>!candidates.some(p=>p!==el&&p.contains(el))))el.classList.add('tw-ocr-annotation');
+   }
+   const toggle=doc.createElement('button');
+   toggle.id='tw-ocr-native-toggle';toggle.type='button';toggle.textContent='显示 OCR 识别框';
+   toggle.addEventListener('click',()=>{enabled=!enabled;doc.body.classList.toggle('tw-ocr-native-clean',enabled);toggle.textContent=enabled?'显示 OCR 识别框':'隐藏 OCR 识别框';});
+   const target=[...doc.querySelectorAll('h1,h2,h3,h4,strong')].find(el=>/原页与位置/.test(el.textContent||''));
+   (target?.parentElement||doc.body).append(toggle);
+   const observer=new MutationObserver(()=>{if(!scheduled){scheduled=true;doc.defaultView.requestAnimationFrame(refresh);}});
+   observer.observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+   refresh();
+  }
+  frame.addEventListener('load',ready);
+  ready();
+ }
+ function scan(){bind(document.getElementById('paramFrame'));}
+ const mo=new MutationObserver(scan);
+ mo.observe(document.body,{childList:true,subtree:true});
+ scan();
+})();
+
 })();
