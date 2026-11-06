@@ -30,7 +30,7 @@ function applyBrand(){
  if(!logo)return;
  if(logo.dataset.transhelperBrand==='v2'&&logo.querySelector('.th-brand-shell'))return;
  // The old logo contains multiple icons and two text lines; replace its children
- // together to prevent duplicated T marks and leftover "Translator Workplace".
+ // together to prevent duplicate marks and leftover product labels.
  logo.replaceChildren(buildBrand(document));
  logo.dataset.transhelperBrand='v2';
  logo.setAttribute('aria-label','Transhelper');
