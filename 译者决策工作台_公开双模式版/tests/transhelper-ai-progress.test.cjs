@@ -52,8 +52,8 @@ test('both project and AI topbar buttons match even with gear icon',()=>{
  const workflow=read('transhelper-workflow-ui.js');
  assert.match(workflow,/includes\('项目设置'\)/);
  assert.match(workflow,/getElementById\('openAISettings'\)/);
- assert.match(workflow,/setProperty\('width','112px','important'\)/);
- assert.match(workflow,/setProperty\('height','42px','important'\)/);
+ assert.match(workflow,/setProperty\('width','92px','important'\)/);
+ assert.match(workflow,/setProperty\('height','36px','important'\)/);
  assert.match(theme,/\.topbar \.th-settings-trigger/);
 });
 test('AI progress script loads independently and does not modify workflow storage',()=>{
