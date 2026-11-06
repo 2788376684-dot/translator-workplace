@@ -36,6 +36,13 @@ function show(){
    const source=d.querySelector('[data-step="source"]');
    if(source)source.click();
   }
+  if(!d.getElementById('tw-week8-import-guard-loader')){
+   const guard=d.createElement('script');
+   guard.id='tw-week8-import-guard-loader';
+   guard.src='/week8-import-guard.js';
+   guard.onerror=()=>console.warn('Week8 import guard unavailable.');
+   d.head.appendChild(guard);
+  }
   if(!d.getElementById('tw-review-loader')){
    const patch=d.createElement('script');
    patch.id='tw-review-loader';
