@@ -135,19 +135,18 @@ if(stage){
    if(el.contains(bases[0])||bases.includes(el))continue;
    if(!overlaps(el))continue;
    const cs=getComputedStyle(el);
-   // OCR vectors and secondary drawing canvases are always presentation layers.
-   if(el.matches('svg') || (el.matches('canvas')&&!bases.includes(el))){
-    results.push(el);continue;
-   }
+   // Native SVG/canvas layers also carry draggable OCR table boundaries.
+   // Hiding them breaks geometry editing, even when they resemble highlights.
+   if(el.matches('svg,canvas')||el.querySelector('svg,canvas,button,input,[draggable]'))continue;
    const abs=cs.position==='absolute'||cs.position==='fixed';
    if(!abs)continue;
    const name=String(el.className&&typeof el.className==='string'?el.className:'').toLowerCase();
    const role=String(el.getAttribute('data-type')||'').toLowerCase();
-   const colored=['borderTopColor','borderLeftColor','borderRightColor','borderBottomColor','outlineColor'].some(k=>colorIsOverlay(cs[k]));
-   const marked=/ocr|overlay|highlight|bbox|bounding|detect|region|word-box|line-box|text-box|table-box/.test(name+' '+role);
-   const bordered=parseFloat(cs.borderTopWidth)>0||parseFloat(cs.outlineWidth)>0;
-   // Include small transparent OCR text hitboxes; exclude control panels.
-   if(colored||marked||(bordered&&el.getBoundingClientRect().width<600&&el.children.length===0))results.push(el);
+   const marker=name+' '+role;
+   const annotation=/ocr[-_ ]?(?:word|text|bbox|recognition|highlight)|recognition[-_ ]?(?:box|word)|(?:word|text)[-_ ]?box|detected[-_ ]?word/.test(marker);
+   const geometry=/geometry|grid|boundary|divider|drag|handle|resize|table[-_ ]?line|column[-_ ]?line|row[-_ ]?line/.test(marker);
+   // Only explicit OCR word annotations are cosmetic; never hide edit guides.
+   if(annotation&&!geometry&&el.childElementCount===0)results.push(el);
   }
   // Suppress only recognition annotations, never the scanned page itself.
   return results.filter(el=>!results.some(parent=>parent!==el&&parent.contains(el)));
@@ -217,11 +216,13 @@ if(stage){
      if(!intersects(r))continue;
      const name=String(typeof el.className==='string'?el.className:'').toLowerCase();
      const role=String(el.getAttribute('data-type')||'').toLowerCase();
-     const mark=/ocr|bbox|box-overlay|overlay|detect|recognition|selection|word-box|table-line|cell-box|polygon|highlight|bounding/.test(name+' '+role);
+     const marker=name+' '+role;
+     const mark=/ocr[-_ ]?(?:word|text|bbox|recognition|highlight)|recognition[-_ ]?(?:box|word)|(?:word|text)[-_ ]?box|detected[-_ ]?word/.test(marker);
+     const guide=/geometry|grid|boundary|divider|drag|handle|resize|table[-_ ]?line|column[-_ ]?line|row[-_ ]?line/.test(marker);
      const pos=style.position==='absolute'||style.position==='fixed';
-     const line=tag==='line'||tag==='rect'||tag==='polygon'||tag==='polyline'||tag==='path';
-     // Actual recognition drawing, including SVG table-grid shapes and word boxes.
-     if(tag==='svg'||tag==='canvas'&&el!==base||pos&&(mark||line||style.borderTopStyle==='solid'||style.outlineStyle==='solid'))candidates.push(el);
+     const vector=['svg','canvas','line','rect','polygon','polyline','path'].includes(tag);
+     // Canvas, SVG and their children may contain Week8's interactive row/column handles.
+     if(!vector&&!guide&&mark&&pos&&!el.querySelector('canvas,svg,button,input,[draggable]'))candidates.push(el);
     }
     for(const el of candidates.filter(el=>!candidates.some(p=>p!==el&&p.contains(el))))el.classList.add('tw-ocr-annotation');
    }
