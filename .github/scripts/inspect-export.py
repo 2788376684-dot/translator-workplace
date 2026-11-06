@@ -1,6 +1,6 @@
 from pathlib import Path
 s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
-needles=['function renderParamFinal(', 'function renderFinal(', 'function showExport(', 'function renderExport(', "id=\"paramShowExport\"", "id=\"exportOpen\"", "function paramExport", "function export"]
+needles=['function showParamExport(', 'function paramExport(', 'function renderParamFinal(', 'function renderFinal(', 'function showExport(', 'function renderExport(', "id=\"paramShowExport\"", "id=\"exportOpen\"", "function paramExport", "function export"]
 out=[]
 for t in needles:
   p=0
