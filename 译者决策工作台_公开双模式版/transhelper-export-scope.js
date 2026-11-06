@@ -188,12 +188,12 @@ function renderScope(){
  native.dataset.thScopeReady='1';
  const scope=D.createElement('section');scope.className='th-export-scope';
  scope.innerHTML='<h3>选择导出范围</h3><div class="th-export-scope-options">'+
- '<label><input type="radio" name="th-export-scope" value="final" checked><span><strong>仅终稿</strong><small>保留现有 Word、TXT、CSV、HTML 导出方式</small></span></label>'+
+ '<label><input type="radio" name="th-export-scope" value="final" checked><span><strong>仅终稿</strong><small>仅输出终稿；原版 CSV 与工程备份保留在扩展选项</small></span></label>'+
  '<label><input type="radio" name="th-export-scope" value="archive"><span><strong>完整翻译档案</strong><small>原文、多稿、逐句 AI 建议、译者决策、追问记录、历史版本与终稿</small></span></label>'+
  '</div>';
  const archButtons=D.createElement('div');archButtons.className='th-archive-export-row';
  archButtons.hidden=true;
- for(const [format,label] of [['docx','完整档案 Word'],['html','完整档案 HTML'],['txt','完整档案 TXT'],['json','完整档案 JSON']]){
+ for(const [format,label] of [['docx','完整档案 Word'],['html','完整档案 HTML'],['txt','完整档案 TXT'],['json','完整档案 JSON'],['zip','完整档案 ZIP']]){
   const b=D.createElement('button');b.type='button';b.className='btn '+(format==='docx'?'primary':'');
   b.textContent=label;b.dataset.archiveExport=format;
   b.addEventListener('click',()=>{
@@ -206,6 +206,11 @@ function renderScope(){
     if(format==='txt')download(name+'.txt',lines(archive),'text/plain;charset=utf-8');
     if(format==='html')download(name+'.html',exportHtml(archive),'text/html;charset=utf-8');
     if(format==='docx')download(name+'.docx',docxArchive(archive),'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    if(format==='zip')download(name+'.zip',zipStore([
+     [name+'.txt',lines(archive)],
+     [name+'.html',exportHtml(archive)],
+     [name+'.json',JSON.stringify(archive,null,2)]
+    ]),'application/zip');
    }catch(e){console.error('Transhelper archive export:',e);alert('完整档案导出失败：'+String(e?.message||e));}
   });
   archButtons.append(b);
@@ -215,10 +220,22 @@ function renderScope(){
  archButtons.append(caption);
  native.before(scope);
  native.after(archButtons);
+ // Preserve the native CSV and backup actions, but disclose that they contain more than final text.
+ const extra=D.createElement('details');extra.className='th-export-advanced';
+ const summary=D.createElement('summary');
+ summary.textContent='其他原版格式（对照 CSV、工程备份 JSON）';
+ const extraRow=D.createElement('div');extraRow.className='th-export-advanced-row';
+ for(const format of ['csv','json']){
+  const btn=native.querySelector('[data-export="'+format+'"]');
+  if(btn)extraRow.append(btn);
+ }
+ extra.append(summary,extraRow);
+ archButtons.after(extra);
  const originalHint=native.parentElement.querySelector('p.muted');
  function choose(value){
   const full=value==='archive';
   native.hidden=full;archButtons.hidden=!full;
+  extra.hidden=full;
   if(originalHint)originalHint.hidden=full;
  }
  scope.addEventListener('change',e=>{if(e.target?.name==='th-export-scope')choose(e.target.value);});
