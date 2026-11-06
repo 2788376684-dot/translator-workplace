@@ -13,9 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 .github/scripts/inspect-export.py
+      - run: python3 .github/scripts/fix-final-delivery.py
+      - name: Verify JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text()
+          assert "section.id='paramDeliveryOptions'" in s
+          assert "stage.insertBefore(section" in s
+          assert "paramExport(b.dataset.pExport)" in s
+          a=s.index("<script>'use strict';(()=>")+len('<script>')
+          b=s.index('</script>',a)
+          Path('/tmp/final-export-check.js').write_text(s[a:b])
+          PY
+          node --check /tmp/final-export-check.js
       - run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/export-diagnostics.txt
-          git diff --cached --quiet || (git commit -m 'Record export UI code inspection' && git push)
+          git add '译者决策工作台_公开双模式版/atelier-core.html'
+          git diff --cached --quiet || (git commit -m 'Fix final export interaction and reveal choices' && git push)
