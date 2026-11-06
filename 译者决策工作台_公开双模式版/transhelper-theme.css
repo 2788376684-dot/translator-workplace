@@ -220,6 +220,40 @@ a{color:var(--th-blue)}
  .topbar .th-settings-trigger{width:112px!important;min-width:112px!important;max-width:112px!important;flex-basis:112px!important}
 }
 
+/* AI transport progress — status is independent of translation state. */
+#th-ai-progress[hidden]{display:none!important}
+#th-ai-progress{
+ position:fixed!important;right:22px;bottom:22px;z-index:99999;
+ width:min(365px,calc(100vw - 24px));box-sizing:border-box;
+ padding:14px 16px 13px;background:rgba(255,255,255,.97);
+ border:1px solid #dfe4ed;border-radius:15px;
+ box-shadow:0 12px 42px #19233421,0 2px 9px #1923340d;
+ color:#20232a;font:13px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+ -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+ animation:th-ai-appear .24s cubic-bezier(.22,1,.36,1) both;
+}
+#th-ai-progress .th-ai-progress-head{display:flex;align-items:center;gap:9px}
+#th-ai-progress .th-ai-progress-head strong{font-size:13px;font-weight:690;flex:1}
+#th-ai-progress .th-ai-progress-dot{width:8px;height:8px;border-radius:50%;
+ background:#0071e3;box-shadow:0 0 0 4px #0071e314}
+#th-ai-progress[data-phase="success"] .th-ai-progress-dot{background:#24865e;box-shadow:0 0 0 4px #24865e15}
+#th-ai-progress[data-phase="error"] .th-ai-progress-dot{background:#c65045;box-shadow:0 0 0 4px #c6504514}
+#th-ai-progress .th-ai-progress-detail{margin:9px 0 10px;font-size:12px;
+ color:#62666e;line-height:1.65;overflow-wrap:anywhere}
+#th-ai-progress .th-ai-progress-track{height:3px;background:#e9edf3;
+ border-radius:3px;overflow:hidden;position:relative}
+#th-ai-progress .th-ai-progress-fill{height:100%;background:#0071e3;
+ width:35%;border-radius:3px;animation:th-ai-loading 1.35s ease-in-out infinite}
+#th-ai-progress[data-phase="success"] .th-ai-progress-fill{width:100%;background:#24865e;animation:none}
+#th-ai-progress[data-phase="error"] .th-ai-progress-fill{width:100%;background:#c65045;animation:none}
+#th-ai-progress .th-ai-progress-close{font:inherit;font-size:11px;padding:3px 7px;
+ color:#66717f;background:#f5f6f8;border:1px solid #e3e7ec;border-radius:6px;cursor:pointer}
+#th-ai-progress .th-ai-progress-close[hidden]{display:none!important}
+@keyframes th-ai-appear{from{opacity:.4;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes th-ai-loading{0%{transform:translateX(-120%)}50%{transform:translateX(125%)}100%{transform:translateX(330%)}}
+@media(max-width:650px){#th-ai-progress{right:12px;bottom:12px}}
+@media(prefers-reduced-motion:reduce){#th-ai-progress .th-ai-progress-fill{animation:none;width:90%}}
+
 /* Respect both OS accessibility setting and user-initiated OCR interactions. */
 @media(prefers-reduced-motion:reduce){
  html,.chat-log{scroll-behavior:auto!important}
