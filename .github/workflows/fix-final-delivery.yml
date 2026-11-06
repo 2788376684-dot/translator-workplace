@@ -40,3 +40,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add '译者决策工作台_公开双模式版/atelier-core.html'
           git diff --cached --quiet || (git commit -m 'Reveal parameter export options only after delivery click' && git push)
+
+# Verified focused export interaction workflow
