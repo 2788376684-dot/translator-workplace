@@ -20,25 +20,25 @@ button('导出校正',()=>{const blob=new Blob([JSON.stringify({version:2,kind:'
 button('导入校正',()=>{const input=d.createElement('input');input.type='file';input.accept='.json';input.onchange=async()=>{try{const j=JSON.parse(await input.files[0].text());if(j.kind!=='ocr-boundary-corrections'||!Array.isArray(j.lines)||j.lines.length>300)throw Error();checkpoint();strokes=j.lines.filter(x=>(x.axis==='h'||x.axis==='v')&&Number.isFinite(x.at)).map(x=>({axis:x.axis,at:Math.max(0,Math.min(1,x.at))}));save();draw();note.textContent='已导入校正线。'}catch{note.textContent='导入失败：校正文件格式不正确。'}};input.click()});
 button('清除校正',()=>{if(!strokes.length||!d.defaultView.confirm('清除本张图片的全部手动校正线？'))return;checkpoint();strokes=[];selected=-1;save();draw()});
 const note=d.createElement('small');note.textContent='橙色为手动校正线，原始绿色 OCR 框保留。点击补线、拖动校正；更改仅影响校正图层，暂不改写 OCR 单元格数据。';bar.append(note);
-// Keep all editor controls out of the application's own grid/flex layout.
-bar.style.cssText='position:fixed!important;right:12px;top:56px;z-index:2147480001;width:min(660px,calc(100vw - 24px));max-height:min(230px,45vh);overflow:auto;box-sizing:border-box;margin:0!important;display:none;box-shadow:0 4px 18px #0002;';
-d.body.append(bar);
-const launcher=d.createElement('button');launcher.type='button';launcher.textContent='✎ 表格线编辑';
+// Mount launcher and toolbar together in a single fixed layer, outside OCR grid.
+const dock=d.createElement('div');dock.id='tw-ocr-editor-dock';
+dock.style.cssText='position:fixed!important;top:10px!important;right:12px!important;z-index:2147483640!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important;gap:7px!important;width:auto!important;max-width:calc(100vw - 24px)!important;overflow:visible!important;pointer-events:none!important;isolation:isolate!important;';
+const launcher=d.createElement('button');launcher.type='button';
+launcher.style.cssText='display:block!important;position:relative!important;pointer-events:auto!important;flex:none!important;border:1px solid #1266d6!important;border-radius:8px!important;background:#1266d6!important;color:#fff!important;padding:9px 14px!important;font:600 13px system-ui!important;box-shadow:0 2px 10px #0002!important;cursor:pointer!important;white-space:nowrap!important;';
 launcher.setAttribute('aria-expanded','false');
-launcher.style.cssText='position:fixed!important;right:12px;top:10px;z-index:2147480002;border:1px solid #1266d6;border-radius:8px;background:#1266d6;color:#fff;padding:8px 14px;font:600 13px system-ui;box-shadow:0 2px 10px #0002;cursor:pointer;white-space:nowrap;';
+bar.style.cssText='position:relative!important;top:auto!important;right:auto!important;left:auto!important;bottom:auto!important;z-index:1!important;width:min(620px,calc(100vw - 24px))!important;max-height:240px!important;overflow:auto!important;box-sizing:border-box!important;margin:0!important;background:#f5f8ff!important;border:1px solid #c7d8e9!important;border-radius:9px!important;box-shadow:0 5px 22px #0003!important;pointer-events:auto!important;flex-wrap:wrap!important;align-items:center!important;gap:6px!important;padding:10px!important;';
+dock.append(launcher,bar);
+d.body.append(dock);
 let opened=false;
 function toggleTools(force){
  opened=typeof force==='boolean'?force:!opened;
  bar.style.setProperty('display',opened?'flex':'none','important');
- bar.style.setProperty('visibility',opened?'visible':'hidden','important');
- bar.style.setProperty('pointer-events',opened?'auto':'none','important');
  launcher.setAttribute('aria-expanded',String(opened));
  launcher.textContent=opened?'✕ 收起表格线工具':'✎ 表格线编辑';
  if(!opened)setMode('view');
 }
 launcher.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleTools();});
 toggleTools(false);
-d.body.append(launcher);
 function position(){const r=base.getBoundingClientRect();Object.assign(overlay.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',display:r.width>50?'block':'none'})}
 function coord(e){const r=overlay.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
 function draw(){svg.replaceChildren();for(let i=0;i<strokes.length;i++){const s=strokes[i],a=d.createElementNS('http://www.w3.org/2000/svg','line'),p=(s.at*100)+'%';const attrs=s.axis==='h'?{x1:'0%',x2:'100%',y1:p,y2:p}:{x1:p,x2:p,y1:'0%',y2:'100%'};for(const k in attrs)a.setAttribute(k,attrs[k]);if(i===selected)a.classList.add('selected');svg.append(a);if(mode==='select'){const hit=a.cloneNode();hit.setAttribute('class','hit');hit.dataset.index=i;svg.append(hit)}}del.disabled=selected<0;back.disabled=!undo.length;forward.disabled=!redo.length}
