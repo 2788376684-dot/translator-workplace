@@ -54,3 +54,24 @@ test('new note row identifiers remain intact after resegmentation',()=>{
  assert.match(code,/保留待人工核对/);
  assert.match(code,/preserveTranslationCells\(rowsBefore,d\.rows\)/);
 });
+
+test('resegmentation makes a text-only recovery record before rebuilding the OCR table',()=>{
+ const helpers=vm.runInNewContext("const norm=x=>String(x??'').replace(/\\s+/g,' ').trim();\\n".replace('\\n','\n')+
+  code.slice(start,end)+'\n({saveRebuildHistory,loadRebuildHistory})',{console,Date});
+ const storage=new Map(),w={localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)}};
+ const before=[row(['Text','Number',''],['文本','数字',''])],notes=[{mark:'[1]',source:'Original',zh:'注释译文'}];
+ for(let i=0;i<4;i++)assert.equal(helpers.saveRebuildHistory(w,'project-A',before,notes),true);
+ const history=helpers.loadRebuildHistory(w,'project-A');
+ assert.equal(history.length,3);
+ assert.equal(history[0].rows[0].cells[0].translation,'文本');
+ assert.equal(history[0].notes[0].translation,'注释译文');
+ assert.ok(!JSON.stringify(history).includes('image'));
+ assert.match(code,/if\(!saveRebuildHistory\(w,d\.id,rowsBefore,notesBefore\)\)/);
+});
+test('OCR rebuild is cancelled if edited source cannot be backed up',()=>{
+ const helpers=vm.runInNewContext("const norm=x=>String(x??'').replace(/\\s+/g,' ').trim();\\n".replace('\\n','\n')+
+  code.slice(start,end)+'\n({saveRebuildHistory})',{console:{warn(){}},Date});
+ const storage={getItem:()=>null,setItem:()=>{throw Error('quota exceeded')}};
+ assert.equal(helpers.saveRebuildHistory({localStorage:storage},'A',[row(['A','',''],['人工修改','',''])],[]),false);
+ assert.equal(helpers.saveRebuildHistory({localStorage:storage},'A',[row(['A','',''],['A','',''])],[]),true);
+});
