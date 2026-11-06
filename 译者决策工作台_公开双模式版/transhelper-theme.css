@@ -20,15 +20,34 @@ body{color:var(--th-ink);background:var(--th-canvas);
 }
 .sidebar{background:#fbfbfd!important;border-right:1px solid var(--th-line)!important;
   color:var(--th-ink)!important}
-.logo{position:relative;padding:9px 8px 25px!important;letter-spacing:-.035em}
-.logo strong,.logo b,.logo .brand-name,.th-brand-wordmark{
- font-weight:720!important;letter-spacing:-.045em!important;color:var(--th-ink)!important;
- font-size:20px!important}
-.logo .th-brand-mark{display:inline-flex;align-items:center;justify-content:center;
- background:linear-gradient(145deg,#252528,#55545b);width:31px;height:31px;
- border-radius:10px;margin-right:8px;color:white;font-size:17px;
- font-weight:700;letter-spacing:-.09em;box-shadow:0 3px 9px #17181c1d;
- vertical-align:middle;user-select:none}
+/* One compact identity; no legacy icon, duplicate wordmark or stacked headline. */
+.logo{
+ display:block!important;min-width:0!important;max-width:100%!important;
+ margin:0!important;padding:11px 8px 24px!important;
+ border:0!important;letter-spacing:normal!important;
+}
+.th-brand-shell{
+ display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;
+ color:#1d1d1f;white-space:nowrap;user-select:none;
+}
+.th-brand-symbol{
+ width:35px;height:35px;flex:0 0 35px;border-radius:11px;
+ background:#1d1d1f;color:white;
+ display:inline-flex;align-items:center;justify-content:center;
+ box-shadow:0 2px 6px rgba(0,0,0,.10),inset 0 1px rgba(255,255,255,.18);
+}
+.th-brand-symbol svg{display:block;width:30px;height:30px}
+.th-brand-copy{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:4px}
+.logo .th-brand-name{
+ display:block;font-size:19px!important;font-weight:720!important;
+ letter-spacing:-.055em!important;line-height:1.1!important;
+ color:#1d1d1f!important;white-space:nowrap!important;
+}
+.logo .th-brand-tagline{
+ display:block;font-size:8px!important;font-weight:650!important;
+ line-height:1.1!important;letter-spacing:.105em!important;
+ color:#86868b!important;white-space:nowrap!important;
+}
 .sidebar .workflow-label,.workflow-label{font-size:10px!important;font-weight:680!important;
  letter-spacing:.075em!important;text-transform:uppercase;color:#8a8a91!important}
 .nav-step{border-radius:10px!important;transition:background .18s ease,color .18s ease,transform .24s var(--th-ease)}
@@ -130,6 +149,31 @@ a{color:var(--th-blue)}
  .logo{padding:8px 5px 13px!important}
  .segments{border-radius:12px!important}
  .pane,.summary-panel,.doc-footer{border-radius:12px!important}
+}
+
+/* Transhelper refinement — navigation, surfaces and motion. */
+.sidebar{box-shadow:inset -1px 0 rgba(0,0,0,.012)!important}
+.sidebar .nav-step{border:1px solid transparent!important}
+.sidebar .nav-step.active,.sidebar .nav-step[aria-current="step"]{
+ box-shadow:inset 0 0 0 1px rgba(0,113,227,.07)!important;
+}
+#stageContent .pane,#stageContent .summary-panel,#stageContent .doc-footer{
+ transition:box-shadow .22s ease,border-color .22s ease!important}
+#stageContent .pane:focus-within{border-color:#cfdef3!important}
+.topbar{position:relative;z-index:2}
+.topbar select,#projectSelect{font-size:13px!important;max-width:100%}
+.nav-step:focus-visible,.segment-item:focus-visible{outline:2px solid #0071e3!important;outline-offset:2px}
+#stageContent .pane-top strong{color:#242428!important}
+#stageContent textarea{caret-color:#0071e3}
+@media(min-width:1100px){
+ .app:not(.parameter-view) .main{padding-top:27px!important}
+}
+@media(max-width:650px){
+ .logo{padding:6px 4px 14px!important}
+ .th-brand-symbol{width:31px;height:31px;flex-basis:31px;border-radius:9px}
+ .th-brand-symbol svg{width:27px;height:27px}
+ .logo .th-brand-name{font-size:17px!important}
+ .logo .th-brand-tagline{font-size:7px!important}
 }
 /* Respect both OS accessibility setting and user-initiated OCR interactions. */
 @media(prefers-reduced-motion:reduce){
