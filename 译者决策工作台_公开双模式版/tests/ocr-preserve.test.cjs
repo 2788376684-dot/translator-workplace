@@ -35,6 +35,20 @@ test('identical sources on unchanged rows retain their own human translations',(
  assert.equal(result.restored,2);assert.equal(result.ambiguous,0);
  assert.equal(after[0].target[0],'译法甲');assert.equal(after[1].target[0],'译法乙');
 });
+test('shifted identical rows remain ambiguous rather than swapping translations',()=>{
+ const before=[row(['Same','',''],['译法甲','','']),row(['Same','',''],['译法乙','',''])];
+ const after=[row(['NEW','',''],['NEW','','']),row(['Same','',''],['Same','','']),row(['Same','',''],['Same','',''])];
+ const result=preserve(before,after);
+ assert.equal(result.restored,0);assert.equal(result.ambiguous,2);
+ assert.equal(after[1].target[0],'Same');assert.equal(after[2].target[0],'Same');
+});
+test('duplicate phrases with distinct neighboring cells match the original row after moving',()=>{
+ const before=[row(['Same','First',''],['甲','第一','']),row(['Same','Second',''],['乙','第二',''])];
+ const after=[row(['NEW','',''],['NEW','','']),row(['Same','Second',''],['Same','Second','']),row(['Same','First',''],['Same','First',''])];
+ const result=preserve(before,after);
+ assert.equal(result.restored,4);
+ assert.equal(after[1].target[0],'乙');assert.equal(after[2].target[0],'甲');
+});
 test('new note row identifiers remain intact after resegmentation',()=>{
  assert.ok(!code.includes('note.rowId=old.rowId'));
  assert.match(code,/保留待人工核对/);
