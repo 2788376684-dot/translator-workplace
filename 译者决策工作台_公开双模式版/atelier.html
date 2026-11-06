@@ -50,6 +50,13 @@ function show(){
    geometry.onerror=()=>console.warn('Native Week8 geometry controls unavailable.');
    d.head.appendChild(geometry);
   }
+  if(!d.getElementById('tw-week8-safety-loader')){
+   const enhancement=d.createElement('script');
+   enhancement.id='tw-week8-safety-loader';
+   enhancement.src='/week8-review-safety.js';
+   enhancement.onerror=()=>console.warn('Week8 review enhancements unavailable.');
+   d.head.appendChild(enhancement);
+  }
  }catch(e){console.warn('Atelier enhancement unavailable:',e);}
 }
 app.addEventListener('load',show);
