@@ -44,6 +44,32 @@ function preserveTranslationCells(before,after){
  });
  return {restored,ambiguous};
 }
+// Keep the last three small, text-only checkpoints before destructive OCR resegmentation.
+// Source images and native OCR persistence remain untouched.
+function saveRebuildHistory(w,id,rows,notes){
+ const editedRows=rows.map((row,i)=>({
+  row:i+1,cells:[0,1,2].map(c=>({column:c+1,source:String(row.source?.[c]??''),translation:String(row.target?.[c]??'')}))
+   .filter(x=>norm(x.translation)&&norm(x.translation)!==norm(x.source))
+ })).filter(x=>x.cells.length);
+ const editedNotes=notes.map(x=>({mark:x.mark,source:x.source,translation:x.zh}))
+  .filter(x=>norm(x.translation)&&norm(x.translation)!==norm(x.source));
+ if(!editedRows.length&&!editedNotes.length)return true;
+ const key='tw-ocr-resegment-history-v1:'+id;
+ try{
+  const old=JSON.parse(w.localStorage.getItem(key)||'[]');
+  const entries=Array.isArray(old)?old.slice(-2):[];
+  entries.push({savedAt:Date.now(),rows:editedRows,notes:editedNotes});
+  let raw=JSON.stringify(entries);
+  while(raw.length>800000&&entries.length>1){entries.shift();raw=JSON.stringify(entries)}
+  if(raw.length>800000)return false;
+  w.localStorage.setItem(key,raw);
+  return true;
+ }catch(e){console.warn('OCR resettlement backup unavailable:',e);return false}
+}
+function loadRebuildHistory(w,id){
+ try{const v=JSON.parse(w.localStorage.getItem('tw-ocr-resegment-history-v1:'+id)||'[]');return Array.isArray(v)?v:[]}
+ catch{return []}
+}
 function setup(w){
  const D=w.document,viewer=D.getElementById('viewer'),editor=D.getElementById('editor'),rebuild=D.getElementById('rebuild-grid');
  if(!viewer||!editor||!rebuild||done.has(D))return;
@@ -73,8 +99,23 @@ function setup(w){
  const title=D.createElement('strong'),hint=D.createElement('small');hint.textContent='选中右侧单元格会定位左侧原图；点击原图也可跳转右侧。';
  const jump=D.createElement('button');jump.textContent='定位当前格';jump.type='button';
  const next=D.createElement('button');next.textContent='下一待核对';next.type='button';
- bar.append(title,jump,next,hint);editor.before(bar);
+ const archive=D.createElement('button');archive.textContent='分表前译文记录';archive.type='button';
+ bar.append(title,jump,next,archive,hint);editor.before(bar);
  const dialog=D.createElement('dialog');dialog.className='tw-diff-dialog';D.body.append(dialog);
+ archive.addEventListener('click',()=>{
+  const d=project(),history=d?loadRebuildHistory(w,d.id):[];
+  if(!history.length){hint.textContent='当前项目暂无分表前的人工译文记录。';return}
+  const entry=history[history.length-1],parts=[];
+  for(const row of entry.rows||[])for(const cell of row.cells||[]){
+   parts.push('第 '+row.row+' 行 / 第 '+cell.column+' 列\n原文：'+cell.source+'\n原译：'+cell.translation);
+  }
+  for(const note of entry.notes||[])parts.push('注释 '+String(note.mark||'')+'\n原文：'+String(note.source||'')+'\n原译：'+String(note.translation||''));
+  const heading=D.createElement('h3');heading.textContent='最近一次重新分表前的人工译文';
+  const description=D.createElement('p');description.textContent='记录时间：'+new Date(entry.savedAt).toLocaleString('zh-CN',{hour12:false})+'。最近三次记录保留在此浏览器，可选择并复制下方文字。';
+  const content=D.createElement('textarea');content.readOnly=true;content.value=parts.join('\n\n');content.style.cssText='width:100%;box-sizing:border-box;min-height:250px;max-height:50vh;padding:9px;resize:vertical;white-space:pre-wrap;font:13px/1.6 sans-serif';
+  const foot=D.createElement('footer'),close=D.createElement('button');close.type='button';close.textContent='关闭';close.addEventListener('click',()=>dialog.close());foot.append(close);
+  dialog.replaceChildren(heading,description,content,foot);dialog.showModal();
+ });
  let mark={},key='',busy=false;
  function project(){return n.doc()}
  function load(){let d=project();if(!d)return;let k='tw-review-status-v2:'+d.id+':'+(d.ocr?.recognizedAt||d.image?.length||'');if(k===key)return;key=k;try{mark=JSON.parse(w.localStorage.getItem(k)||'{}')}catch{mark={}}}
@@ -100,6 +141,10 @@ function setup(w){
    const keep=dialog.querySelector('#tw-preserve').checked;
    const rowsBefore=d.rows.map(r=>({source:Array.isArray(r.source)?r.source.slice():[],target:Array.isArray(r.target)?r.target.slice():[]}));
    const notesBefore=d.notes.map(x=>({mark:x.mark,source:x.source,zh:x.zh,models:Array.isArray(x.models)?x.models.slice():[]}));
+   if(!saveRebuildHistory(w,d.id,rowsBefore,notesBefore)){
+    hint.textContent='分表已取消：无法安全保存修改前的译文。请先通过原生功能导出 OCR 工程备份，或释放浏览器存储空间。';
+    busy=false;return;
+   }
    try{
     n.rebuild(false);
     let preserved={restored:0,ambiguous:0};
