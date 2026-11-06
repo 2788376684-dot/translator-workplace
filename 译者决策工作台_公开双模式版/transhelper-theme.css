@@ -221,7 +221,6 @@ a{color:var(--th-blue)}
 }
 
 /* AI transport progress — status is independent of translation state. */
-#th-ai-progress[hidden]{display:none!important}
 #th-ai-progress{
  position:fixed!important;right:22px;bottom:22px;z-index:99999;
  width:min(365px,calc(100vw - 24px));box-sizing:border-box;
@@ -248,7 +247,6 @@ a{color:var(--th-blue)}
 #th-ai-progress[data-phase="error"] .th-ai-progress-fill{width:100%;background:#c65045;animation:none}
 #th-ai-progress .th-ai-progress-close{font:inherit;font-size:11px;padding:3px 7px;
  color:#66717f;background:#f5f6f8;border:1px solid #e3e7ec;border-radius:6px;cursor:pointer}
-#th-ai-progress .th-ai-progress-close[hidden]{display:none!important}
 @keyframes th-ai-appear{from{opacity:.4;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @keyframes th-ai-loading{0%{transform:translateX(-120%)}50%{transform:translateX(125%)}100%{transform:translateX(330%)}}
 @media(max-width:650px){#th-ai-progress{right:12px;bottom:12px}}
