@@ -30,12 +30,12 @@ function importSource(raw){
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('源资源须为 JSON 对象');
  if(raw.schema&&raw.schema!=='interface.source.v1')throw Error('不支持的源资源格式');
  if(raw.project!=null&&(typeof raw.project!=='string'||!raw.project.trim()))throw Error('项目标识无效');
+ if(raw.revision!=null&&(typeof raw.revision!=='string'&&typeof raw.revision!=='number'))throw Error('源资源版本无效');
  let rows=raw.strings||Object.entries(raw).map(([id,source])=>({id,source}));
  if(!Array.isArray(rows)||!rows.length||rows.length>300)throw Error('支持 1–300 条资源');
  const keys=new Set();for(const r of rows){if(typeof r.id!=='string'||!r.id||['__proto__','constructor','prototype'].includes(r.id)||keys.has(r.id)||typeof r.source!=='string'||!r.source.trim())throw Error('资源键重复、缺失或原文无效');keys.add(r.id);tokens(r.source);if(r.context&&(!r.context||typeof r.context!=='object'||Array.isArray(r.context)))throw Error('语境须为对象');for(const k of ['control','state','purpose'])if(r.context?.[k]!=null&&typeof r.context[k]!=='string')throw Error('语境字段须为文字');}
  const previous=JSON.parse(JSON.stringify(p.segments));const next=rows.map(r=>{const old=p.segments.find(t=>t.resourceKey===r.id);if(old&&old.source===r.source){const t={...old,context:r.context||old.context};if(JSON.stringify(t.context)!==JSON.stringify(old.context)){t.reviewChoice='';t.unresolved=true;}return t;}const t=newSeg(r.source);t.resourceKey=r.id;t.context=r.context||{};if(old)t.previousVersion=old;return t;});
  loc.versions||=[];if(!empty)loc.versions.push({at:time(),revision:loc.revision,segments:previous});
- if(raw.revision!=null&&(typeof raw.revision!=='string'&&typeof raw.revision!=='number'))throw Error('源资源版本无效');
  if(raw.sourceLocale)p.sourceLang=({'en-US':'英语','zh-CN':'中文'}[raw.sourceLocale]||p.sourceLang);if(raw.targetLocale)p.targetLang=({'en-US':'英语','zh-CN':'中文'}[raw.targetLocale]||p.targetLang);
  p.segments=next;loc.revision=String(raw.revision||String(Number(loc.revision)+1));loc.project=raw.project||p.id;loc.view=raw.view||null;loc.baseline=rows.map(r=>({id:r.id,source:r.source}));
  // Core selection is updated through the native segment click after redraw.
