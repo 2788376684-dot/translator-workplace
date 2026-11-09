@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>账户与用户数据 · Translator Workplace</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#243347;background:#f5f6f8}
+*{box-sizing:border-box}body{margin:0;padding:32px 14px}main{max-width:570px;margin:auto}a{color:#315c87;text-decoration:none}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}h1{font-size:23px;font-weight:620;letter-spacing:-.3px;margin:0 0 7px}h2{font-size:16px;margin:0 0 13px}
+.card{border:1px solid #dce1e8;background:#fff;border-radius:13px;padding:22px;margin-bottom:13px;box-shadow:0 3px 13px #20283d07}
+p{font-size:13px;color:#647388;line-height:1.75;margin:8px 0 16px}
+label{display:block;font-size:13px;margin-bottom:13px;color:#435267}input{display:block;width:100%;padding:11px 12px;margin-top:5px;border:1px solid #cfd7e0;border-radius:8px;font:inherit;font-size:15px;color:#293648;background:#fff}
+button{cursor:pointer;padding:10px 14px;background:white;border:1px solid #ccd5df;border-radius:8px;font:inherit;font-size:13px;color:#2f4359}
+button.primary{background:#335a7d;color:#fff;border-color:#335a7d}button:disabled{opacity:.5;cursor:wait}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#feedback{white-space:pre-wrap;font-size:13px;line-height:1.6;min-height:22px;color:#365d78}
+#feedback.error{color:#ae443b}.quiet{font-size:12px;color:#788395}.tip{background:#f5f8fb;border:1px solid #e4eaf0;border-radius:7px;padding:10px 12px}
+[hidden]{display:none!important}@media(max-width:420px){body{padding:18px 10px}.card{padding:16px}}
+</style></head><body><main><header><div><strong style="font-size:14px">Translator Workplace</strong><div class="quiet">用户数据与账户管理</div></div><a href="/atelier.html">返回工作台</a></header>
+<section class="card"><h1>账户与云端工作区</h1><p>访客仍可照常使用本地工作台。登录后，可以手动将本机项目保存到个人云端空间，并在另一台设备恢复。云端与本地的覆盖操作都需要你主动确认。</p><div id="feedback" role="status" aria-live="polite">正在检查账户服务…</div></section>
+<section id="auth" class="card" hidden><h2>登录或创建账户</h2><form id="form"><label>邮箱<input id="email" type="email" autocomplete="email" required maxlength="254" placeholder="name@example.com"></label><label>密码<input id="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128" placeholder="至少 8 位"></label><div class="actions"><button class="primary" type="submit" id="login">登录</button><button type="button" id="signup">注册账户</button></div></form><p>使用邮箱和密码登录。注册时可能需要通过邮件验证邮箱。请勿使用其他网站的相同密码。</p></section>
+<section id="cloud" class="card" hidden><h2>我的云端数据</h2><p id="identity"></p><div class="actions"><button class="primary" id="upload">将本机工作区备份到云端</button><button id="download">从云端恢复至本机</button><button id="export">下载云端备份 JSON</button><button id="logout">退出账户</button></div><p id="cloudtime" class="quiet"></p><p class="tip">本地工作台目前仍使用该浏览器的本地存储。退出账号不会自动删除本机数据；在公共电脑上请避免打开私人项目。恢复云端备份将替换本机当前工作区，操作前会自动下载当前本机备份。</p></section>
+<script src="/account.js" defer></script></main></body></html>
