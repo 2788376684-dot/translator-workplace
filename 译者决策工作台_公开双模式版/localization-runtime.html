@@ -1,0 +1,226 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'"><title>校样批注台</title><style>
+*{box-sizing:border-box}body{margin:0;color:#27303c;background:#e9edf1;font:17px/1.46 'Times New Roman','SimSun','宋体',serif}button,input,select{font:inherit;color:inherit}button,.file{cursor:pointer;border:1px solid #a3adb9;border-radius:5px;padding:6px 13px;background:white;display:inline-block}button:hover,.file:hover{background:#eaf0f4}button:focus-visible,input:focus-visible,select:focus-visible,.file:focus-within{outline:3px solid #5879c5;outline-offset:2px}.file input{position:absolute;width:1px;height:1px;clip-path:inset(50%)}.tools{max-width:900px;margin:22px auto;padding:14px 20px;background:#fff;border:1px solid #d1d8df;border-radius:7px}.tools h1{font-size:23px;margin:0 0 8px}.bar{display:flex;gap:7px;align-items:center;flex-wrap:wrap}select{border:1px solid #abb6c2;padding:7px;background:#fff}.message{font-size:15px;margin:9px 0 0;color:#465d6f}.error{color:#993d31}.folio{max-width:900px;margin:18px auto;background:#fff;overflow:hidden;border:1px solid #cdd5dc;border-radius:8px}.inside .folio{margin:0;border:0;border-radius:0;max-width:none}.inside .tools{display:none}.mast{height:45px;background:#29394a;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 20px}.brand{font-size:20px;letter-spacing:.25px}.lang{font-size:13px;letter-spacing:.3px}.content{padding:22px 22px 26px}.content h2{font-size:29px;line-height:1.2;margin:0 0 5px}.summary{margin:0 0 20px;color:#5d6976;font-size:16px}.records{border-top:1px solid #c5ced5}.record{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;padding:15px 0;border-bottom:1px solid #dce1e6;align-items:center}.record h3{font-size:18px;line-height:1.4;margin:0 0 5px;overflow-wrap:anywhere}.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:#64707a;font-size:14px}.badge{display:inline-block;padding:1px 7px;background:#fbefc9;color:#684a12;border-radius:3px;font-size:14px}.badge.done{background:#e3efe7;color:#365a42}.record button{min-width:63px;max-width:160px;overflow-wrap:anywhere}.detail{margin:14px 0 18px;border-left:4px solid #c7994d;background:#faf8ee;padding:14px 18px}.detail h3{font-size:22px;margin:6px 0}.detail p{margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.primary{background:#344e67;color:#fff;border-color:#344e67}.primary:hover{background:#263d53}.generic{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:10px;padding:10px 0;border-bottom:1px solid #ddd}.generic small{color:#64707a;overflow-wrap:anywhere}.generic span{overflow-wrap:anywhere;white-space:pre-wrap}.variables{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.variables input{max-width:90px}.variables label{font-size:14px}.accessible{position:absolute;overflow:hidden;width:1px;height:1px;clip-path:inset(50%)}[hidden]{display:none!important}@media(max-width:500px){.tools,.folio{margin:8px}.content{padding:16px}.inside .folio{margin:0}.record{gap:5px}.content h2{font-size:26px}.tools{padding:12px}.mast{padding:0 16px}}
+</style></head><body><section class="tools"><h1>校样批注台</h1><div class="bar"><select id="runtime-source" aria-label="选择源资源"><option value="A">校样批注 A</option><option value="B">校样批注 B</option></select><label class="file">导入源资源<input type="file" id="runtime-source-file" accept=".json,application/json"></label><label class="file">载入语言包<input type="file" id="runtime-pack-file" accept=".json,application/json"></label><button id="runtime-en">恢复英文</button></div><p id="runtime-status" class="message" role="status" aria-live="polite">已打开英文界面。选择与当前源资源对应的语言包。</p></section><article class="folio" id="target-app"><div class="mast"><strong class="brand">Proofdesk</strong><span id="runtime-lang" class="lang">EN</span></div><div class="content" id="screen"></div></article><script id="cases-data" type="application/json">{"A":{"source":{"schema":"interface.source.v1","project":"proofdesk","revision":"proof-1","title":"校样批注 A","sourceLocale":"en-US","targetLocale":"zh-CN","strings":[{"id":"status.open","source":"Open","context":{"control":"状态标签","state":"批注尚未处理，显示在列表和详情页。","purpose":"表示工作仍待处理。标签本身不可点击。"}},{"id":"action.open","source":"Open","context":{"control":"详情按钮","state":"在批注列表，每条记录右侧显示。","purpose":"打开该条批注详情。打开后仍保留原来的处理状态。"}},{"id":"app.title","source":"Proof comments","context":{"control":"页面标题","state":"列表及详情页顶部。","purpose":"标识当前的校样批注列表。"}},{"id":"queue.count","source":"{count} open comments","context":{"control":"数量提示","state":"列表标题下方，处理状态改变时刷新。","purpose":"报告尚未处理的批注数，保留 {count}。"}},{"id":"status.resolved","source":"Resolved","context":{"control":"状态标签","state":"批注已标为处理完成。","purpose":"表示该批注处理已完成。"}},{"id":"action.resolve","source":"Mark resolved","context":{"control":"处理按钮","state":"待处理批注的详情页。","purpose":"将当前批注标为已处理，待处理数量减少一条。"}},{"id":"action.reopen","source":"Reopen","context":{"control":"恢复按钮","state":"已处理批注的详情页。","purpose":"恢复为待处理，待处理数量增加一条。"}},{"id":"action.back","source":"Back to list","context":{"control":"返回按钮","state":"批注详情页顶部。","purpose":"回到列表，保留已有处理状态。"}},{"id":"detail.page","source":"Page {page}","context":{"control":"页码标签","state":"列表和详情页的批注位置。","purpose":"用 {page} 显示对应的校样页码。"}}],"view":{"type":"commentQueue","keys":{"title":"app.title","count":"queue.count","openStatus":"status.open","openAction":"action.open","resolvedStatus":"status.resolved","resolveAction":"action.resolve","reopenAction":"action.reopen","backAction":"action.back","page":"detail.page"},"records":[{"id":"fig3","title":"图 3 的图题","page":12,"body":"请核对 Figure 3 的图题与正文交叉引用是否一致。","resolved":false},{"id":"unit2","title":"表 2 的单位","page":18,"body":"请确认表头的单位是否与栏目内数值一致。","resolved":false},{"id":"header","title":"页眉短题名","page":27,"body":"本章页眉已统一为修订后的短题名。","resolved":true}]}}},"B":{"source":{"schema":"interface.source.v1","project":"proofdesk","revision":"proof-2","title":"校样批注 B","sourceLocale":"en-US","targetLocale":"zh-CN","strings":[{"id":"status.open","source":"Open","context":{"control":"状态标签","state":"批注尚未处理，显示在列表和详情页。","purpose":"表示工作仍待处理。标签本身不可点击。"}},{"id":"action.open","source":"Open","context":{"control":"详情按钮","state":"在批注列表，每条记录右侧显示。","purpose":"打开该条批注详情。打开后仍保留原来的处理状态。"}},{"id":"app.title","source":"Proof comments","context":{"control":"页面标题","state":"列表及详情页顶部。","purpose":"标识当前的校样批注列表。"}},{"id":"queue.count","source":"{count} comments awaiting review","context":{"control":"数量提示","state":"列表标题下方，处理状态改变时刷新。","purpose":"报告尚未处理的批注数，保留 {count}。"}},{"id":"status.resolved","source":"Resolved","context":{"control":"状态标签","state":"批注已标为处理完成。","purpose":"表示该批注处理已完成。"}},{"id":"action.resolve","source":"Mark resolved","context":{"control":"处理按钮","state":"待处理批注的详情页。","purpose":"将当前批注标为已处理，待处理数量减少一条。"}},{"id":"action.reopen","source":"Reopen","context":{"control":"恢复按钮","state":"已处理批注的详情页。","purpose":"恢复为待处理，待处理数量增加一条。"}},{"id":"action.back","source":"Back to list","context":{"control":"返回按钮","state":"批注详情页顶部。","purpose":"回到列表，保留已有处理状态。"}},{"id":"detail.page","source":"Proof page {page}","context":{"control":"页码标签","state":"列表和详情页的批注位置。","purpose":"用 {page} 显示对应的校样页码。"}}],"view":{"type":"commentQueue","keys":{"title":"app.title","count":"queue.count","openStatus":"status.open","openAction":"action.open","resolvedStatus":"status.resolved","resolveAction":"action.resolve","reopenAction":"action.reopen","backAction":"action.back","page":"detail.page"},"records":[{"id":"caption","title":"封面副题","page":1,"body":"请核对封面副题的新版本。","resolved":false},{"id":"callout","title":"侧栏引文","page":8,"body":"请确认侧栏引文的起止位置。","resolved":false},{"id":"index","title":"索引条目","page":31,"body":"请按终校页码核对索引。","resolved":false}]}}}}</script><script>'use strict';
+const clone = value => JSON.parse(JSON.stringify(value));
+const dict = value => value && typeof value === 'object' && !Array.isArray(value);
+const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+const el = id => document.getElementById(id);
+const legacyIds = ['app.title','progress','task.label','action.resume','action.save','notice.saved','action.submit','confirm.title','confirm.body','action.cancel','action.confirm','notice.done'];
+const queueRoles = ['title','count','openStatus','openAction','resolvedStatus','resolveAction','reopenAction','backAction','page'];
+function fail(message) { throw new Error(message); }
+function string(value, label, limit = 3000, empty = false) {
+  if (typeof value !== 'string' || value.length > limit || (!empty && !value.trim())) fail('请检查'+label+'的文字内容。');
+  return value;
+}
+function identifier(value) {
+  string(value,'资源键',160);
+  if (['__proto__','constructor','prototype'].includes(value) || /[\x00-\x1f]/.test(value)) fail('资源键含有无效字符。');
+  return value;
+}
+function tokens(value) {
+  const result = [];
+  const rest = value.replace(/\{([A-Za-z][A-Za-z_0-9]*)\}/g,(_,v)=>{result.push(v);return ''});
+  if (/[{}]/.test(rest)) fail('变量必须写作单层 {name}，请检查花括号。');
+  return result.sort();
+}
+function contextData(raw = {}) {
+  if (!dict(raw)) fail('语境记录须为对象。');
+  const result = {};
+  for (const key of ['control','state','purpose']) result[key]=string(raw[key]??'','语境',1600,true);
+  return result;
+}
+function checkView(view, rows) {
+  if (!view) return null;
+  if (!dict(view) || view.type!=='commentQueue' || !dict(view.keys) || !Array.isArray(view.records) || !view.records.length || view.records.length>50) fail('批注界面描述不完整。');
+  const ids = new Set(rows.map(r=>r.id));
+  if (queueRoles.some(role=>!ids.has(view.keys[role]))) fail('批注界面引用了不存在的资源键。');
+  for (const role of queueRoles) {
+    const expected=role==='count'?['count']:role==='page'?['page']:[];
+    const actual=tokens(rows.find(r=>r.id===view.keys[role]).source);
+    if (JSON.stringify(expected)!==JSON.stringify(actual)) fail('批注界面的 '+role+' 使用了无法填入的变量。');
+  }
+  const seen = new Set();
+  const records = view.records.map(r=>{
+    if (!dict(r) || seen.has(r.id)) fail('批注记录键缺失或重复。');
+    seen.add(identifier(r.id));
+    if (!Number.isInteger(r.page)||r.page<1||r.page>99999||typeof r.resolved!=='boolean') fail('批注页码或状态无效。');
+    return {id:r.id,title:string(r.title,'批注标题',300),body:string(r.body,'批注内容',2000),page:r.page,resolved:r.resolved};
+  });
+  return {type:'commentQueue',keys:Object.fromEntries(queueRoles.map(k=>[k,view.keys[k]])),records};
+}
+function normalizeSource(raw, filename = '导入资源') {
+  if (!dict(raw)) fail('源资源应为JSON对象。');
+  if (!Array.isArray(raw.strings)) {
+    if (!Object.values(raw).every(v=>typeof v==='string')) fail('请选择包含 strings 条目的源资源，或键与英文文字组成的JSON。');
+    raw={schema:'interface.source.v1',project:'imported',revision:filename,title:filename,sourceLocale:'en-US',targetLocale:'zh-CN',strings:Object.entries(raw).map(([id,source])=>({id,source,context:{}}))};
+  }
+  if (!['interface.source.v1','courseflow.source.v1'].includes(raw.schema)) fail('不支持此源资源格式。');
+  if (!raw.strings.length||raw.strings.length>300) fail('每个资源文件支持1至300条文字。');
+  const seen=new Set();
+  const strings=raw.strings.map(row=>{
+    if(!dict(row)) fail('源文条目格式错误。');
+    const id=identifier(row.id);
+    if(seen.has(id)) fail('重复的资源键 '+id);
+    seen.add(id);
+    const source=string(row.source,'原文');tokens(source);
+    return {id,source,context:contextData(row.context)};
+  });
+  const source={schema:raw.schema,project:string(raw.project,'项目名',160),revision:string(raw.revision,'版本号',160),title:string(raw.title??filename,'资源名称',200),sourceLocale:string(raw.sourceLocale??'en-US','原文语言',25),targetLocale:string(raw.targetLocale??'zh-CN','目标语言',25),strings};
+
+  if(raw.schema==='courseflow.source.v1'&&(source.project!=='courseflow.practice'||strings.length!==12||legacyIds.some(id=>!seen.has(id)))) fail('原版CourseFlow源资源须包括约定的12个键。');
+  const view=checkView(raw.view,strings);if(view)source.view=view;
+  return source;
+}
+function readJSON(raw) {
+  string(raw,'JSON',2000000);
+  return strictJSON(raw.replace(/^\uFEFF/,''));
+}
+function readCandidateJSON(raw) {
+  try { return readJSON(raw); } catch(firstError) {
+    const fenced=[...raw.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)];
+    if(fenced.length===1)return readJSON(fenced[0][1]);
+    const first=raw.indexOf('{'),last=raw.lastIndexOf('}');
+    if(first>=0&&last>first)return readJSON(raw.slice(first,last+1));
+    throw firstError;
+  }
+}
+async function readFile(file) {
+  if (!file || file.size>2000000) fail('请选择小于2MB的JSON文件。');
+  return readJSON(await file.text());
+}
+function baseline(source) {
+  if(source.schema==='courseflow.source.v1')return legacyIds.map(id=>clone(source.strings.find(r=>r.id===id)));
+  return source.strings.map(({id,source})=>({id,source})).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
+}
+function checksum(value) {
+  const text=JSON.stringify(value);let hash=2166136261;
+  for(let i=0;i<text.length;i++){hash^=text.charCodeAt(i);hash=Math.imul(hash,16777619)}
+  return (hash>>>0).toString(16).padStart(8,'0');
+}
+function validateMessages(messages,source,allowEmpty=false) {
+  if(!dict(messages)||Object.keys(messages).length!==source.strings.length||source.strings.some(row=>!own(messages,row.id)))fail('译文的键与当前源资源不一致。请提供全部条目。');
+  for(const row of source.strings){
+    const value=string(messages[row.id],row.id,3000,allowEmpty);
+    if(allowEmpty)continue;
+    if(JSON.stringify(tokens(value))!==JSON.stringify(tokens(row.source)))fail(row.id+' 的变量与原文不一致，请保留名称和出现次数。');
+    if(source.schema==='courseflow.source.v1'&&(!/[\u3400-\u9fff]/.test(value)||value===row.source))fail(row.id+' 尚未填写原版CourseFlow要求的中文译文。');
+  }
+  return clone(messages);
+}
+function makePack(source,messages,profile,origin) {
+  validateMessages(messages,source);
+  const base=baseline(source);
+  const pack={schema:'interface.locale.v1',project:source.project,sourceRevision:source.revision,sourceBaseline:base,locale:'zh-CN',messages:clone(messages)};
+  if(source.schema==='courseflow.source.v1')Object.assign(pack,{schema:'courseflow.locale.v1',sourceSignature:'cf-'+checksum(base),provenance:{kind:'manual',tool:'本地化编辑器',date:new Date().toISOString().slice(0,10),detail:origin||'人工编辑'},profileSummary:{audience:profile.audience||'中文产品用户',style:'guided',primaryStyle:'follow',requirement:profile.requirement.slice(0,700),width:'640'},productCard:{user:'',roles:'',evidence:'',next:''},humanReview:false});
+  return pack;
+}
+function readPack(pack,source) {
+  if(!dict(pack)||pack.schema!==(source.schema==='courseflow.source.v1'?'courseflow.locale.v1':'interface.locale.v1')||pack.project!==source.project||pack.sourceRevision!==source.revision||pack.locale!==source.targetLocale||JSON.stringify(pack.sourceBaseline)!==JSON.stringify(baseline(source)))fail('语言包与当前项目、版本或源文不匹配。请先选择对应的源资源。');
+  if(pack.schema==='courseflow.locale.v1'&&pack.sourceSignature!=='cf-'+checksum(baseline(source)))fail('原版语言包签名不匹配。');
+  return validateMessages(pack.messages,source);
+}
+function writeJSON(filename,value) {
+  const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+function node(tag, textContent='',className='') {
+  const n=document.createElement(tag);
+  if(textContent!=='')n.textContent=textContent;
+  if(className)n.className=className;
+  return n;
+}
+function guarded(fn,notify) {
+  return async(...args)=>{try{await fn(...args)}catch(error){notify(error.message||'操作失败。')}};
+}
+
+function strictJSON(raw){let i=0;const s=raw;function ws(){while(/\s/.test(s[i]||'')&&i<s.length)i++}function fail(m){throw new Error('文件 / 回复不是有效 JSON：'+m+'（位置 '+i+'）。')}function str(){const start=i++;let escape=false;for(;i<s.length;i++){const c=s[i];if(escape){escape=false;continue}if(c==='\\'){escape=true;continue}if(c==='"'){i++;try{return JSON.parse(s.slice(start,i))}catch(e){fail('字符串转义无效')}}if(c.charCodeAt(0)<32)fail('字符串含未转义换行')}fail('字符串未结束')}function val(depth=0){if(depth>35)fail('嵌套过深');ws();const c=s[i];if(c==='"')return str();if(c==='{'){i++;const o=Object.create(null),keys=new Set();ws();if(s[i]==='}'){i++;return o}while(i<s.length){ws();if(s[i]!=='"')fail('对象键须有双引号');const k=str();if(keys.has(k))fail('字段重复：'+k);keys.add(k);ws();if(s[i++]!==':')fail('缺少冒号');o[k]=val(depth+1);ws();const end=s[i++];if(end==='}')return o;if(end!==',')fail('缺少逗号或右花括号')}fail('对象未结束')}if(c==='['){i++;const a=[];ws();if(s[i]===']'){i++;return a}while(i<s.length){a.push(val(depth+1));ws();const end=s[i++];if(end===']')return a;if(end!==',')fail('数组分隔符错误')}fail('数组未结束')}for(const [t,v]of [['true',true],['false',false],['null',null]])if(s.slice(i,i+t.length)===t){i+=t.length;return v}const n=s.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);if(n){i+=n[0].length;const v=Number(n[0]);if(!Number.isFinite(v))fail('数字超范围');return v}fail('无法读取值')}const result=val();ws();if(i!==s.length)fail('对象后仍有多余内容');return result}
+</script><script>const runtimeCases = JSON.parse(el('cases-data').textContent);
+let source = normalizeSource(runtimeCases.A.source), messages = null, records = [], detailId = null;
+let variables = Object.create(null);
+const embedded = window.parent!==window;
+if(embedded)document.body.classList.add('inside');
+function runtimeNotice(text,error=false){
+  el('runtime-status').textContent=text;
+  el('runtime-status').classList.toggle('error',error);
+  if(embedded)parent.postMessage({channel:'proofdesk.status',text,error},'*');
+}
+function rawMessage(id){return messages?.[id]??source.strings.find(row=>row.id===id)?.source??'';}
+function fillMessage(id,values={}){
+  return rawMessage(id).replace(/\{([A-Za-z][A-Za-z_0-9]*)\}/g,(original,key)=>String(own(values,key)?values[key]:(own(variables,key)?variables[key]:original)));
+}
+function button(text,action,className='',id=''){
+  const b=node('button',text,className);if(id)b.id=id;b.type='button';b.onclick=action;return b;
+}
+function showQueue(screen){
+  const keys=source.view.keys;
+  const label=(role,values)=>fillMessage(keys[role],values);
+  const count=records.filter(record=>!record.resolved).length;
+  screen.append(node('h2',label('title')));
+  const summary=node('p',label('count',{count}),'summary');summary.id='open-count';screen.append(summary);
+  const active=records.find(record=>record.id===detailId);
+  if(active){
+    screen.append(button(label('backAction'),()=>{detailId=null;renderRuntime()},'','go-back'));
+    const detail=node('section','','detail');detail.id='comment-detail';
+    const meta=node('div','','meta');meta.append(node('span',label('page',{page:active.page})),node('span',label(active.resolved?'resolvedStatus':'openStatus'),'badge'+(active.resolved?' done':'')));
+    detail.append(meta,node('h3',active.title),node('p',active.body));screen.append(detail);
+    screen.append(button(label(active.resolved?'reopenAction':'resolveAction'),()=>{active.resolved=!active.resolved;renderRuntime()},'primary','toggle-resolved'));return;
+  }
+  const list=node('div','','records');
+  records.forEach(record=>{
+    const item=node('section','','record'),left=node('div'),meta=node('div','','meta');
+    meta.append(node('span',label(record.resolved?'resolvedStatus':'openStatus'),'badge'+(record.resolved?' done':'')),node('span',label('page',{page:record.page})));
+    left.append(node('h3',record.title),meta);
+    const open=button(label('openAction'),()=>{detailId=record.id;renderRuntime()});open.dataset.open=record.id;
+    item.append(left,open);list.append(item);
+  });screen.append(list);
+}
+function showGeneric(screen){
+  screen.append(node('h2','控件预览'),node('p','此资源显示各键的文字与变量示例。','summary'));
+  const names=[...new Set(source.strings.flatMap(row=>tokens(row.source)))];
+  const vars=node('div','','variables');
+  names.forEach(name=>{const label=node('label',name+' ');const input=node('input');input.value=variables[name]??(name==='name'?'林悦':'3');variables[name]=input.value;input.onchange=()=>{variables[name]=input.value;renderRuntime()};label.append(input);vars.append(label)});
+  if(names.length)screen.append(vars);
+  source.strings.forEach(row=>{
+    const line=node('div','','generic'),value=fillMessage(row.id),control=row.context.control;
+    let sample;
+    if(/按钮|button/i.test(control)){sample=node('button',value);sample.disabled=true;}
+    else if(/状态|status/i.test(control)){sample=node('span',value,'badge');}
+    else if(/标题|title/i.test(control)){sample=node('strong',value);}
+    else{sample=node('span',value);}
+    line.append(node('small',row.id),sample);screen.append(line);
+  });
+}
+function renderRuntime(){
+  const screen=el('screen');screen.replaceChildren();document.querySelector('.brand').textContent=source.view?'Proofdesk':'字符串预览';el('runtime-lang').textContent=messages?source.targetLocale:source.sourceLocale;
+  if(source.view)showQueue(screen);else showGeneric(screen);
+  if(embedded)requestAnimationFrame(()=>parent.postMessage({channel:'proofdesk.height',height:document.documentElement.scrollHeight},'*'));
+}
+function installSource(next){
+  source=next;messages=null;records=clone(source.view?.records??[]);detailId=null;variables=Object.create(null);renderRuntime();
+}
+function applyPack(pack,via){messages=readPack(pack,source);renderRuntime();runtimeNotice('已载入中文语言包'+(via?'，'+via:'')+'。');}
+el('runtime-source').onchange=e=>{
+  const k=e.target.value;if(!runtimeCases[k])return;
+  installSource(normalizeSource(runtimeCases[k].source));runtimeNotice('已切换至 '+source.title+'，当前使用英文。');
+};
+el('runtime-en').onclick=()=>{messages=null;renderRuntime();runtimeNotice('已恢复英文。')};
+el('runtime-source-file').onchange=guarded(async e=>{
+  const file=e.target.files[0];e.target.value='';if(!file)return;
+  const next=normalizeSource(await readFile(file),file.name.replace(/\.json$/i,''));installSource(next);
+  let opt=el('runtime-source').querySelector('[value="custom"]');if(!opt){opt=node('option');opt.value='custom';el('runtime-source').append(opt)}opt.textContent=next.title;el('runtime-source').value='custom';runtimeNotice('已导入 '+next.title+'。');
+},m=>runtimeNotice(m,true));
+el('runtime-pack-file').onchange=guarded(async e=>{
+  const file=e.target.files[0];e.target.value='';if(file)applyPack(await readFile(file),file.name);
+},m=>runtimeNotice(m,true));
+if(embedded)window.addEventListener('message',event=>{
+  if(event.source!==parent||event.data?.channel!=='proofdesk.command')return;
+  try{
+    const {action,payload}=event.data;
+    if(action==='source')installSource(normalizeSource(payload));
+    else if(action==='pack')applyPack(payload,'编辑区试用');
+    else if(action==='english'){messages=null;renderRuntime()}
+  }catch(error){runtimeNotice(error.message,true)}
+});
+installSource(source);
+if(embedded)parent.postMessage({channel:'proofdesk.ready'},'*');
+</script></body></html>
