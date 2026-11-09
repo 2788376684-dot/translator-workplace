@@ -51,9 +51,9 @@ module.exports=async function handler(req,res){
   if(action==='snapshot'&&req.method==='POST'){
    const payload=req.body?.payload;
    if(!payload||typeof payload!=='object'||Array.isArray(payload)||payload.schema!=='tw.account.snapshot.v1'||typeof payload.workspace!=='string'||payload.workspace.length>1_600_000)return json(res,400,{error:'备份文件结构不正确'});
-   const key='translator-workbench-agnes-cn-v3';
+   const key='tw-workplace-v4';
    let data;try{data=JSON.parse(payload.workspace)}catch{return json(res,400,{error:'工作区内容不是有效 JSON'})}
-   if(data===null||typeof data!=='object')return json(res,400,{error:'工作区格式不正确'});
+   if(!data||data.version!==4||!Array.isArray(data.projects))return json(res,400,{error:'工作区版本不匹配，无法保存'});
    const r=await fetch(c.url+table+'?on_conflict=user_id',{method:'POST',headers:{...opts(c,session.token),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,payload:{schema:payload.schema,storageKey:key,workspace:payload.workspace},updated_at:new Date().toISOString()}),signal:AbortSignal.timeout(12000)});
    if(!r.ok)return json(res,502,{error:'云端保存失败，请确认数据库权限配置'});
    return json(res,200,{saved:true});
