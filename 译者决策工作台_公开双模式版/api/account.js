@@ -3,8 +3,8 @@ const cookie=require('node:querystring');
 const MAX=2_000_000;
 const HOST=/^https:\/\/[a-z0-9-]+\.supabase\.co$/;
 const COOKIE={access:'tw_account_access',refresh:'tw_account_refresh'};
-function cfg(){const url=(process.env.SUPABASE_URL||'').replace(/\/$/,'');const key=process.env.SUPABASE_ANON_KEY||'';return HOST.test(url)&&key.length>20?{url,key}:null;}
-function opts(c,token){return {'apikey':c.key,'Authorization':'Bearer '+(token||c.key),'Content-Type':'application/json'};}
+function cfg(){const url=(process.env.SUPABASE_URL||'').replace(/\/$/,'');const key=process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||'';return HOST.test(url)&&key.length>20?{url,key}:null;}
+function opts(c,token){return {'apikey':c.key,...(token?{'Authorization':'Bearer '+token}:{}),'Content-Type':'application/json'};}
 function json(res,status,obj){res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');return res.status(status).json(obj);}
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(v=>{let i=v.indexOf('=');return i<0?['','']:[v.slice(0,i).trim(),decodeURIComponent(v.slice(i+1))]}));}
 function putCookies(res,s){const secure=process.env.NODE_ENV==='production'?'; Secure':'';const base='; Path=/; HttpOnly; SameSite=Lax'+secure;res.setHeader('Set-Cookie',[COOKIE.access+'='+encodeURIComponent(s.access_token)+base+'; Max-Age='+Math.min(s.expires_in||3600,3600),COOKIE.refresh+'='+encodeURIComponent(s.refresh_token)+base+'; Max-Age=2592000']);}
