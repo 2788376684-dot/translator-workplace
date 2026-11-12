@@ -24,24 +24,23 @@ function enhance(){
  if(!target)return;
  const {root,title}=target;
  root.classList.add('th-project-settings');
- if(root.querySelector('#th-project-settings-intro'))return;
  const all=[...root.querySelectorAll('small,span,p,div')];
  // Suppress duplicate/static descriptions only. No form fields or actions are changed.
- const subtitle=all.find(x=>x.children.length===0&&clean(x.textContent)==='项目语言、文体、要求与术语');
- if(subtitle){subtitle.classList.add('th-project-redundant');subtitle.setAttribute('aria-hidden','true');}
+ const subtitle=all.find(x=>x.children.length===0&&['项目语言、文体、要求与术语','AI 翻译与审校设置'].includes(clean(x.textContent)));
+ if(subtitle){
+  subtitle.textContent='AI 翻译与审校设置';
+  subtitle.classList.add('th-project-subtitle');
+  subtitle.classList.remove('th-project-redundant');
+  subtitle.removeAttribute('aria-hidden');
+ }
  const note=all.find(x=>x.children.length===0&&clean(x.textContent)==='用于 AI 提示与本地质检');
  if(note){note.classList.add('th-project-redundant');note.setAttribute('aria-hidden','true');}
- const intro=D.createElement('p');
- intro.id='th-project-settings-intro';
- intro.className='th-project-settings-intro';
- intro.textContent='此处设置将用于 AI 翻译和审校。请按需填写译文风格、读者、语言要求和术语；留空则不增加额外要求。';
  const header=title.closest('.modal-header,.dialog-header,.modal-head,.pane-top,.settings-header')||title.parentElement;
- if(header&&header!==root&&root.contains(header)){
-  header.insertAdjacentElement('afterend',intro);
- }else{
-  const targetElement=title.parentElement&&title.parentElement!==root?title.parentElement:title;
-  targetElement.insertAdjacentElement('afterend',intro);
- }
+ if(header&&header!==root)header.classList.add('th-project-compact-header');
+ // Replace the old extra instruction row with a short subtitle inside the native header.
+ // Never add a new block between the header and form.
+ const oldIntro=root.querySelector('#th-project-settings-intro');
+ if(oldIntro)oldIntro.hidden=true;
  const requirement=root.querySelector('textarea[placeholder*="风格"],textarea[placeholder*="忠实度"],textarea[placeholder*="读者"]');
  if(requirement){
   requirement.classList.add('th-project-requirements');
