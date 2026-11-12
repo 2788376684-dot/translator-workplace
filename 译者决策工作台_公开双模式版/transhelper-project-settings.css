@@ -1,18 +1,10 @@
 /* Project settings modal: grouped content and concise AI explanation. */
 .th-project-settings{--th-project-line:#e7ebf0}
 .th-project-settings .th-project-redundant{display:none!important}
-.th-project-settings-intro{
- margin:0!important;padding:12px 24px!important;
- border-bottom:1px solid var(--th-project-line);
- background:#f8fafc;color:#53657a;font-size:12px!important;
- line-height:1.65!important;letter-spacing:0!important;
-}
 .th-project-settings .th-project-section-label{font-weight:700;color:#263648}
 .th-project-settings :is(input,select,textarea):focus-visible{
  outline:2px solid #8bb9f4;outline-offset:1px;
 }
-@media(max-width:650px){
- .th-project-settings-intro{padding:11px 16px!important;font-size:12px!important}
 }
 
 /* Compact default editing surface; users can still resize vertically. */
@@ -26,3 +18,20 @@
  padding:10px 12px!important;
 }
 .th-project-settings .th-project-section-label{font-size:13px!important}
+
+/* Keep guidance within the native title area; no extra instruction stripe. */
+.th-project-settings .th-project-subtitle{
+ display:block!important;margin:3px 0 0!important;
+ font-size:12px!important;line-height:1.45!important;color:#778496!important;
+}
+.th-project-settings .th-project-compact-header{
+ min-height:0!important;padding-top:14px!important;padding-bottom:14px!important;
+ margin-bottom:0!important;
+}
+.th-project-settings #th-project-settings-intro{display:none!important}
+.th-project-settings .th-project-compact-header + *{
+ margin-top:0!important;
+}
+@media(max-width:650px){
+ .th-project-settings .th-project-compact-header{padding-top:12px!important;padding-bottom:12px!important}
+}
