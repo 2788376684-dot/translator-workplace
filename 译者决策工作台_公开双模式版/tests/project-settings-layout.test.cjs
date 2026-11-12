@@ -12,7 +12,9 @@ test('project settings layout preserves original settings controls and storage',
  assert.match(js,/项目设置/);
  assert.match(js,/项目语言、文体、要求与术语/);
  assert.match(js,/用于 AI 提示与本地质检/);
- assert.match(js,/译文风格、读者、语言要求和术语/);
+ assert.match(js,/AI 翻译与审校设置/);
+ assert.doesNotMatch(js,/createElement\('p'\)/);
+ assert.match(js,/th-project-compact-header/);
  assert.match(js,/译文风格与要求/);
  assert.match(js,/th-project-requirements/);
  const style=read('transhelper-project-settings.css');
