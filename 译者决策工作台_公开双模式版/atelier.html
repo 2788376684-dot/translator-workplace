@@ -105,14 +105,14 @@ function show(){
   if(!d.getElementById('transhelper-quick-actions-style')){
    const sheet=d.createElement('link');
    sheet.id='transhelper-quick-actions-style';
-   sheet.rel='stylesheet';sheet.href='/transhelper-quick-actions.css?v=2';
+   sheet.rel='stylesheet';sheet.href='/transhelper-quick-actions.css?v=3';
    sheet.onerror=()=>console.warn('Quick actions theme unavailable.');
    d.head.appendChild(sheet);
   }
   if(!d.getElementById('transhelper-quick-actions-loader')){
    const quick=d.createElement('script');
    quick.id='transhelper-quick-actions-loader';
-   quick.src='/transhelper-quick-actions.js?v=1';
+   quick.src='/transhelper-quick-actions.js?v=2';
    quick.onerror=()=>console.warn('Quick actions unavailable; original AI and backup controls remain accessible.');
    d.head.appendChild(quick);
   }
