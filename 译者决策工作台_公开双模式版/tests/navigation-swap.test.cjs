@@ -14,6 +14,7 @@ function element(tag='div',text=''){
   append(...nodes){for(const x of nodes){if(x.parentNode)x.parentNode.children.splice(x.parentNode.children.indexOf(x),1);this.children.push(x);x.parentNode=this}},
   prepend(...nodes){for(const x of nodes.reverse()){if(x.parentNode)x.parentNode.children.splice(x.parentNode.children.indexOf(x),1);this.children.unshift(x);x.parentNode=this}},
   contains(x){if(x===this)return true;return this.children.some(c=>c.contains(x))},
+  get parentElement(){return this.parentNode},
   get nextSibling(){if(!this.parentNode)return null;return this.parentNode.children[this.parentNode.children.indexOf(this)+1]||null},
  };
  return obj;
