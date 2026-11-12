@@ -135,14 +135,14 @@ function show(){
   if(!d.getElementById('th-project-settings-style')){
    const sheet=d.createElement('link');
    sheet.id='th-project-settings-style';sheet.rel='stylesheet';
-   sheet.href='/transhelper-project-settings.css?v=2';
+   sheet.href='/transhelper-project-settings.css?v=3';
    sheet.onerror=()=>console.warn('Project settings presentation styles unavailable.');
    d.head.appendChild(sheet);
   }
   if(!d.getElementById('th-project-settings-loader')){
    const settings=d.createElement('script');
    settings.id='th-project-settings-loader';
-   settings.src='/transhelper-project-settings.js?v=2';
+   settings.src='/transhelper-project-settings.js?v=3';
    settings.onerror=()=>console.warn('Project settings presentation enhancement unavailable.');
    d.head.appendChild(settings);
   }
