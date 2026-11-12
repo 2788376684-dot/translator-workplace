@@ -34,7 +34,7 @@ function enhance(){
  const intro=D.createElement('p');
  intro.id='th-project-settings-intro';
  intro.className='th-project-settings-intro';
- intro.textContent='语言、文体和翻译要求用于 AI 翻译与审校；术语表同时辅助术语一致性检查。';
+ intro.textContent='此处设置将用于 AI 翻译和审校。请按需填写译文风格、读者、语言要求和术语；留空则不增加额外要求。';
  const header=title.closest('.modal-header,.dialog-header,.modal-head,.pane-top,.settings-header')||title.parentElement;
  if(header&&header!==root&&root.contains(header)){
   header.insertAdjacentElement('afterend',intro);
@@ -42,10 +42,23 @@ function enhance(){
   const targetElement=title.parentElement&&title.parentElement!==root?title.parentElement:title;
   targetElement.insertAdjacentElement('afterend',intro);
  }
+ const requirement=root.querySelector('textarea[placeholder*="风格"],textarea[placeholder*="忠实度"],textarea[placeholder*="读者"]');
+ if(requirement){
+  requirement.classList.add('th-project-requirements');
+  requirement.setAttribute('rows','3');
+  requirement.placeholder='例如：面向普通读者，表达自然准确；保留专有名词，不随意增删信息。';
+ }
  const labels=[...root.querySelectorAll('label,strong,h3,h4')];
  for(const el of labels){
   const t=clean(el.textContent);
-  if(t==='通用翻译要求')el.classList.add('th-project-section-label');
+  if(t==='通用翻译要求'){
+   el.classList.add('th-project-section-label');
+   // Change only the visible label. Leave the native field and listeners intact.
+   if(el.childNodes.length===1&&el.firstChild.nodeType===3)el.textContent='译文风格与要求';
+   else for(const child of el.childNodes){
+    if(child.nodeType===3&&clean(child.textContent)==='通用翻译要求')child.textContent='译文风格与要求';
+   }
+  }
   if(t==='术语表')el.classList.add('th-project-section-label');
  }
 }
