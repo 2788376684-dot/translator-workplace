@@ -72,5 +72,5 @@ $('logout').onclick=async()=>{
  try{await request('logout','POST',{});session(false);note('已退出云端账户。本机项目仍保存在此浏览器中。');}
  catch(e){note(e.message,true)}finally{disable(false)}
 };
-(async()=>{try{await request('status');await refresh()}catch(e){session(false);$('auth').hidden=true;note('账户服务尚未配置。工作台本地模式仍可正常使用。请网站管理员设置 Supabase 数据库及 Vercel 环境变量。',true)}})();
+(async()=>{try{await request('status');await refresh()}catch(e){session(false);$('auth').hidden=true;note((e.message||'账户服务连接失败')+' 本地工作台仍可使用。',true)}})();
 })();
