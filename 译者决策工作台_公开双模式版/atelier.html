@@ -78,13 +78,13 @@ function show(){
   // No mutation of persisted state, OCR geometry, or translation content.
   if(!d.getElementById('transhelper-theme')){
    const theme=d.createElement('link');
-   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=5';
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=6';
    theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
    d.head.appendChild(theme);
   }
   if(!d.getElementById('transhelper-brand-loader')){
    const brand=d.createElement('script');
-   brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js?v=2';
+   brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js?v=3';
    brand.onerror=()=>console.warn('Transhelper branding unavailable.');
    d.head.appendChild(brand);
   }
@@ -129,6 +129,14 @@ function show(){
    scope.src='/transhelper-export-scope.js?v=1';
    scope.onerror=()=>console.warn('Optional export scope chooser unavailable; native exports remain accessible.');
    d.head.appendChild(scope);
+  }
+  // Visual-only header bridge. Never replaces native controls or their listeners.
+  if(!d.getElementById('th-header-layout-loader')){
+   const layout=d.createElement('script');
+   layout.id='th-header-layout-loader';
+   layout.src='/transhelper-header-layout.js?v=1';
+   layout.onerror=()=>console.warn('Optional header layout unavailable; original controls remain available.');
+   d.head.appendChild(layout);
   }
   if(!d.getElementById('tw-week8-safety-loader')){
    const enhancement=d.createElement('script');
