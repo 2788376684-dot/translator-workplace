@@ -140,6 +140,13 @@ function show(){
    guard.onerror=()=>console.warn('OCR project reuse guard unavailable; original OCR remains operational.');
    d.head.appendChild(guard);
   }
+  if(!d.getElementById('th-ai-provider-label-loader')){
+   const provider=d.createElement('script');
+   provider.id='th-ai-provider-label-loader';
+   provider.src='/transhelper-ai-provider-label.js?v=1';
+   provider.onerror=()=>console.warn('AI provider label unavailable.');
+   d.head.appendChild(provider);
+  }
   if(!d.getElementById('th-project-settings-style')){
    const sheet=d.createElement('link');
    sheet.id='th-project-settings-style';sheet.rel='stylesheet';
