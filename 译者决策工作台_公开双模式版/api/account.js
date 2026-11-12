@@ -80,9 +80,24 @@ module.exports=async function handler(req,res){
    const key='tw-workplace-v4';
    let data;try{data=JSON.parse(payload.workspace)}catch{return json(res,400,{error:'工作区内容不是有效 JSON'})}
    if(!data||data.version!==4||!Array.isArray(data.projects))return json(res,400,{error:'工作区版本不匹配，无法保存'});
-   const r=await fetch(c.url+table+'?on_conflict=user_id',{method:'POST',headers:{...opts(c,session.token),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,payload:{schema:payload.schema,storageKey:key,workspace:payload.workspace},updated_at:new Date().toISOString()}),signal:AbortSignal.timeout(12000)});
+   const expected=req.body?.expectedUpdatedAt;
+   if(expected!==undefined&&(typeof expected!=='string'||expected.length>64||!Number.isFinite(Date.parse(expected))))return json(res,400,{error:'云端版本参数无效'});
+   const at=new Date().toISOString();
+   const record={payload:{schema:payload.schema,storageKey:key,workspace:payload.workspace},updated_at:at};
+   // Auto-backups use an atomic compare-and-swap to prevent overwriting edits
+   // that another device saved since this device's last successful backup.
+   if(expected!==undefined){
+    const query=table+'?user_id=eq.'+encodeURIComponent(session.user.id)+'&updated_at=eq.'+encodeURIComponent(expected)+'&select=updated_at';
+    const response=await fetch(c.url+query,{method:'PATCH',headers:{...opts(c,session.token),Prefer:'return=representation'},body:JSON.stringify(record),signal:AbortSignal.timeout(12000)});
+    if(!response.ok)return json(res,502,{error:'自动备份失败，请检查云端权限'});
+    const rows=await response.json().catch(()=>[]);
+    if(!Array.isArray(rows)||rows.length!==1)return json(res,409,{error:'云端工作区已由另一台设备更新，自动备份已暂停。请手动检查并选择恢复或覆盖。'});
+    return json(res,200,{saved:true,updatedAt:rows[0].updated_at});
+   }
+   const r=await fetch(c.url+table+'?on_conflict=user_id&select=updated_at',{method:'POST',headers:{...opts(c,session.token),Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({user_id:session.user.id,...record}),signal:AbortSignal.timeout(12000)});
    if(!r.ok)return json(res,502,{error:'云端保存失败，请确认数据库权限配置'});
-   return json(res,200,{saved:true});
+   const rows=await r.json().catch(()=>[]);
+   return json(res,200,{saved:true,updatedAt:rows?.[0]?.updated_at||at});
   }
   return json(res,404,{error:'未找到接口'});
  }catch(e){return json(res,502,{error:'账户服务暂时无法连接，请稍后重试'});}
