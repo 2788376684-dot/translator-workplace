@@ -1,0 +1,46 @@
+/* Navigation swap: native buttons have merely changed containers. */
+body.th-navigation-swapped .topbar{
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+ column-gap:10px!important;row-gap:8px!important;
+ padding-top:8px!important;padding-bottom:8px!important;
+}
+.th-top-flow{
+ display:flex;align-items:center;gap:7px;
+ flex:1 1 100%;width:100%;min-width:0;
+ margin:0;padding:0 0 8px;border-bottom:1px solid #e9edf2;
+ overflow-x:auto;scrollbar-width:thin;
+}
+.th-top-flow-caption{flex:0 0 auto;font:600 11px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#798799;margin-right:5px;white-space:nowrap}
+.th-top-flow .nav-step{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:1 1 0!important;min-width:98px!important;max-width:220px!important;
+ min-height:37px!important;width:auto!important;padding:7px 12px!important;
+ margin:0!important;border:1px solid #e1e6ee!important;border-radius:9px!important;
+ background:#f9fafc!important;color:#526175!important;white-space:nowrap!important;
+ font-size:12px!important;line-height:1.4!important;transform:none!important;
+ transition:background-color .15s,border-color .15s,color .15s!important;
+}
+.th-top-flow .nav-step.active,.th-top-flow .nav-step[aria-current="step"],.th-top-flow .nav-step[aria-selected="true"]{
+ background:#e8f2ff!important;border-color:#bcd8fc!important;color:#0863bc!important;
+ font-weight:700!important;
+}
+.th-top-flow .nav-step:hover{background:#f0f6fd!important}
+.th-top-flow .nav-step:focus-visible{outline:2px solid #0071e3!important;outline-offset:2px}
+.th-top-flow .nav-step small,.th-top-flow .nav-step .muted{color:inherit!important}
+.th-sidebar-tools{display:flex;flex-direction:column;gap:7px;min-width:0;margin:0!important;padding:4px 0 10px}
+.th-sidebar-tools .th-sidebar-tool{
+ box-sizing:border-box!important;display:flex!important;
+ align-items:center!important;justify-content:flex-start!important;
+ width:100%!important;max-width:none!important;min-width:0!important;
+ height:38px!important;min-height:38px!important;padding:7px 11px!important;
+ flex:none!important;gap:7px!important;text-align:left!important;
+ font-size:12px!important;white-space:nowrap!important;
+ border-radius:9px!important;
+}
+.th-sidebar-tools .th-sidebar-tool:hover{background:#edf2f8!important}
+.th-sidebar-tools .th-sidebar-tool:focus-visible{outline:2px solid #0071e3!important;outline-offset:2px}
+@media(max-width:760px){
+ .th-top-flow{gap:5px;padding-bottom:6px}
+ .th-top-flow .nav-step{flex:0 0 auto!important;min-width:82px!important;padding:6px 9px!important}
+ .th-top-flow-caption{font-size:10px}
+}
