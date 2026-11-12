@@ -15,6 +15,22 @@ function configState(){
 }
 function cfg(){const state=configState();return state.code==='ok'?{url:state.url,key:state.key}:null;}
 function opts(c,token){return {'apikey':c.key,...(token?{'Authorization':'Bearer '+token}:{}),'Content-Type':'application/json'};}
+/* Surface actionable Auth failures without returning upstream messages or credentials. */
+function authFailure(r,signup){
+ const code=String(r.body?.code||r.body?.error_code||'').toLowerCase();
+ const detail=String(r.body?.msg||r.body?.message||r.body?.error_description||'').toLowerCase();
+ if(r.status===429)return '请求过于频繁，请稍后再试。';
+ if(signup){
+  if(['user_already_exists','email_exists','identity_already_exists'].includes(code)||detail.includes('already registered')||detail.includes('already exists'))return '这个邮箱可能已注册，请直接点击“登录”。';
+  if(['signup_disabled','email_provider_disabled','provider_disabled'].includes(code))return 'Supabase 已禁止邮箱注册。请检查 Authentication → Sign In / Providers 中的 Email 和允许新用户注册设置。';
+  if(code==='weak_password'||detail.includes('password'))return '密码未满足 Supabase 安全要求，请设置更强的密码后再试。';
+  if(['email_address_invalid','email_address_not_authorized'].includes(code))return '当前邮箱地址未被 Supabase 允许注册，请检查 Auth 邮箱限制。';
+  return '注册未成功（Supabase 状态 '+r.status+(code?'，错误码 '+code:'')+'）。请检查 Authentication 日志和注册设置。';
+ }
+ if(code==='email_not_confirmed')return '邮箱尚未确认。请检查 Supabase 的 Confirm email 设置或现有用户状态。';
+ if(code==='invalid_credentials')return '邮箱或密码不正确。若曾注册过，请检查账户密码。';
+ return '登录未成功（Supabase 状态 '+r.status+(code?'，错误码 '+code:'')+'）。请检查邮箱、密码与认证设置。';
+}
 function json(res,status,obj){res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');return res.status(status).json(obj);}
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(v=>{let i=v.indexOf('=');return i<0?['','']:[v.slice(0,i).trim(),decodeURIComponent(v.slice(i+1))]}));}
 function putCookies(res,s){const secure=process.env.NODE_ENV==='production'?'; Secure':'';const base='; Path=/; HttpOnly; SameSite=Lax'+secure;res.setHeader('Set-Cookie',[COOKIE.access+'='+encodeURIComponent(s.access_token)+base+'; Max-Age='+Math.min(s.expires_in||3600,3600),COOKIE.refresh+'='+encodeURIComponent(s.refresh_token)+base+'; Max-Age=2592000']);}
@@ -44,7 +60,7 @@ module.exports=async function handler(req,res){
    if(typeof email!=='string'||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||typeof password!=='string'||password.length<8||password.length>128)return json(res,400,{error:'请输入有效邮箱和 8–128 位密码'});
    const signup=action==='signup';
    const r=await upstream(c,signup?'/auth/v1/signup':'/auth/v1/token?grant_type=password','POST',{email,password});
-   if(!r.ok)return json(res,r.status===429?429:400,{error:signup?'注册未完成，请检查邮箱或稍后重试':'登录失败，请检查邮箱、密码或邮箱验证状态'});
+   if(!r.ok)return json(res,r.status===429?429:400,{error:authFailure(r,signup)});
    if(r.body.access_token&&r.body.refresh_token){putCookies(res,r.body);return json(res,200,{authenticated:true,email:r.body.user?.email||email});}
    return json(res,200,{authenticated:false,message:'注册申请已提交，请查收验证邮件后登录。'});
   }
