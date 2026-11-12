@@ -132,6 +132,14 @@ function show(){
    d.head.appendChild(scope);
   }
   // Visual-only header bridge. Never replaces native controls or their listeners.
+  // Preserve native OCR behavior while reusing an existing blank parameter project.
+  if(!d.getElementById('th-ocr-project-guard-loader')){
+   const guard=d.createElement('script');
+   guard.id='th-ocr-project-guard-loader';
+   guard.src='/transhelper-ocr-project-guard.js?v=1';
+   guard.onerror=()=>console.warn('OCR project reuse guard unavailable; original OCR remains operational.');
+   d.head.appendChild(guard);
+  }
   if(!d.getElementById('th-project-settings-style')){
    const sheet=d.createElement('link');
    sheet.id='th-project-settings-style';sheet.rel='stylesheet';
