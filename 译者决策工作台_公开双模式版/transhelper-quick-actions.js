@@ -72,6 +72,25 @@ action('返回顶部',svg('<path d="M12 20V5m0 0-6 6m6-6 6 6"/>'),()=>{
   else el.scrollTop=0;
  }
 });
+/* View preferences affect only the translation reading surface, never project data. */
+const focus=action('进入专注编辑',svg('<path d="M8 3H4a1 1 0 0 0-1 1v4m13-5h4a1 1 0 0 1 1 1v4M3 16v4a1 1 0 0 0 1 1h4m13-5v4a1 1 0 0 1-1 1h-4"/>'),()=>{
+ const enabled=D.body.classList.toggle('th-focus-mode');
+ focus.querySelector('span:last-child').textContent=enabled?'退出专注编辑':'进入专注编辑';
+ notify(enabled?'已收起侧栏。再次点击可恢复。':'已恢复完整工作台。');
+});
+const reader=action('放大阅读文字',svg('<path d="M4 19 10 5l6 14M6 15h8M17 9h5m-2.5-2.5v5"/>'),()=>{
+ const enabled=D.body.classList.toggle('th-reading-large');
+ reader.querySelector('span:last-child').textContent=enabled?'恢复默认字号':'放大阅读文字';
+ notify(enabled?'阅读文字已放大。编辑数据保持不变。':'阅读字号已恢复。');
+});
+D.addEventListener('keydown',e=>{
+ if(e.defaultPrevented||e.repeat||!e.altKey||!e.shiftKey||e.ctrlKey||e.metaKey)return;
+ if(e.code==='KeyF'){
+  e.preventDefault();focus.click();
+ }else if(e.code==='KeyR'){
+  e.preventDefault();reader.click();
+ }
+});
 const qa=action('检查术语与数字',svg('<path d="m5 12 4 4L19 6"/><path d="M4 4h16v16H4z"/>'),()=>{
  const native=D.getElementById('runQA');
  if(native&&!native.disabled){native.click();return;}
@@ -80,6 +99,12 @@ const qa=action('检查术语与数字',svg('<path d="m5 12 4 4L19 6"/><path d="
 function refresh(){
  const onFinal=!!D.getElementById('runQA');
  qa.hidden=!onFinal;
+ const isParam=!!D.querySelector('.app.parameter-view');
+ focus.hidden=isParam;
+ reader.hidden=isParam;
+ if(isParam)D.body.classList.remove('th-focus-mode','th-reading-large');
+ focus.querySelector('span:last-child').textContent=D.body.classList.contains('th-focus-mode')?'退出专注编辑':'进入专注编辑';
+ reader.querySelector('span:last-child').textContent=D.body.classList.contains('th-reading-large')?'恢复默认字号':'放大阅读文字';
  const ai=D.getElementById('openStageAI');
  dock.dataset.aiAvailable=ai&&!ai.disabled?'true':'false';
 }
