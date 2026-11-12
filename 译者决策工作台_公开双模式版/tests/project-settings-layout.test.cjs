@@ -12,7 +12,12 @@ test('project settings layout preserves original settings controls and storage',
  assert.match(js,/项目设置/);
  assert.match(js,/项目语言、文体、要求与术语/);
  assert.match(js,/用于 AI 提示与本地质检/);
- assert.match(js,/术语表同时辅助术语一致性检查/);
+ assert.match(js,/译文风格、读者、语言要求和术语/);
+ assert.match(js,/译文风格与要求/);
+ assert.match(js,/th-project-requirements/);
+ const style=read('transhelper-project-settings.css');
+ assert.match(style,/height:76px!important/);
+ assert.match(style,/resize:vertical!important/);
  for(const destructive of ['removeChild(','replaceChildren(','localStorage','persist(','\.onclick','\.click(']){
   assert.ok(!js.includes(destructive),'presentation must not change native behavior: '+destructive);
  }
