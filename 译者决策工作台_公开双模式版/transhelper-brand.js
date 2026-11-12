@@ -20,8 +20,8 @@ function buildBrand(doc){
  name.textContent='Transhelper';
  const detail=doc.createElement('span');
  detail.className='th-brand-tagline';
- detail.textContent='TRANSLATION WORKSPACE';
- copy.append(name,detail);
+ detail.textContent='';
+ copy.append(name);
  root.append(symbol,copy);
  return root;
 }
