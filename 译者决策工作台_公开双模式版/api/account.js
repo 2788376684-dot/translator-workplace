@@ -3,7 +3,17 @@ const cookie=require('node:querystring');
 const MAX=2_000_000;
 const HOST=/^https:\/\/[a-z0-9-]+\.supabase\.co$/;
 const COOKIE={access:'tw_account_access',refresh:'tw_account_refresh'};
-function cfg(){const url=(process.env.SUPABASE_URL||'').replace(/\/$/,'');const key=process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||'';return HOST.test(url)&&key.length>20?{url,key}:null;}
+function configState(){
+ const rawUrl=process.env.SUPABASE_URL||'';
+ const url=rawUrl.trim().replace(/\/$/,'');
+ const key=(process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||'').trim();
+ if(!rawUrl.trim())return {code:'missing_url',error:'Vercel 缺少 SUPABASE_URL，请检查 Production 环境变量及重新部署。'};
+ if(!HOST.test(url))return {code:'invalid_url',error:'SUPABASE_URL 格式错误。应填写 https://项目标识.supabase.co，不能填写 /rest/v1、Data API 路径或其他文字。'};
+ if(!key)return {code:'missing_key',error:'Vercel 缺少 SUPABASE_PUBLISHABLE_KEY，请检查 Production 环境变量及重新部署。'};
+ if(key.length<=20||(!key.startsWith('sb_publishable_')&&!key.startsWith('eyJ')))return {code:'invalid_key',error:'Supabase 公钥格式不正确，请复制 API Keys 中的 Publishable key。不要使用 Secret key。'};
+ return {code:'ok',url,key};
+}
+function cfg(){const state=configState();return state.code==='ok'?{url:state.url,key:state.key}:null;}
 function opts(c,token){return {'apikey':c.key,...(token?{'Authorization':'Bearer '+token}:{}),'Content-Type':'application/json'};}
 function json(res,status,obj){res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');return res.status(status).json(obj);}
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(v=>{let i=v.indexOf('=');return i<0?['','']:[v.slice(0,i).trim(),decodeURIComponent(v.slice(i+1))]}));}
@@ -21,7 +31,7 @@ async function identity(req,res,c){
 }
 function sameOrigin(req){const h=req.headers.host,o=req.headers.origin;if(!o)return true;try{return new URL(o).host===h&&new URL(o).protocol==='https:';}catch{return false;}}
 module.exports=async function handler(req,res){
- const c=cfg();if(!c)return json(res,503,{error:'账户数据服务尚未配置',configured:false});
+ const state=configState();const c=cfg();if(!c)return json(res,503,{error:state.error,configured:false,reason:state.code});
  if(!['GET','POST'].includes(req.method))return json(res,405,{error:'请求方法不支持'});
  if(req.method==='POST'&&!sameOrigin(req))return json(res,403,{error:'跨站请求已拒绝'});
  const action=String(req.query?.action||'');
