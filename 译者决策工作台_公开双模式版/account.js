@@ -1,6 +1,20 @@
 (()=>{
 'use strict';
 const KEY='tw-workplace-v4';
+const AUTO_KEY='tw-cloud-autobackup-v1';
+async function fingerprint(raw){
+ const bytes=new TextEncoder().encode(raw);
+ const digest=await crypto.subtle.digest('SHA-256',bytes);
+ return Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+}
+function autoPrefs(){try{return JSON.parse(localStorage.getItem(AUTO_KEY)||'null')}catch{return null}}
+function showAuto(){
+ const pref=autoPrefs(),enabled=logged&&pref?.email===$('identity').textContent.replace(/^当前账户：/,'')&&pref?.enabled===true;
+ $('autobackup').checked=!!enabled;
+ $('autobackup').disabled=!logged||!pref?.updatedAt;
+ $('autoDetail').textContent=!pref?.updatedAt?'首次点击“备份到云端”后即可开启自动备份。':pref?.conflict?'检测到云端版本冲突，自动备份已暂停。请检查云端数据。':enabled?'自动备份已启用：工作台修改后自动上传。':'自动备份已关闭。';
+}
+
 const $=id=>document.getElementById(id);
 let busy=false,logged=false;
 function note(v,error=false){$('feedback').textContent=v;$('feedback').classList.toggle('error',error)}
@@ -11,7 +25,7 @@ async function request(action,method='GET',data){
  if(!r.ok)throw Error(j.error||'操作失败');return j;
 }
 function session(auth,email){
- logged=auth;$('auth').hidden=auth;$('cloud').hidden=!auth;$('identity').textContent=auth?'当前账户：'+email:'';
+ logged=auth;$('auth').hidden=auth;$('cloud').hidden=!auth;$('identity').textContent=auth?'当前账户：'+email:'';showAuto();
 }
 function parseLocal(){
  const raw=localStorage.getItem(KEY);if(!raw)throw Error('本机尚无可备份的翻译工作区。请先返回工作台创建项目并保存。');
@@ -26,7 +40,7 @@ function saveFile(name,content){
 }
 function filename(prefix){return prefix+'_'+new Date().toISOString().replace(/[:.]/g,'-')+'.json'}
 async function refresh(){
- try{const me=await request('me');session(true,me.email);note('已登录，云端备份需要手动保存。');}
+ try{const me=await request('me');session(true,me.email);note('已登录。首次备份后，可以在工作台自动保存后续修改。');}
  catch{session(false);note('请登录以使用个人云端存储。');}
 }
 $('form').addEventListener('submit',async e=>{
@@ -45,7 +59,7 @@ $('upload').onclick=async()=>{
  if(busy)return;let raw;try{raw=parseLocal()}catch(e){note(e.message,true);return}
  if(!confirm('确认将当前本机工作区保存到此账户的云端？已有云端备份会被覆盖。'))return;
  disable(true);
- try{await request('snapshot','POST',{payload:{schema:'tw.account.snapshot.v1',workspace:raw}});note('云端备份已保存。请在需要时手动再次保存，当前版本尚未启用自动同步。');$('cloudtime').textContent='本次保存：'+new Date().toLocaleString();}
+ try{const result=await request('snapshot','POST',{payload:{schema:'tw.account.snapshot.v1',workspace:raw}});const email=$('identity').textContent.replace(/^当前账户：/,'');const previous=autoPrefs();localStorage.setItem(AUTO_KEY,JSON.stringify({email,updatedAt:result.updatedAt,hash:await fingerprint(raw),enabled:previous?.email===email?previous.enabled!==false:true,conflict:false}));showAuto();note('云端备份已保存，自动备份已'+($('autobackup').checked?'开启':'关闭')+'。');$('cloudtime').textContent='本次保存：'+new Date().toLocaleString();}
  catch(e){note(e.message,true)}finally{disable(false)}
 };
 async function cloudSnapshot(){
@@ -59,7 +73,7 @@ $('download').onclick=async()=>{
  try{const s=await cloudSnapshot();if(!confirm('从云端恢复将替换该浏览器的所有本地翻译项目。确认继续吗？'))return;
  const previous=localStorage.getItem(KEY);
  if(previous)saveFile(filename('workspace-before-cloud-restore'),previous);
- localStorage.setItem(KEY,s.raw);note('云端工作区已恢复。返回工作台并刷新页面即可读取项目。');$('cloudtime').textContent='云端更新时间：'+new Date(s.time).toLocaleString();
+ localStorage.setItem(KEY,s.raw);const current=autoPrefs();const email=$('identity').textContent.replace(/^当前账户：/,'');localStorage.setItem(AUTO_KEY,JSON.stringify({email,updatedAt:s.time,hash:await fingerprint(s.raw),enabled:current?.email===email?current.enabled!==false:true,conflict:false}));showAuto();note('云端工作区已恢复。返回工作台并刷新页面即可读取项目。');$('cloudtime').textContent='云端更新时间：'+new Date(s.time).toLocaleString();
  }catch(e){note('恢复失败：'+e.message,true)}finally{disable(false)}
 };
 $('export').onclick=async()=>{
@@ -67,6 +81,8 @@ $('export').onclick=async()=>{
  try{const s=await cloudSnapshot();saveFile(filename('workspace-cloud-backup'),s.raw);note('云端 JSON 备份已下载。')}
  catch(e){note(e.message,true)}finally{disable(false)}
 };
+$('autobackup').addEventListener('change',()=>{const pref=autoPrefs();const email=$('identity').textContent.replace(/^当前账户：/,'');if(!pref||pref.email!==email||!pref.updatedAt){showAuto();return;}pref.enabled=$('autobackup').checked;localStorage.setItem(AUTO_KEY,JSON.stringify(pref));showAuto();note(pref.enabled?'自动备份已启用。':'自动备份已关闭。');});
+window.addEventListener('storage',e=>{if(e.key===AUTO_KEY)showAuto();});
 $('logout').onclick=async()=>{
  if(busy)return;disable(true);
  try{await request('logout','POST',{});session(false);note('已退出云端账户。本机项目仍保存在此浏览器中。');}
