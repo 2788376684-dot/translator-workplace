@@ -132,6 +132,20 @@ function show(){
    d.head.appendChild(scope);
   }
   // Visual-only header bridge. Never replaces native controls or their listeners.
+  if(!d.getElementById('th-project-settings-style')){
+   const sheet=d.createElement('link');
+   sheet.id='th-project-settings-style';sheet.rel='stylesheet';
+   sheet.href='/transhelper-project-settings.css?v=1';
+   sheet.onerror=()=>console.warn('Project settings presentation styles unavailable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-project-settings-loader')){
+   const settings=d.createElement('script');
+   settings.id='th-project-settings-loader';
+   settings.src='/transhelper-project-settings.js?v=1';
+   settings.onerror=()=>console.warn('Project settings presentation enhancement unavailable.');
+   d.head.appendChild(settings);
+  }
   if(!d.getElementById('th-header-layout-loader')){
    const layout=d.createElement('script');
    layout.id='th-header-layout-loader';
