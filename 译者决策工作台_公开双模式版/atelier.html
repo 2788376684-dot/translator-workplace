@@ -161,6 +161,21 @@ function show(){
    settings.onerror=()=>console.warn('Project settings presentation enhancement unavailable.');
    d.head.appendChild(settings);
   }
+  // Presentation-only navigation swap; native workflow buttons stay intact.
+  if(!d.getElementById('th-navigation-swap-style')){
+   const sheet=d.createElement('link');
+   sheet.id='th-navigation-swap-style';sheet.rel='stylesheet';
+   sheet.href='/transhelper-navigation-swap.css?v=1';
+   sheet.onerror=()=>console.warn('Navigation swap style unavailable; original layout remains usable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-navigation-swap-loader')){
+   const layout=d.createElement('script');
+   layout.id='th-navigation-swap-loader';
+   layout.src='/transhelper-navigation-swap.js?v=1';
+   layout.onerror=()=>console.warn('Navigation swap unavailable; original layout remains usable.');
+   d.head.appendChild(layout);
+  }
   if(!d.getElementById('th-header-layout-loader')){
    const layout=d.createElement('script');
    layout.id='th-header-layout-loader';
