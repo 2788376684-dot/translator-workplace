@@ -259,3 +259,35 @@ a{color:var(--th-blue)}
 
 /* Compact product subline must not be clipped in the 188px sidebar. */
 .logo .th-brand-tagline{font-size:7px!important;letter-spacing:.035em!important;max-width:125px;overflow:visible!important}
+
+
+/* Structural header refinement, no behavior changes to existing controls. */
+.topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap!important;padding-block:9px!important}
+.topbar > *{min-width:0}
+.th-global-cloud{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;
+ margin-left:auto;padding-left:12px;border-left:1px solid #e6e8ee;min-height:34px}
+.th-global-cloud-link{display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;height:35px;padding:0 13px;border:1px solid #d9e1ec;border-radius:9px;
+ background:#fff;color:#375572!important;font-size:12px;font-weight:620;text-decoration:none!important;
+ white-space:nowrap;transition:background-color .16s,border-color .16s}
+.th-global-cloud-link:hover{background:#f2f7fd;border-color:#b8cfe6}
+.th-global-cloud-status{display:inline-flex;align-items:center;gap:5px;min-height:30px;
+ font-size:11px;white-space:nowrap;color:#65758a}
+.th-global-cloud-status::before{content:"";width:6px;height:6px;border-radius:50%;background:#98a5b4}
+.th-global-cloud-status[data-kind="saved"]::before{background:#319471}
+.th-global-cloud-status[data-kind="busy"]::before{background:#3685d8}
+.th-global-cloud-status[data-kind="error"]::before{background:#c87949}
+.th-global-cloud-status[hidden]{display:none!important}
+.logo .th-brand-tagline{display:none!important}
+.logo .th-brand-copy{gap:0!important}
+.logo .th-brand-name{letter-spacing:-.035em!important}
+@media(max-width:1100px){.th-global-cloud{margin-left:0;padding-left:8px;gap:5px}}
+@media(max-width:650px){
+ .topbar{gap:6px!important}
+ .th-global-cloud{width:100%;margin-left:0;padding:7px 0 0;border-left:0;
+ border-top:1px solid #eaebef;justify-content:flex-end}
+ .th-global-cloud-link{height:32px}
+ .th-global-cloud-status{max-width:48vw;overflow:hidden;text-overflow:ellipsis}
+}
+/* Keep workflow buttons in their original stage action group, separate from global settings. */
+#stageActions,.stage-actions,.stage-actions-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
