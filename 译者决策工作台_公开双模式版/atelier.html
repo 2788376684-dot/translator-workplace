@@ -143,6 +143,7 @@ app.addEventListener('load',show);
 app.addEventListener('error',()=>{
  message.textContent='页面加载失败，请点击下方链接直接进入工作台。';
 });
+const auto=document.createElement('script');auto.src='/tw-cloud-auto-backup.js?v=1';auto.defer=true;auto.onerror=()=>console.warn('Cloud auto-backup helper unavailable; manual backup remains accessible.');document.head.appendChild(auto);
 app.src='/atelier-core.html';
 setTimeout(()=>{
  if(!finished){
