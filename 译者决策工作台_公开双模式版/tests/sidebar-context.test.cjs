@@ -32,3 +32,12 @@ test('duplicate stage context is collapsed without removing stage controls',()=>
  assert.match(script,/th-sidebar-ai-status/);
  assert.match(swap,/sectionLabel\.textContent='设置'/);
 });
+
+test('brand stays ahead of context and completion actions remain visible',()=>{
+ const script=read('transhelper-sidebar-context.js');
+ assert.match(script,/sidebar\.querySelector\('\.logo,\.th-brand-shell'\)/);
+ assert.match(script,/anchor\.insertAdjacentElement\('afterend',context\)/);
+ assert.doesNotMatch(script,/sidebar\.insertBefore\(context,sidebar\.firstChild\)/);
+ assert.match(script,/getBoundingClientRect/);
+ assert.match(script,/querySelector\('button,a\[href\],input,textarea,select,\[role="button"\]'\)/);
+});
