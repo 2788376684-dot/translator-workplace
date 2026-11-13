@@ -1,0 +1,40 @@
+/* Account & Cloud visual refinement — CSS only, no auth changes. */
+:root{--ac-blue:#0875df;--ac-text:#1d2633;--ac-muted:#65758a;--ac-edge:#e1e6ed;
+ --ac-ease:cubic-bezier(.2,.78,.24,1);}
+html{-webkit-tap-highlight-color:transparent}
+body{background:#f5f6f9;color:var(--ac-text);-webkit-font-smoothing:antialiased;}
+main{max-width:720px}
+main>header{padding:3px 1px 6px}
+main>header strong{letter-spacing:-.02em;color:#1d2633}
+.card{background:#fff;border:1px solid var(--ac-edge);border-radius:16px;
+ box-shadow:0 2px 5px rgba(20,36,58,.025),0 14px 34px rgba(20,36,58,.035);
+ transition:border-color .2s ease,box-shadow .2s ease;}
+.card:focus-within{border-color:#b8d5f5;box-shadow:0 0 0 3px rgba(13,112,221,.045),0 14px 34px rgba(20,36,58,.035)}
+h1{font-size:23px;line-height:1.3;font-weight:690;letter-spacing:-.035em;color:#202938}
+h2{font-size:16px;font-weight:680;letter-spacing:-.014em;color:#263345}
+p{line-height:1.75;color:#687789}
+label{color:#405269;font-weight:550}
+input:not([type="checkbox"]){border-radius:10px;border-color:#d8e0ea;
+ transition:border-color .16s ease,box-shadow .16s ease}
+input:not([type="checkbox"]):hover{border-color:#b8cadf}
+input:not([type="checkbox"]):focus{outline:0;border-color:#74b0f3;box-shadow:0 0 0 3px rgba(8,117,223,.12)}
+button,.return-workbench{border-radius:10px;min-height:38px;
+ transition:background-color .17s ease,border-color .17s ease,color .17s ease,box-shadow .17s ease}
+button:hover,.return-workbench:hover{background:#f0f5fa;border-color:#b9cadc}
+button.primary{background:var(--ac-blue);border-color:var(--ac-blue);font-weight:620;box-shadow:0 2px 9px rgba(8,117,223,.11)}
+button.primary:hover{background:#0066d3;border-color:#0066d3;box-shadow:0 4px 13px rgba(8,117,223,.15)}
+button:active,.return-workbench:active{filter:brightness(.96)}
+button:focus-visible,.return-workbench:focus-visible,input:focus-visible{outline:2px solid #4a9bf0;outline-offset:2px}
+.tip{border-radius:11px;background:#f7f9fc;border-color:#e5ebf3;line-height:1.8}
+#feedback{min-height:22px}
+#feedback:not(:empty){transition:color .2s ease}
+@media(prefers-reduced-motion:no-preference){
+ .card{animation:ac-appear .2s var(--ac-ease) both}
+ .card:nth-of-type(2){animation-delay:.04s}
+ .card:nth-of-type(3){animation-delay:.07s}
+}
+@keyframes ac-appear{from{opacity:.85;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media(max-width:420px){.card{border-radius:13px}.actions{gap:7px}}
