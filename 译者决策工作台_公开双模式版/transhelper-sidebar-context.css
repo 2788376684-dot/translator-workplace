@@ -47,3 +47,40 @@ body.th-native-header-compact .topbar > #th-top-flow{margin-bottom:0!important;}
  font-weight:620;
  line-height:1.45;
 }
+
+/* One consistent centered alignment throughout the left sidebar. */
+.sidebar .side-label,
+.sidebar .workflow-label,
+.sidebar #th-ai-state-heading{
+ text-align:center!important;
+}
+.sidebar .project-control{
+ justify-content:center!important;
+}
+.sidebar .project-control select,
+.sidebar #projectSelect{
+ text-align:center!important;
+ text-align-last:center!important;
+}
+.sidebar #th-ai-state-row,
+.sidebar #th-ai-state-row #modeTop{
+ text-align:center!important;
+ justify-content:center!important;
+}
+.sidebar #th-sidebar-tools .th-sidebar-tool{
+ text-align:center!important;
+ justify-content:center!important;
+}
+.sidebar #th-sidebar-tools .th-sidebar-tool :is(span,strong){
+ text-align:center!important;
+}
+.sidebar .logo{
+ justify-content:center!important;
+}
+.sidebar .side-bottom{
+ text-align:center!important;
+ align-items:center!important;
+}
+.sidebar .side-bottom > *{
+ text-align:center!important;
+}
