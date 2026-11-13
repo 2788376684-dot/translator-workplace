@@ -21,3 +21,14 @@ test('context mirror preserves workflow handlers and draft locking',()=>{
  assert.match(css,/#stageTitle/);
  assert.doesNotMatch(css,/lockDraft|confirmDraft|backupProject/);
 });
+
+test('duplicate stage context is collapsed without removing stage controls',()=>{
+ const script=read('transhelper-sidebar-context.js');
+ const css=read('transhelper-sidebar-context.css');
+ const swap=read('transhelper-navigation-swap.js');
+ assert.match(script,/th-redundant-stage-context/);
+ assert.match(script,/querySelector\('button,a\[href\],input,textarea,select,\[role="button"\]'\)/);
+ assert.match(css,/\.th-redundant-stage-context\{display:none!important/);
+ assert.match(script,/th-sidebar-ai-status/);
+ assert.match(swap,/sectionLabel\.textContent='设置'/);
+});
