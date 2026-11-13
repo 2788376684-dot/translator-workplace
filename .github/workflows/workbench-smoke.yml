@@ -25,7 +25,7 @@ jobs:
           home=(root/'index.html').read_text(encoding='utf-8')
           wrapper=(root/'atelier.html').read_text(encoding='utf-8')
           core=(root/'atelier-core.html').read_text(encoding='utf-8')
-          assert '/atelier.html' in home
+          assert '/atelier-core.html' in home
           assert '/atelier-core.html' in wrapper
           for key in ['function sentenceReviewUnits(', 'function mergeReviewChoices(', 'function applyDocumentSource(', 'function ensureDraftDirection(', 'data-sentence-action', '向 AI 追问此处']:
               assert key in core, key
