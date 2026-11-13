@@ -38,6 +38,9 @@ body.th-navigation-swapped .topbar{
  font-size:12px!important;white-space:nowrap!important;
  border-radius:9px!important;
 }
+/* Keep all project actions text-only; hide decorative native icon wrappers. */
+.th-sidebar-tools .th-sidebar-tool::before{display:none!important;content:none!important}
+.th-sidebar-tools .th-sidebar-tool > svg,.th-sidebar-tools .th-sidebar-tool > i,.th-sidebar-tools .th-sidebar-tool > .icon,.th-sidebar-tools .th-sidebar-tool > [aria-hidden="true"]{display:none!important}
 .th-sidebar-tools .th-sidebar-tool:hover{background:#edf2f8!important}
 .th-sidebar-tools .th-sidebar-tool:focus-visible{outline:2px solid #0071e3!important;outline-offset:2px}
 @media(max-width:760px){
