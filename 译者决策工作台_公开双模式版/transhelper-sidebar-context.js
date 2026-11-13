@@ -1,7 +1,6 @@
 (()=>{
 'use strict';
-/* Keep project and phase in the left rail; eliminate the redundant context strip.
-   Original stage actions, handlers and persisted data are untouched. */
+/* Presentational relocation of context and AI status. Native actions stay in place. */
 if(window.__thSidebarContextReady)return;
 window.__thSidebarContextReady=true;
 const D=document;
@@ -10,36 +9,33 @@ if(!sidebar)return;
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 const context=D.createElement('section');
 context.id='th-sidebar-context';
-context.setAttribute('aria-label','当前项目与阶段');
-const label=D.createElement('span');
-label.className='th-sidebar-context-label';
-label.textContent='当前位置';
-const project=D.createElement('strong');
-project.className='th-sidebar-project';
-const phase=D.createElement('span');
-phase.className='th-sidebar-phase';
-const aiSlot=D.createElement('div');
-aiSlot.id='th-sidebar-ai-status';
-aiSlot.setAttribute('aria-label','当前 AI 状态');
+context.setAttribute('aria-label','当前位置与 AI 状态');
+const label=D.createElement('span');label.className='th-sidebar-context-label';label.textContent='当前位置';
+const project=D.createElement('strong');project.className='th-sidebar-project';
+const phase=D.createElement('span');phase.className='th-sidebar-phase';
+const aiSlot=D.createElement('div');aiSlot.id='th-sidebar-ai-status';aiSlot.setAttribute('aria-label','当前 AI 状态');
 context.append(label,project,phase,aiSlot);
-const tools=D.getElementById('th-sidebar-tools');
-if(tools)tools.parentNode.insertBefore(context,tools);
-else sidebar.insertBefore(context,sidebar.firstChild);
+function positionContext(){
+ // Always position BELOW the native brand, never at sidebar.firstChild.
+ const logo=sidebar.querySelector('.logo,.th-brand-shell');
+ if(!logo)return;
+ let anchor=logo;
+ while(anchor.parentElement&&anchor.parentElement!==sidebar)anchor=anchor.parentElement;
+ if(context.parentElement!==sidebar||context.previousElementSibling!==anchor)
+  anchor.insertAdjacentElement('afterend',context);
+}
 function relocateAI(){
- const existing=D.getElementById('th-default-ai-slot');
- if(existing&&existing!==aiSlot&&existing.childElementCount>0){
-  if(existing.parentElement!==aiSlot)aiSlot.append(existing);
+ const slot=D.getElementById('th-default-ai-slot');
+ if(slot&&slot.childElementCount){
+  if(slot.parentElement!==aiSlot)aiSlot.append(slot);
   return true;
  }
- // Some stages render this badge in the breadcrumb strip, without the
- // enhancement-created slot. Preserve the native status node where possible.
- const root=D.querySelector('.main');
- if(!root)return false;
- const candidates=[...root.querySelectorAll('span,small,label,div')];
- const badge=candidates.find(el=>
-  el.children.length===0 &&
-  /^(?:默认\s*AI|当前\s*AI|AI\s*未配置|DeepSeek|OpenAI)$/i.test(norm(el.textContent)) &&
-  !el.closest('#th-sidebar-context'));
+ const main=D.querySelector('.main');
+ if(!main)return false;
+ // The badge can be a native element outside the enhancement slot.
+ const badge=[...main.querySelectorAll('span,small,label,div')].find(el=>
+  el.children.length===0&&
+  /^(默认\s*AI|当前\s*AI|AI\s*未配置)$/i.test(norm(el.textContent)));
  if(!badge)return false;
  if(badge.parentElement!==aiSlot)aiSlot.append(badge);
  badge.style.setProperty('position','static','important');
@@ -50,35 +46,50 @@ function relocateAI(){
 function collapseContextStrip(){
  const caption=D.getElementById('stageCaption');
  const title=D.getElementById('stageTitle');
- if(!caption||!title)return;
- let row=caption.parentElement;
- // Select the smallest enclosing block holding both breadcrumb labels.
- for(let i=0;row&&i<5&&!row.contains(title);i++)row=row.parentElement;
- if(!row||row===D.body||row.classList.contains('main'))return;
- // A control-bearing ancestor must never be collapsed: stage navigation
- // and lock/confirm buttons must remain clickable.
- if(row.querySelector('button,a[href],input,textarea,select,[role="button"]'))return;
- row.classList.add('th-redundant-stage-context');
+ const main=D.querySelector('.main');
+ if(!caption||!title||!main)return;
+ D.body.classList.add('th-sidebar-context-integrated');
+ // The heading and badge are rendered in a redundant context row. Find its
+ // smallest full-width ancestor; never hide an ancestor of active controls.
+ let el=caption.parentElement, candidate=null;
+ for(let depth=0;el&&depth<7&&el!==main;depth++,el=el.parentElement){
+  const rect=el.getBoundingClientRect?.();
+  const mainRect=main.getBoundingClientRect?.();
+  if(!rect||!mainRect||rect.width<mainRect.width*.67||rect.height>105)continue;
+  if(el.querySelector('button,a[href],input,textarea,select,[role="button"]'))continue;
+  // This row may contain both breadcrumb and completion progress.
+  candidate=el;break;
+ }
+ if(candidate){
+  candidate.classList.add('th-redundant-stage-context');
+ }else{
+  // Hide only the text wrapper as a fallback; do not touch action rows.
+  const inner=caption.parentElement;
+  if(inner&&!inner.querySelector('button,a[href],input,textarea,select,[role="button"]'))
+   inner.classList.add('th-redundant-stage-context-text');
+ }
 }
-let scheduled=false;
+let pending=false;
 function sync(){
- scheduled=false;
+ pending=false;
+ positionContext();
  const caption=D.getElementById('stageCaption');
- const title=D.getElementById('stageTitle');
- const step=D.querySelector('#th-top-flow .nav-step.active, #th-top-flow .nav-step[aria-current="step"]');
- const name=norm(caption?.textContent)||'当前项目';
- const stage=norm(title?.textContent)||norm(step?.textContent).replace(/^\d+\s*/,'');
+ const active=D.querySelector('#th-top-flow [data-step].active, #th-top-flow [data-step][aria-current="step"]');
+ const select=D.getElementById('projectSelect');
+ const name=norm(select?.selectedOptions?.[0]?.textContent)||norm(caption?.textContent);
  if(name&&project.textContent!==name)project.textContent=name;
+ const steps={source:'原文',draft:'初稿',revision:'二稿',final:'终稿'};
+ const step=active?.getAttribute('data-step');
+ const stage=steps[step]||norm(D.getElementById('stageTitle')?.textContent);
  if(stage&&phase.textContent!==stage)phase.textContent=stage;
  relocateAI();
  collapseContextStrip();
 }
 function schedule(){
- if(scheduled)return;
- scheduled=true;
+ if(pending)return;
+ pending=true;
  (window.requestAnimationFrame||window.setTimeout)(sync,40);
 }
-const observer=new MutationObserver(schedule);
-observer.observe(D.body,{childList:true,subtree:true,characterData:true});
+new MutationObserver(schedule).observe(D.body,{childList:true,subtree:true,characterData:true});
 schedule();
 })();
