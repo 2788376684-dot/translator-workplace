@@ -34,7 +34,7 @@ function mount(){
  toolsBox.id='th-sidebar-tools';
  toolsBox.className='th-sidebar-tools';
  toolsBox.setAttribute('role','group');
- toolsBox.setAttribute('aria-label','项目管理');
+ toolsBox.setAttribute('aria-label','设置');
  const flowBox=D.createElement('nav');
  flowBox.id='th-top-flow';
  flowBox.className='th-top-flow';
@@ -69,7 +69,7 @@ function mount(){
   // Place workflow on its own row; original context and cloud controls stay below.
   top.prepend(flowBox);
   const sectionLabel=[...sidebar.querySelectorAll('.workflow-label')].find(x=>norm(x.textContent)==='工作流程');
-  if(sectionLabel)sectionLabel.textContent='项目管理';
+  if(sectionLabel)sectionLabel.textContent='设置';
   D.body.classList.add('th-navigation-swapped');
   mounted=true;
   return true;
