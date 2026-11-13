@@ -316,3 +316,11 @@ a{color:var(--th-blue)}
 @media(max-width:650px){
  .topbar #th-top-flow .th-global-cloud{margin-left:6px!important;width:auto!important}
 }
+
+/* Default AI indicator occupies an ordinary left-side row, never an overlay. */
+#th-default-ai-slot{display:flex;align-items:center;justify-content:flex-start;
+ gap:6px;position:relative;z-index:auto;min-height:30px;
+ margin:0 0 8px;padding:0;overflow:visible}
+#th-default-ai-slot>*{position:static!important;inset:auto!important;
+ float:none!important;transform:none!important;max-width:100%;
+ pointer-events:auto;box-sizing:border-box}
