@@ -39,10 +39,7 @@ function mount(){
  flowBox.id='th-top-flow';
  flowBox.className='th-top-flow';
  flowBox.setAttribute('aria-label','翻译工作流程');
- const label=D.createElement('span');
- label.className='th-top-flow-caption';
- label.textContent='翻译流程';
- flowBox.append(label);
+ // Four numbered stages are self-explanatory; no extra caption is needed.
  const anchors=[...buttons,...tools].map(x=>({node:x,parent:x.parentNode,next:x.nextSibling}));
  try{
   // Reuse the original sidebar workflow container for the project tool actions.
