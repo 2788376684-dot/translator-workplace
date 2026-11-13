@@ -49,3 +49,22 @@ body.th-navigation-swapped .topbar{
  .th-top-flow .nav-step{flex:0 0 112px!important;width:112px!important;min-width:112px!important;max-width:112px!important;padding:6px 9px!important}
  .th-top-flow-caption{font-size:10px}
 }
+
+/* Fit navigation to its available width without introducing a scrollbar. */
+body.th-navigation-swapped .topbar #th-top-flow{
+ box-sizing:border-box;display:flex;flex-wrap:wrap;flex:1 1 100%;
+ width:100%;max-width:100%;min-width:0;overflow:visible;
+ gap:7px;margin:0;padding:0 0 8px;
+}
+#th-top-flow .th-top-flow-caption{display:none!important}
+#th-top-flow .nav-step{
+ box-sizing:border-box!important;flex:1 1 115px!important;
+ width:auto!important;min-width:98px!important;max-width:none!important;
+}
+#th-top-flow .th-flow-connector{flex:0 0 12px}
+#th-top-flow .th-global-cloud{flex:0 0 auto!important;min-width:0!important}
+#th-top-flow .th-global-cloud-status{max-width:125px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){
+ #th-top-flow .nav-step{flex:1 1 108px!important;width:auto!important;min-width:92px!important;max-width:none!important}
+ #th-top-flow .th-global-cloud{margin-left:0!important}
+}
