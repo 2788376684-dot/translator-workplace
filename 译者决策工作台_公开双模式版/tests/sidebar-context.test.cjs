@@ -21,10 +21,23 @@ test('hide the actual redundant native topbar row, preserving workflow navigatio
  assert.doesNotMatch(css,/\.topbar\s*\{\s*display:none/);
  assert.match(script,/getElementById\('th-top-flow'\)/);
  assert.match(script,/getElementById\('modeTop'\)/);
- assert.match(script,/tools\.append\(mode\)/);
+ assert.match(script,/statusRow\.append\(mode\)/);
  assert.match(script,/getElementById\('quickOCR'\)/);
  assert.match(script,/tools\.append\(ocr\)/);
  assert.match(css,/#th-sidebar-context\{display:none!important/);
  assert.doesNotMatch(script,/sidebar\.insertBefore\(context|createElement\('section'\)/);
  assert.doesNotMatch(script,/\.onclick\s*=|\.value\s*=|localStorage|\.click\(\)/);
+});
+
+test('AI status sits below current project, spans the sidebar and retains native state',()=>{
+ const script=read('transhelper-sidebar-context.js');
+ const css=read('transhelper-sidebar-context.css');
+ assert.match(script,/sidebar\.querySelector\('\.project-control'\)/);
+ assert.match(script,/heading\.textContent='当前AI状态'/);
+ assert.match(script,/heading\.className='side-label'/);
+ assert.match(script,/projectControl\.insertAdjacentElement\('afterend',heading\)/);
+ assert.match(script,/heading\.insertAdjacentElement\('afterend',statusRow\)/);
+ assert.match(script,/statusRow\.append\(mode\)/);
+ assert.match(css,/#th-ai-state-row #modeTop\.th-sidebar-mode/);
+ assert.match(css,/width:100%!important/);
 });
