@@ -7,7 +7,7 @@ window.__thSidebarContextReady=true;
 const D=document;
 const sidebar=D.querySelector('.sidebar');
 if(!sidebar)return;
-const norm=s=>String(s||'').replace(/\\s+/g,' ').trim();
+const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 const context=D.createElement('section');
 context.id='th-sidebar-context';
 context.setAttribute('aria-label','当前项目与阶段');
@@ -25,7 +25,7 @@ function sync(){
  const title=D.getElementById('stageTitle');
  const step=D.querySelector('#th-top-flow .nav-step.active, #th-top-flow .nav-step[aria-current="step"]');
  const name=norm(caption?.textContent)||'当前项目';
- const stage=norm(title?.textContent)||norm(step?.textContent).replace(/^\\d+\\s*/,'');
+ const stage=norm(title?.textContent)||norm(step?.textContent).replace(/^\\d+\s*/,'');
  if(name!==project.textContent)project.textContent=name;
  if(stage!==phase.textContent)phase.textContent=stage;
  // Only hide the original labels after the rail has been populated.
