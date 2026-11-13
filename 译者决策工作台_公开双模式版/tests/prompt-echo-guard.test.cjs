@@ -2,6 +2,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const path=require('node:path');
+process.env.AI_API_KEY='test-key';
 const handler=require(path.join('..','api','chat.js'));
 const good='The weather is warm today.';
 const leaked='Preserve the original text and identify paragraphs.\n\nThis prompt:\nPlease complete the translation based on the original text, specified terminology, and project requirements.';
