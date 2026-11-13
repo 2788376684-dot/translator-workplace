@@ -305,3 +305,14 @@ a{color:var(--th-blue)}
  .topbar .th-global-cloud{width:auto!important;max-width:100%;padding:0!important;margin-left:auto!important;border:0!important}
  .topbar .th-global-cloud-link{white-space:nowrap}
 }
+
+/* Account belongs directly after 04 Final in the workflow navigation. */
+.topbar #th-top-flow .th-global-cloud{
+ order:initial!important;margin:0 0 0 8px!important;padding:0!important;
+ width:auto!important;max-width:none!important;flex:0 0 auto!important;
+ border:0!important;align-self:center!important;
+}
+#th-top-flow .th-global-cloud-link{height:40px;white-space:nowrap}
+@media(max-width:650px){
+ .topbar #th-top-flow .th-global-cloud{margin-left:6px!important;width:auto!important}
+}
