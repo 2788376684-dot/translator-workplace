@@ -298,4 +298,3 @@ a{color:var(--th-blue)}
 .app:not(.parameter-view) #stageCaption,.app:not(.parameter-view) #stageSub{position:static!important;transform:none!important}
 
 /* Top workflow already names the active phase; remove its duplicated content heading. */
-body.th-navigation-swapped #stageTitle{display:none!important}
