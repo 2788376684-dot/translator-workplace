@@ -27,7 +27,7 @@ if(tools)tools.parentNode.insertBefore(context,tools);
 else sidebar.insertBefore(context,sidebar.firstChild);
 function relocateAI(){
  const existing=D.getElementById('th-default-ai-slot');
- if(existing&&existing!==aiSlot&&existing.contains(D.querySelector('#th-default-ai-slot *'))){
+ if(existing&&existing!==aiSlot&&existing.childElementCount>0){
   if(existing.parentElement!==aiSlot)aiSlot.append(existing);
   return true;
  }
