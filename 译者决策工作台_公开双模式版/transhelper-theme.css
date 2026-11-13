@@ -63,8 +63,10 @@ body{color:var(--th-ink);background:var(--th-canvas);
 /* Deliberately restrained title hierarchy, generous space for actual text. */
 #stageCaption{font-size:11px!important;font-weight:700;letter-spacing:.11em!important;
  color:#86868b!important}
-#stageTitle{font-size:clamp(27px,2.7vw,36px)!important;line-height:1.12!important;
- font-weight:740!important;letter-spacing:-.055em!important}
+#stageTitle{font-size:clamp(22px,2vw,28px)!important;line-height:1.3!important;
+ font-weight:700!important;letter-spacing:-.035em!important;
+ position:static!important;transform:none!important;margin:4px 0 7px!important;
+ padding:0!important;max-width:100%!important;overflow-wrap:break-word!important}
 #stageSub{font-size:13px!important;line-height:1.65;color:var(--th-secondary)!important}
 .main,.stage,.stage-content{min-width:0}
 .workgrid{min-width:0}
@@ -139,7 +141,7 @@ a{color:var(--th-blue)}
   box-shadow:0 8px 24px #17171b09,0 1px 3px #17171b05!important}
 }
 @media(max-width:850px){
- #stageTitle{font-size:27px!important}
+ #stageTitle{font-size:23px!important}
  .pane-content{padding:14px!important}
  .pane-top{padding:13px 14px!important}
 }
@@ -289,3 +291,8 @@ a{color:var(--th-blue)}
 }
 /* Keep workflow buttons in their original stage action group, separate from global settings. */
 #stageActions,.stage-actions,.stage-actions-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+
+/* Prevent oversized native stage headings from colliding with breadcrumbs or notes.
+   Keep this scoped to the editor title; OCR and content geometry are unchanged. */
+.app:not(.parameter-view) #stageTitle{display:block!important;float:none!important;clear:both!important;min-height:0!important}
+.app:not(.parameter-view) #stageCaption,.app:not(.parameter-view) #stageSub{position:static!important;transform:none!important}
