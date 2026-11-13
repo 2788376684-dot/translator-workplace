@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
 const base=join(__dirname,'..');
 const read=name=>readFileSync(join(base,name),'utf8');
 const index=read('index.html'),atelier=read('atelier.html'),core=read('atelier-core.html'),enh=read('atelier-review-enhancements.js'),api=read('api/chat.js');
-test('entry architecture is complete and parses',()=>{assert.match(index,/atelier\.html/);assert.match(atelier,/atelier-core\.html/);assert.match(atelier,/atelier-review-enhancements\.js/);assert.doesNotThrow(()=>new Function(index.match(/<script>([\s\S]*?)<\/script>/)[1]));assert.doesNotThrow(()=>new Function(enh));assert.doesNotThrow(()=>new Function(api));});
+test('entry architecture is complete and parses',()=>{assert.match(index,/atelier-core\.html/);assert.match(atelier,/atelier-core\.html/);assert.match(atelier,/atelier-review-enhancements\.js/);assert.doesNotThrow(()=>new Function(index.match(/<script>([\s\S]*?)<\/script>/)[1]));assert.doesNotThrow(()=>new Function(enh));assert.doesNotThrow(()=>new Function(api));});
 test('iframe loader has visible failure and timeout recovery',()=>{assert.match(atelier,/addEventListener\('error'/);assert.match(atelier,/工作台加载时间较长/);assert.match(atelier,/直接进入工作台/);});
 test('review enhancement preserves safe diff rendering and sentence alignment',()=>{for(const expected of ['function diff(','function sentences(','tw-source-alignment-v1','textContent','innerHTML'])assert.ok(enh.includes(expected),`missing ${expected}`);});
 test('backend exposes structured error handling',()=>{for(const expected of ['RATE_LIMIT_LOCAL','Retry-After','CHAT_DISABLED','timingSafeEqual'])assert.ok(api.includes(expected),`missing ${expected}`);});
