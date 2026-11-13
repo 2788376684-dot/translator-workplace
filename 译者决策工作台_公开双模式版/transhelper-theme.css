@@ -298,3 +298,10 @@ a{color:var(--th-blue)}
 .app:not(.parameter-view) #stageCaption,.app:not(.parameter-view) #stageSub{position:static!important;transform:none!important}
 
 /* Top workflow already names the active phase; remove its duplicated content heading. */
+
+/* Keep account/cloud controls on the far right of the native header. */
+.topbar .th-global-cloud{margin-left:auto!important;order:99;max-width:100%;padding-left:12px}
+@media(max-width:650px){
+ .topbar .th-global-cloud{width:auto!important;max-width:100%;padding:0!important;margin-left:auto!important;border:0!important}
+ .topbar .th-global-cloud-link{white-space:nowrap}
+}
