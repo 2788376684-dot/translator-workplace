@@ -1,0 +1,53 @@
+name: Remove duplicate stage heading from Atelier core
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/remove-duplicate-stage-title.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  remove-heading:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Remove duplicate heading from core markup and renderer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("译者决策工作台_公开双模式版/atelier-core.html")
+          s = p.read_text(encoding="utf-8")
+          pairs = [
+              ('<h1 id="stageTitle">原文</h1>', ''),
+              ("$('stageTitle').textContent=steps[state.step][1];", ''),
+          ]
+          for old, new in pairs:
+              if s.count(old) != 1:
+                  raise SystemExit(f"Expected one exact match for {old!r}; found {s.count(old)}")
+              s = s.replace(old, new)
+          assert 'id="stageTitle"' not in s
+          assert "$('stageTitle')" not in s
+          assert 'id="stageSub"' in s and 'id="stageActions"' in s
+          p.write_text(s, encoding="utf-8")
+          PY
+      - name: Verify source no longer contains duplicate title
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('译者决策工作台_公开双模式版/atelier-core.html').read_text(encoding='utf-8')
+          assert 'id="stageTitle"' not in s
+          assert "$('stageTitle')" not in s
+          assert 'id="stageActions"' in s
+          PY
+      - name: Commit corrected core
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "译者决策工作台_公开双模式版/atelier-core.html"
+          if ! git diff --cached --quiet; then
+            git commit -m "Delete duplicate stage title from core editor markup and renderer"
+            git push
+          fi
