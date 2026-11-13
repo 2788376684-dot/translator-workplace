@@ -48,6 +48,14 @@ function mount(){
   // Reuse the original sidebar workflow container for the project tool actions.
   workflowHome.append(toolsBox);
   for(const tool of tools){
+   // Remove only decorative gear text from the project-settings control.
+   // Keep the native button node and its event handlers untouched.
+   if(tool===tools[0]){
+    for(const node of Array.from(tool.childNodes||[])){
+     if(node.nodeType===3&&/^[\s\u2699\uFE0F]+/.test(node.nodeValue||''))node.nodeValue=node.nodeValue.replace(/^[\s\u2699\uFE0F]+/,'');
+     else if(node.nodeType===1&&/^[\u2699\uFE0F]+$/.test((node.textContent||'').trim()))node.style.display='none';
+    }
+   }
    tool.classList.add('th-sidebar-tool');
    tool.classList.remove('th-settings-trigger');
    // Older visual enhancement imposed fixed widths on topbar buttons.
