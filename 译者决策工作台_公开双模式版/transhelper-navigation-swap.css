@@ -6,15 +6,15 @@ body.th-navigation-swapped .topbar{
 }
 .th-top-flow{
  display:flex;align-items:center;gap:7px;
- flex:1 1 100%;width:100%;min-width:0;
+ flex:0 1 100%;width:100%;min-width:0;
  margin:0;padding:0 0 8px;border-bottom:1px solid #e9edf2;
  overflow-x:auto;scrollbar-width:thin;
 }
 .th-top-flow-caption{flex:0 0 auto;font:600 11px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#798799;margin-right:5px;white-space:nowrap}
 .th-top-flow .nav-step{
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
- flex:1 1 0!important;min-width:98px!important;max-width:220px!important;
- min-height:37px!important;width:auto!important;padding:7px 12px!important;
+ flex:0 0 152px!important;width:152px!important;min-width:152px!important;max-width:152px!important;
+ height:42px!important;min-height:42px!important;max-height:42px!important;padding:6px 12px!important;
  margin:0!important;border:1px solid #e1e6ee!important;border-radius:9px!important;
  background:#f9fafc!important;color:#526175!important;white-space:nowrap!important;
  font-size:12px!important;line-height:1.4!important;transform:none!important;
@@ -41,6 +41,6 @@ body.th-navigation-swapped .topbar{
 .th-sidebar-tools .th-sidebar-tool:focus-visible{outline:2px solid #0071e3!important;outline-offset:2px}
 @media(max-width:760px){
  .th-top-flow{gap:5px;padding-bottom:6px}
- .th-top-flow .nav-step{flex:0 0 auto!important;min-width:82px!important;padding:6px 9px!important}
+ .th-top-flow .nav-step{flex:0 0 112px!important;width:112px!important;min-width:112px!important;max-width:112px!important;padding:6px 9px!important}
  .th-top-flow-caption{font-size:10px}
 }
