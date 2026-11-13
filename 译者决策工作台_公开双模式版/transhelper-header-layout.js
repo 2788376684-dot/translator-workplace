@@ -39,12 +39,16 @@ function sync(){
  state.dataset.kind=/失败|暂停|冲突|错误|未登录/.test(text)?'error':/正在|备份中/.test(text)?'busy':/已备份|成功/.test(text)?'saved':'neutral';
 }
 function place(){
- const header=doc.querySelector('.topbar');
- if(!header){
-  parentDoc.body.classList.remove('th-header-integrated');
+ const flow=doc.getElementById('th-top-flow');
+ const finalButton=flow?.querySelector('[data-step="final"]');
+ if(!flow||!finalButton){
+  // Keep the outer floating link hidden until the real workflow slot exists.
+  parentDoc.body.classList.add('th-header-integrated');
   return;
  }
- if(group.parentElement!==header)header.append(group);
+ // The account control belongs immediately after the native 04 Final step.
+ if(group.parentElement!==flow||group.previousElementSibling!==finalButton)
+  finalButton.insertAdjacentElement('afterend',group);
  parentDoc.body.classList.add('th-header-integrated');
  sync();
 }
