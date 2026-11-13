@@ -1,0 +1,19 @@
+/* Draft-generation Prompt: full editor width without changing saved text. */
+#stageContent .th-generation-prompt-wrap{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;flex:1 1 100%!important;grid-column:1 / -1!important;
+}
+#stageContent textarea.th-generation-prompt{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ min-height:180px!important;height:clamp(180px,26vh,300px)!important;
+ resize:vertical!important;line-height:1.65!important;
+}
+/* Keep the four-stage navigator visible when scrolling within the workbench. */
+body.th-navigation-swapped .topbar{
+ position:sticky!important;top:0!important;z-index:1200!important;
+ background:rgba(255,255,255,.98)!important;
+ box-shadow:0 2px 10px rgba(22,41,64,.06);
+}
+body.th-navigation-swapped #th-top-flow{scrollbar-width:none!important}
+body.th-navigation-swapped #th-top-flow::-webkit-scrollbar{display:none!important}
