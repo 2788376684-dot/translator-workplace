@@ -1,0 +1,17 @@
+/* Outer workspace shell and account dialog: presentation only. */
+:root{color-scheme:light}
+body{background:#f5f6f9}
+#th-account-panel{background:rgba(20,30,48,.4)!important;
+ -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);}
+#th-account-dialog{background:#f7f8fa!important;border:1px solid rgba(255,255,255,.4);
+ border-radius:17px!important;box-shadow:0 24px 75px rgba(15,30,52,.25)!important}
+#th-account-close{border-radius:10px!important;background:rgba(255,255,255,.96)!important;
+ transition:background-color .16s ease,border-color .16s ease!important}
+#th-account-close:hover{background:#edf4fc!important;border-color:#a9c8e9!important}
+#th-account-close:focus-visible{outline:2px solid #4a9bf0;outline-offset:2px}
+@media(prefers-reduced-motion:no-preference){
+ #th-account-panel:not([hidden]) #th-account-dialog{animation:tx-dialog-arrive .22s cubic-bezier(.2,.8,.25,1) both}
+}
+@keyframes tx-dialog-arrive{from{opacity:.83;transform:translateY(6px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:650px){#th-account-dialog{border-radius:0!important;border:0!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
