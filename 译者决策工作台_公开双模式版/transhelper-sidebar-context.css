@@ -1,33 +1,13 @@
-/* Sidebar owns the redundant project/stage breadcrumb. */
-#th-sidebar-context{box-sizing:border-box;display:flex;flex-direction:column;
- min-width:0;gap:6px;margin:4px 2px 14px;padding:11px 10px;
- border:1px solid #e4e8ef;border-radius:10px;background:#fff;}
-.th-sidebar-context-label{font-size:10px;font-weight:650;color:#858e9b;}
-.th-sidebar-project{font-size:13px;line-height:1.45;color:#303b4a;
- overflow-wrap:anywhere;}
-.th-sidebar-phase{font-size:12px;line-height:1.4;color:#1267bf;font-weight:700;}
-#th-sidebar-context #th-default-ai-slot{min-height:0;margin:5px 0 0;flex-wrap:wrap;}
-body.th-sidebar-context-integrated #stageCaption,
-body.th-sidebar-context-integrated #stageTitle{
- display:none!important;
-}
-/* Hide redundant breadcrumb separation without touching the draft lock action. */
-body.th-sidebar-context-integrated #stageCaption + .breadcrumb-separator{
- display:none!important;
-}
-
-/* Suppress the whole repeated breadcrumb/status strip, including its spacing. */
-body .main .th-redundant-stage-context{display:none!important;margin:0!important;padding:0!important;height:0!important;border:0!important;}
-#th-sidebar-ai-status{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0;margin-top:5px;}
-#th-sidebar-ai-status:empty{display:none;}
-#th-sidebar-ai-status>*{position:static!important;inset:auto!important;transform:none!important;
- width:auto!important;max-width:100%;margin:0!important;box-sizing:border-box;}
-#th-sidebar-ai-status #th-default-ai-slot{margin:0!important;padding:0!important;min-height:0!important;}
-
-/* No top-of-sidebar context card; brand remains the first visual element. */
-.sidebar #th-sidebar-context{order:initial!important;}
-body.th-sidebar-context-integrated .th-redundant-stage-context,
-body.th-sidebar-context-integrated .th-redundant-stage-context-text{
- display:none!important;margin:0!important;padding:0!important;
- min-height:0!important;height:0!important;border:0!important;
-}
+/* Native header contains duplicate crumb/progress row after flow is moved in. */
+body.th-native-header-compact .topbar > .crumb,
+body.th-native-header-compact .topbar > .top-right{display:none!important;}
+body.th-native-header-compact .topbar{height:auto!important;min-height:0!important;}
+body.th-native-header-compact .topbar > #th-top-flow{margin-bottom:0!important;}
+/* Brand stays in its original position. Do not create a second project card. */
+#th-sidebar-context{display:none!important;}
+#th-sidebar-tools .th-sidebar-mode{display:inline-flex!important;align-items:center;
+ max-width:100%;box-sizing:border-box;margin:4px 0 0;padding:5px 9px;
+ font-size:11px;line-height:1.5;color:#64748b;border:1px solid #dbe3ee;
+ border-radius:9px;background:#fff;align-self:flex-start;white-space:normal;}
+#th-sidebar-tools #quickOCR[hidden]{display:none!important;}
+#th-sidebar-tools #quickOCR:not([hidden]){display:flex!important;}
