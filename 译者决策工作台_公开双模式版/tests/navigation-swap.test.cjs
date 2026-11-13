@@ -52,7 +52,11 @@ test('real native workflow buttons move into topbar, real settings actions move 
  const d=boot();
  const flow=d.top.children.find(x=>x.id==='th-top-flow');
  assert.ok(flow,'workflow bar created');
- assert.deepEqual(flow.children.slice(1),d.steps);
+ assert.deepEqual(flow.children.filter(x=>x.tagName==='BUTTON'),d.steps);
+ const connectors=flow.children.filter(x=>x.className==='th-flow-connector');
+ assert.equal(connectors.length,3);
+ assert.ok(connectors.every(x=>x.textContent==='→'&&x.attributes['aria-hidden']==='true'));
+ assert.deepEqual(flow.children.slice(1).map(x=>x.tagName==='BUTTON'?x.step:'→'),['source','→','draft','→','revision','→','final']);
  const tools=d.original.children.find(x=>x.id==='th-sidebar-tools');
  assert.ok(tools);
  assert.deepEqual(tools.children,[d.project,d.ai,d.imported]);
