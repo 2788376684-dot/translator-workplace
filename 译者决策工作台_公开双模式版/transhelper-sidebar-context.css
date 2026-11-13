@@ -23,3 +23,11 @@ body .main .th-redundant-stage-context{display:none!important;margin:0!important
 #th-sidebar-ai-status>*{position:static!important;inset:auto!important;transform:none!important;
  width:auto!important;max-width:100%;margin:0!important;box-sizing:border-box;}
 #th-sidebar-ai-status #th-default-ai-slot{margin:0!important;padding:0!important;min-height:0!important;}
+
+/* No top-of-sidebar context card; brand remains the first visual element. */
+.sidebar #th-sidebar-context{order:initial!important;}
+body.th-sidebar-context-integrated .th-redundant-stage-context,
+body.th-sidebar-context-integrated .th-redundant-stage-context-text{
+ display:none!important;margin:0!important;padding:0!important;
+ min-height:0!important;height:0!important;border:0!important;
+}
