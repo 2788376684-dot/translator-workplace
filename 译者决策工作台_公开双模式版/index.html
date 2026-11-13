@@ -3,10 +3,259 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Transhelper</title>
-<meta http-equiv="refresh" content="0; url=/atelier.html">
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8f9fb;color:#526477;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}a{color:#1266d6}</style>
-<script>window.location.replace('/atelier.html');</script>
+<title>Transhelper · Workspace</title>
+<style>
+html,body{height:100%;margin:0;background:#f5f5f7}
+#app{display:block;width:100%;height:100%;border:0}
+#status{position:fixed;inset:0;display:none;place-items:center;background:#f5f5f7;color:#607083;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;z-index:2}
+#status[hidden]{display:none}
+#account-entry{display:none;position:fixed;right:18px;top:12px;z-index:4;padding:7px 12px;border:1px solid #d6dfe7;border-radius:999px;background:#fffefef2;box-shadow:0 2px 9px #0000000b;color:#3e5770;text-decoration:none;font:12px -apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}
+#account-entry:focus-visible{outline:2px solid #2d70a8;outline-offset:2px}
+body.th-header-integrated #account-entry,body.th-header-integrated #tw-cloud-status{display:none!important}
+#th-account-panel[hidden]{display:none!important}
+#th-account-panel{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(20,34,54,.36)}
+#th-account-dialog{position:relative;width:min(820px,100%);height:min(760px,calc(100vh - 36px));background:#f5f6f8;border-radius:14px;box-shadow:0 20px 70px rgba(18,32,50,.25);overflow:hidden}
+#th-account-frame{display:block;width:100%;height:100%;border:0}
+#th-account-close{position:absolute;right:12px;top:10px;z-index:1;display:grid;place-items:center;width:32px;height:32px;border:1px solid #d5dee9;background:#fff;border-radius:8px;color:#405770;cursor:pointer;font-size:20px;line-height:1}
+#th-account-close:focus-visible{outline:2px solid #2868a6;outline-offset:2px}
+@media(max-width:650px){#th-account-panel{padding:0}#th-account-dialog{width:100%;height:100%;border-radius:0}}
+@media(max-width:650px){#account-entry{right:10px;top:10px;padding:6px 9px;font-size:11px}}
+#status p{margin:0 0 14px}
+#status a{color:#1266d6}
+</style>
 </head>
-<body><p>正在进入 Transhelper… <a href="/atelier.html">点击这里继续</a></p></body>
+<body>
+<a id="account-entry" href="/account.html" aria-label="打开账户与云端">账户与云端</a>
+<div id="th-account-panel" hidden><div id="th-account-dialog" role="dialog" aria-modal="true" aria-label="账户与云端"><button type="button" id="th-account-close" aria-label="关闭账户与云端">×</button><iframe id="th-account-frame" title="账户与云端"></iframe></div></div>
+<div id="status" role="status"><div><p id="message">正在打开 Transhelper…</p><p><a href="/atelier-core.html">直接进入工作台</a></p></div></div>
+<iframe id="app" title="Transhelper · Workspace" allow="clipboard-read; clipboard-write"></iframe>
+<script>
+(function(){
+const panel=document.getElementById("th-account-panel");
+const accountFrame=document.getElementById("th-account-frame");
+const accountClose=document.getElementById("th-account-close");
+let priorFocus=null;
+window.openAccountPanel=function(){priorFocus=document.activeElement;if(!accountFrame.getAttribute("src"))accountFrame.src="/account.html";panel.hidden=false;accountClose.focus();};
+window.closeAccountPanel=function(){panel.hidden=true;if(priorFocus&&typeof priorFocus.focus==="function")priorFocus.focus();};
+accountClose.addEventListener("click",window.closeAccountPanel);
+panel.addEventListener("click",e=>{if(e.target===panel)window.closeAccountPanel();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden)window.closeAccountPanel();});
+document.getElementById("account-entry").addEventListener("click",e=>{e.preventDefault();window.openAccountPanel();});
+'use strict';
+const app=document.getElementById('app');
+const status=document.getElementById('status');
+const message=document.getElementById('message');
+let finished=false;
+function show(){
+ if(finished)return;
+ finished=true;
+ status.hidden=true;
+ status.style.display='none';
+ try{
+  const d=app.contentDocument;
+  if(!d)return;
+  const packed=d.getElementById('week8-packed');
+  const paramFrame=d.getElementById('paramFrame');
+  const openSource=()=>{
+   if(paramFrame&&packed){
+    const source=d.querySelector('[data-step="source"]');
+    if(source)source.click();
+   }
+  };
+  // Install the persistence guard BEFORE the source step creates the OCR iframe.
+  // Invalid old IndexedDB snapshots remain stored and are never forwarded to TW_RESTORE.
+  if(!d.getElementById('tw-week8-restore-safety-loader')){
+   const restoreGuard=d.createElement('script');
+   restoreGuard.id='tw-week8-restore-safety-loader';
+   restoreGuard.src='/week8-restore-safety.js';
+   restoreGuard.onload=openSource;
+   restoreGuard.onerror=()=>{console.warn('OCR snapshot restore guard unavailable.');openSource();};
+   d.head.appendChild(restoreGuard);
+  }else openSource();
+  if(!d.getElementById('tw-review-loader')){
+   const patch=d.createElement('script');
+   patch.id='tw-review-loader';
+   patch.src='/atelier-review-enhancements.js';
+   patch.onerror=()=>console.warn('Review enhancement unavailable; original editor remains operational.');
+   d.head.appendChild(patch);
+  }
+  if(!d.getElementById('tw-week8-geometry-loader')){
+   const geometry=d.createElement('script');
+   geometry.id='tw-week8-geometry-loader';
+   geometry.src='/week8-native-geometry.js';
+   geometry.onerror=()=>console.warn('Native Week8 geometry controls unavailable.');
+   d.head.appendChild(geometry);
+  }
+  // Read-only/passive continuity guard: no override of the core editor or OCR engine.
+  if(!d.getElementById('tw-continuity-loader')){
+   const continuity=d.createElement('script');
+   continuity.id='tw-continuity-loader';
+   continuity.src='/tw-continuity-guard.js';
+   continuity.onerror=()=>console.warn('Workspace recovery unavailable; native editor and exports remain operational.');
+   d.head.appendChild(continuity);
+  }
+  // Load the optional theme after the existing enhancement scripts.
+  // No mutation of persisted state, OCR geometry, or translation content.
+  if(!d.getElementById('transhelper-theme')){
+   const theme=d.createElement('link');
+   theme.id='transhelper-theme';theme.rel='stylesheet';theme.href='/transhelper-theme.css?v=6';
+   theme.onerror=()=>console.warn('Transhelper theme unavailable; original layout remains operational.');
+   d.head.appendChild(theme);
+  }
+  if(!d.getElementById('transhelper-brand-loader')){
+   const brand=d.createElement('script');
+   brand.id='transhelper-brand-loader';brand.src='/transhelper-brand.js?v=3';
+   brand.onerror=()=>console.warn('Transhelper branding unavailable.');
+   d.head.appendChild(brand);
+  }
+  if(!d.getElementById('transhelper-workflow-ui-loader')){
+   const workflow=d.createElement('script');
+   workflow.id='transhelper-workflow-ui-loader';
+   workflow.src='/transhelper-workflow-ui.js?v=3';
+   workflow.onerror=()=>console.warn('Optional Transhelper UI refinement unavailable.');
+   d.head.appendChild(workflow);
+  }
+  if(!d.getElementById('transhelper-ai-progress-loader')){
+   const progress=d.createElement('script');
+   progress.id='transhelper-ai-progress-loader';
+   progress.src='/transhelper-ai-progress.js?v=1';
+   progress.onerror=()=>console.warn('AI progress display unavailable; original AI actions remain operational.');
+   d.head.appendChild(progress);
+  }
+  if(!d.getElementById('th-draft-layout-style')){
+   const sheet=d.createElement('link');
+   sheet.id='th-draft-layout-style';sheet.rel='stylesheet';
+   sheet.href='/transhelper-draft-layout.css?v=1';
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-draft-layout-loader')){
+   const draftLayout=d.createElement('script');
+   draftLayout.id='th-draft-layout-loader';
+   draftLayout.src='/transhelper-draft-layout.js?v=1';
+   draftLayout.onerror=()=>console.warn('Draft prompt layout unavailable; native editor remains operational.');
+   d.head.appendChild(draftLayout);
+  }
+  if(!d.getElementById('transhelper-quick-actions-style')){
+   const sheet=d.createElement('link');
+   sheet.id='transhelper-quick-actions-style';
+   sheet.rel='stylesheet';sheet.href='/transhelper-quick-actions.css?v=3';
+   sheet.onerror=()=>console.warn('Quick actions theme unavailable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('transhelper-quick-actions-loader')){
+   const quick=d.createElement('script');
+   quick.id='transhelper-quick-actions-loader';
+   quick.src='/transhelper-quick-actions.js?v=2';
+   quick.onerror=()=>console.warn('Quick actions unavailable; original AI and backup controls remain accessible.');
+   d.head.appendChild(quick);
+  }
+  if(!d.getElementById('transhelper-export-scope-style')){
+   const sheet=d.createElement('link');
+   sheet.id='transhelper-export-scope-style';
+   sheet.rel='stylesheet';sheet.href='/transhelper-export-scope.css?v=1';
+   sheet.onerror=()=>console.warn('Export scope styling unavailable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('transhelper-export-scope-loader')){
+   const scope=d.createElement('script');
+   scope.id='transhelper-export-scope-loader';
+   scope.src='/transhelper-export-scope.js?v=1';
+   scope.onerror=()=>console.warn('Optional export scope chooser unavailable; native exports remain accessible.');
+   d.head.appendChild(scope);
+  }
+  // Visual-only header bridge. Never replaces native controls or their listeners.
+  // Preserve native OCR behavior while reusing an existing blank parameter project.
+  if(!d.getElementById('th-ocr-project-guard-loader')){
+   const guard=d.createElement('script');
+   guard.id='th-ocr-project-guard-loader';
+   guard.src='/transhelper-ocr-project-guard.js?v=1';
+   guard.onerror=()=>console.warn('OCR project reuse guard unavailable; original OCR remains operational.');
+   d.head.appendChild(guard);
+  }
+  if(!d.getElementById('th-ai-provider-label-loader')){
+   const provider=d.createElement('script');
+   provider.id='th-ai-provider-label-loader';
+   provider.src='/transhelper-ai-provider-label.js?v=1';
+   provider.onerror=()=>console.warn('AI provider label unavailable.');
+   d.head.appendChild(provider);
+  }
+  if(!d.getElementById('th-project-settings-style')){
+   const sheet=d.createElement('link');
+   sheet.id='th-project-settings-style';sheet.rel='stylesheet';
+   sheet.href='/transhelper-project-settings.css?v=3';
+   sheet.onerror=()=>console.warn('Project settings presentation styles unavailable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-project-settings-loader')){
+   const settings=d.createElement('script');
+   settings.id='th-project-settings-loader';
+   settings.src='/transhelper-project-settings.js?v=3';
+   settings.onerror=()=>console.warn('Project settings presentation enhancement unavailable.');
+   d.head.appendChild(settings);
+  }
+  // Presentation-only navigation swap; native workflow buttons stay intact.
+  if(!d.getElementById('th-navigation-swap-style')){
+   const sheet=d.createElement('link');
+   sheet.id='th-navigation-swap-style';sheet.rel='stylesheet';
+   sheet.href='/transhelper-navigation-swap.css?v=1';
+   sheet.onerror=()=>console.warn('Navigation swap style unavailable; original layout remains usable.');
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-navigation-swap-loader')){
+   const layout=d.createElement('script');
+   layout.id='th-navigation-swap-loader';
+   layout.src='/transhelper-navigation-swap.js?v=1';
+   layout.onerror=()=>console.warn('Navigation swap unavailable; original layout remains usable.');
+   d.head.appendChild(layout);
+  }
+  if(!d.getElementById('th-header-layout-loader')){
+   const layout=d.createElement('script');
+   layout.id='th-header-layout-loader';
+   layout.src='/transhelper-header-layout.js?v=1';
+   layout.onerror=()=>console.warn('Optional header layout unavailable; original controls remain available.');
+   d.head.appendChild(layout);
+  }
+  if(!d.getElementById('th-sidebar-context-style')){
+   const sheet=d.createElement('link');sheet.rel='stylesheet';
+   sheet.id='th-sidebar-context-style';
+   sheet.href='/transhelper-sidebar-context.css?v=1';
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-sidebar-context-loader')){
+   const script=d.createElement('script');
+   script.id='th-sidebar-context-loader';
+   script.src='/transhelper-sidebar-context.js?v=1';
+   script.onerror=()=>console.warn('Sidebar context enhancement unavailable.');
+   d.head.appendChild(script);
+  }
+  if(!d.getElementById('tw-week8-safety-loader')){
+   const enhancement=d.createElement('script');
+   enhancement.id='tw-week8-safety-loader';
+   enhancement.src='/week8-review-safety.js';
+   enhancement.onerror=()=>console.warn('Week8 review enhancements unavailable.');
+   d.head.appendChild(enhancement);
+  }
+ }catch(e){console.warn('Atelier enhancement unavailable:',e);}
+}
+app.addEventListener('load',show);
+app.addEventListener('error',()=>{
+ message.textContent='页面加载失败，请点击下方链接直接进入工作台。';
+ status.style.display='grid';
+});
+const auto=document.createElement('script');auto.src='/tw-cloud-auto-backup.js?v=1';auto.defer=true;auto.onerror=()=>console.warn('Cloud auto-backup helper unavailable; manual backup remains accessible.');document.head.appendChild(auto);
+app.src='/atelier-core.html';
+setTimeout(()=>{
+ if(!finished){
+  message.textContent='工作台加载时间较长。可以点击下方链接直接进入工作台。';
+  status.style.display='grid';
+  // Avoid permanently obscuring an already rendered frame.
+  try{
+   const d=app.contentDocument;
+   if(d && d.body && (d.getElementById('week8-packed') || d.querySelector('.app'))){show();return;}
+  }catch(e){}
+ }
+},6000);
+})();
+</script>
+</body>
 </html>
