@@ -11,6 +11,21 @@ function limited(ip){
  if(!state||now-state.start>60000){attemptWindow.set(ip,{start:now,count:1});return false}
  state.count++;return state.count>24;
 }
+
+// Reject recognizable instruction echo before it can become a translation draft.
+// Keep matching narrow: legitimate translations may discuss prompts or AI.
+function containsLeakedPrompt(content){
+  const value=String(content||'').replace(/\\s+/g,' ').trim();
+  const patterns=[
+    /Preserve the original text and identify paragraphs\\.?/i,
+    /Please complete the translation based on the original text, specified terminology/i,
+    /This prompt:\\s*Please complete the translation/i,
+    /(?:^|\\n)\\s*(?:System|Developer|User)\\s*(?:prompt|instructions?)\\s*:/i
+  ];
+  return patterns.some(pattern=>pattern.test(String(content||''))) ||
+    (/This prompt:/i.test(value) && /(?:complete the translation|specified terminology|project requirements)/i.test(value));
+}
+
 const DEFAULT_ENDPOINT = process.env.AI_API_ENDPOINT || 'https://api.deepseek.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.AI_MODEL || 'deepseek-chat';
 const DEFAULT_KEY = process.env.AI_API_KEY || '';
@@ -50,6 +65,7 @@ module.exports = async function handler(req,res){
     const data=await upstream.json();const content=data?.choices?.[0]?.message?.content;
     if(typeof content!=='string')return fail(res,502,'AI 响应格式异常');
     if(data?.choices?.[0]?.finish_reason==='length')return fail(res,502,'AI 输出触及长度限制，请缩短文本或分段处理，避免不完整译文。');
+    if(containsLeakedPrompt(content))return fail(res,502,'PROMPT_ECHO_DETECTED','AI 返回内容混入了生成指令，已阻止写入初稿。请重新生成；如反复出现，请检查初稿提示词。');
     return res.status(200).json({content});
   }catch(e){return fail(res,504,'默认 AI 请求超时或网络不可用，请稍后重试。');}
 };
