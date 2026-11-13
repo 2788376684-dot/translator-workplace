@@ -15,7 +15,8 @@ function nearestPrompt(textarea){
  const container=textarea.parentElement;
  const context=(container?.parentElement?.textContent||'').slice(0,900);
  const top=(pane.textContent||'').slice(0,1200);
- return /Prompt/i.test(context) && /恢复默认/.test(top) && /生成设置/.test(top);
+ return /Prompt/i.test(top) && /恢复默认/.test(top) && /生成设置/.test(top) &&
+  (/Prompt/i.test(context) || pane.querySelector('textarea')===textarea);
 }
 function apply(){
  queued=false;
