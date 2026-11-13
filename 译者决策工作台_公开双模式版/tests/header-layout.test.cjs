@@ -10,7 +10,8 @@ test('header layout is syntactically valid and installed as optional layer',()=>
 });
 test('account link and cloud status have independent header slots',()=>{
  const js=read('transhelper-header-layout.js');
- assert.match(js,/\.topbar/);
+ assert.match(js,/th-top-flow/);
+ assert.match(js,/data-step="final"/);
  assert.match(js,/link\.href='\/account\.html'/);
  assert.match(js,/link\.target='_top'/);
  assert.match(js,/tw-cloud-status/);
