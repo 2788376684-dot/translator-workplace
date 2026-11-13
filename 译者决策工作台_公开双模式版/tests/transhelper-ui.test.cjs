@@ -10,7 +10,7 @@ const style=read('transhelper-theme.css'),brand=read('transhelper-brand.js');
 const core=read('atelier-core.html');
 test('Transhelper is the visible product and original routing remains',()=>{
  assert.match(wrapper,/<title>Transhelper · Workspace<\/title>/);
- assert.match(entry,/<title>Transhelper<\/title>/);
+ assert.match(entry,/<title>Transhelper · Workspace<\/title>/);
  assert.match(home,/<title>Transhelper<\/title>/);
  assert.match(wrapper,/app\.src='\/atelier-core\.html'/);
  assert.match(wrapper,/transhelper-theme\.css/);
