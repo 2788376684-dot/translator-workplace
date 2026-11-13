@@ -1,0 +1,17 @@
+/* Sidebar owns the redundant project/stage breadcrumb. */
+#th-sidebar-context{box-sizing:border-box;display:flex;flex-direction:column;
+ min-width:0;gap:6px;margin:4px 2px 14px;padding:11px 10px;
+ border:1px solid #e4e8ef;border-radius:10px;background:#fff;}
+.th-sidebar-context-label{font-size:10px;font-weight:650;color:#858e9b;}
+.th-sidebar-project{font-size:13px;line-height:1.45;color:#303b4a;
+ overflow-wrap:anywhere;}
+.th-sidebar-phase{font-size:12px;line-height:1.4;color:#1267bf;font-weight:700;}
+#th-sidebar-context #th-default-ai-slot{min-height:0;margin:5px 0 0;flex-wrap:wrap;}
+body.th-sidebar-context-integrated #stageCaption,
+body.th-sidebar-context-integrated #stageTitle{
+ display:none!important;
+}
+/* Hide redundant breadcrumb separation without touching the draft lock action. */
+body.th-sidebar-context-integrated #stageCaption + .breadcrumb-separator{
+ display:none!important;
+}
