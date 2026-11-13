@@ -1,0 +1,174 @@
+/* Transhelper Experience 2026 · visual-only, reversible design layer.
+   Never changes workflow visibility, editor geometry, persisted state or handlers.
+   Calm iOS interaction feedback with an editorial Apple-like hierarchy. */
+:root{
+ --tx-ease:cubic-bezier(.2,.78,.24,1);
+ --tx-spring:cubic-bezier(.2,1,.36,1);
+ --tx-blue:#0879e8;
+ --tx-border:rgba(28,51,80,.085);
+ --tx-border-strong:rgba(28,51,80,.15);
+ --tx-shadow:0 2px 4px rgba(22,37,61,.025),0 14px 35px rgba(22,37,61,.035);
+ --tx-shadow-raised:0 6px 16px rgba(22,37,61,.065),0 22px 50px rgba(22,37,61,.05);
+}
+html{ -webkit-tap-highlight-color:transparent; }
+body{font-feature-settings:"kern";-webkit-font-smoothing:antialiased;}
+/* A quiet material palette supports hours of reading and editing. */
+.app:not(.parameter-view){background:#f5f6f8!important;}
+.app:not(.parameter-view) .sidebar{background:#fbfcfe!important;border-right-color:#e4e8ef!important;}
+.app:not(.parameter-view) .main{background:transparent!important;}
+.app:not(.parameter-view) .topbar{
+ background:rgba(253,254,255,.96)!important;
+ -webkit-backdrop-filter:saturate(155%) blur(16px);
+ backdrop-filter:saturate(155%) blur(16px);
+ border-bottom-color:rgba(49,67,93,.1)!important;
+ box-shadow:0 1px 0 rgba(255,255,255,.8),0 4px 15px rgba(24,42,67,.035)!important;
+}
+/* Respect the previously agreed header architecture. */
+body.th-native-header-compact .topbar > .crumb,
+body.th-native-header-compact .topbar > .top-right{display:none!important;}
+.sidebar .logo{transition:opacity .18s ease;}
+.th-brand-symbol{box-shadow:0 2px 9px rgba(17,23,35,.13),inset 0 1px rgba(255,255,255,.18)!important;}
+.logo .th-brand-name{font-weight:710!important;letter-spacing:-.035em!important;}
+.sidebar .side-label,.sidebar .workflow-label{letter-spacing:.055em!important;color:#84909d!important;}
+/* Navigation: selected step is unmistakable; no animated geometry. */
+#th-top-flow .nav-step{
+ border-radius:12px!important;
+ background:#f8f9fc!important;border-color:#e1e6ef!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.8);
+ transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .22s ease!important;
+}
+#th-top-flow .nav-step:hover{
+ background:#eff5fc!important;border-color:#c6d8ed!important;transform:none!important;
+}
+#th-top-flow .nav-step.active,#th-top-flow .nav-step[aria-current="step"]{
+ background:linear-gradient(135deg,#e8f2ff,#edf6ff)!important;
+ border-color:#a9cfff!important;color:#0965bb!important;
+ box-shadow:inset 0 0 0 1px rgba(42,122,233,.035),0 1px 5px rgba(45,112,203,.045)!important;
+}
+#th-top-flow .nav-step:active{background:#e4eefb!important;transform:none!important;}
+#th-top-flow .th-flow-connector{color:#9baabd;}
+#th-top-flow .th-global-cloud-link{
+ background:#fff!important;border-color:#dce5f1!important;border-radius:11px!important;
+ transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease!important;
+}
+#th-top-flow .th-global-cloud-link:hover{background:#f2f7fd!important;border-color:#afcbea!important;box-shadow:0 2px 8px rgba(35,84,151,.06)!important;}
+/* Native sidebar settings and mode status. */
+.th-sidebar-tools .th-sidebar-tool{
+ border:1px solid transparent!important;
+ transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease!important;
+}
+.th-sidebar-tools .th-sidebar-tool:hover{background:#edf3fa!important;border-color:#e1e9f3!important;transform:none!important;}
+.th-sidebar-tools .th-sidebar-tool:active{background:#e2edf9!important;}
+#th-sidebar-tools .th-sidebar-mode{background:#f0f6fe!important;border:1px solid #dce9f9!important;color:#375d85!important;border-radius:9px!important;}
+.sidebar .project-control select,.sidebar .new-project{
+ background:#fff!important;border-color:#dce3ec!important;
+ transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease;
+}
+.sidebar .project-control select:hover,.sidebar .new-project:hover{border-color:#b9ccdf!important;}
+.sidebar .side-bottom{border-color:#e5e9ef!important;}
+/* Content card system: same visual grammar across stages. */
+:where(.app:not(.parameter-view)) :is(.pane,.segments,.summary-panel,.doc-footer,.export-panel,.tw-card,.mini-callout){
+ border-radius:16px!important;
+ border-color:var(--tx-border-strong)!important;
+ box-shadow:var(--tx-shadow)!important;
+}
+:where(.app:not(.parameter-view)) :is(.pane,.segments,.summary-panel,.tw-card){
+ transition:border-color .2s ease,box-shadow .24s ease,background-color .2s ease!important;
+}
+:where(.app:not(.parameter-view)) .pane:focus-within{
+ border-color:#b9d6fb!important;
+ box-shadow:0 0 0 3px rgba(9,111,229,.06),var(--tx-shadow)!important;
+}
+:where(.app:not(.parameter-view)) .pane-top{
+ background:linear-gradient(180deg,#fff,#fdfdff)!important;
+ border-bottom-color:#ebedf3!important;
+}
+:where(.app:not(.parameter-view)) .pane-top strong,
+:where(.app:not(.parameter-view)) .segments-head strong{letter-spacing:-.01em;font-weight:690!important;}
+:where(.app:not(.parameter-view)) .source-ref{background:#f8fafc!important;}
+:where(.app:not(.parameter-view)) .segment-item{
+ border:1px solid transparent!important;
+ transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+}
+:where(.app:not(.parameter-view)) .segment-item:hover{background:#f2f6fc!important;border-color:#e2eaf5!important;}
+:where(.app:not(.parameter-view)) .segment-item.active{
+ background:#eaf3ff!important;border-color:#b4d3fa!important;
+ box-shadow:inset 0 0 0 1px rgba(8,111,219,.045)!important;
+}
+/* Keep the editorial surface steady: no typing-time bounce or delayed editing. */
+:where(.app:not(.parameter-view)) :is(textarea,input:not([type="checkbox"]):not([type="radio"]),select){
+ accent-color:var(--tx-blue);
+ transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease!important;
+}
+:where(.app:not(.parameter-view)) textarea{
+ color:#222932!important;background:#fff!important;
+ font-size:inherit;line-height:1.7!important;
+ caret-color:#0879e8!important;
+}
+:where(.app:not(.parameter-view)) textarea::placeholder{color:#98a4b5;opacity:1;}
+:where(.app:not(.parameter-view)) :is(textarea,input,select):focus-visible{
+ outline:2px solid rgba(10,109,220,.4)!important;outline-offset:2px!important;
+}
+:where(.app:not(.parameter-view)) :is(.readbox,.editor-text,.source-ref,.tw-diff){
+ overflow-wrap:break-word;
+}
+/* Touch target quality and depth cues without changing action semantics. */
+:where(.app:not(.parameter-view)) :is(.btn,button.btn,.text-btn,.icon-btn){
+ border-radius:10px!important;
+ transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .18s ease,opacity .16s ease!important;
+}
+:where(.app:not(.parameter-view)) :is(.btn,button.btn):not(.primary):hover{background:#ecf1f7!important;border-color:#d6e0ea!important;}
+:where(.app:not(.parameter-view)) :is(.btn.primary,button.primary,.btn-primary){
+ background:#0875df!important;border-color:#0875df!important;
+ box-shadow:0 3px 9px rgba(4,105,217,.12)!important;
+}
+:where(.app:not(.parameter-view)) :is(.btn.primary,button.primary,.btn-primary):hover{
+ background:#0069d5!important;border-color:#0069d5!important;
+ box-shadow:0 4px 13px rgba(4,105,217,.18)!important;
+ transform:none!important;
+}
+:where(.app:not(.parameter-view)) :is(.btn,button.btn):active{filter:brightness(.96);transform:none!important;}
+:where(.app:not(.parameter-view)) button:disabled{box-shadow:none!important;filter:none!important;}
+/* Review and comparison: read the information, not the animation. */
+:where(.app:not(.parameter-view)) .tw-card:focus-within{border-color:#c2d9f6!important;}
+:where(.app:not(.parameter-view)) .tw-diff{border-radius:10px!important;}
+:where(.app:not(.parameter-view)) .th-sentence-nav{
+ background:rgba(255,255,255,.98)!important;
+ border-color:#e0e6ee!important;
+}
+:where(.app:not(.parameter-view)) [data-sentence-jump]{
+ transition:background-color .18s ease,border-color .18s ease,color .18s ease!important;
+}
+/* Floating quick actions: anchored, legible, light. */
+.th-quick-toggle{
+ background:rgba(255,255,255,.97)!important;border-color:#cddff5!important;
+ box-shadow:0 5px 18px rgba(28,67,117,.11),0 1px 3px rgba(28,67,117,.045)!important;
+ transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+}
+.th-quick-toggle:hover{background:#f0f7ff!important;border-color:#abccef!important;transform:none!important;}
+.th-quick-menu{border-color:#dae4f0!important;box-shadow:var(--tx-shadow-raised)!important;}
+.th-quick-action{transition:background-color .16s ease,color .16s ease!important;}
+/* State feedback: limited motion, no perpetual shimmer. */
+#th-ai-progress{border-color:#dbe5ef!important;box-shadow:var(--tx-shadow-raised)!important;}
+#th-ai-progress:not([hidden]){animation:tx-message-in .18s var(--tx-ease) both;}
+@keyframes tx-message-in{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* True first-open reveal, only on cards freshly generated in a stage. */
+@keyframes tx-card-arrive{from{opacity:.88;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:no-preference){
+ #stageContent > :is(.pane,.summary-panel,.draft-layout,.review-layout,.final-layout){
+  animation:tx-card-arrive .2s var(--tx-ease) both!important;
+ }
+}
+/* Accessible predictable behavior across devices and Safari. */
+@media(max-width:760px){
+ #th-top-flow .nav-step{border-radius:10px!important;}
+ .th-global-cloud-status{max-width:96px!important;}
+}
+@media(hover:none){
+ #th-top-flow .nav-step:hover,.th-sidebar-tools .th-sidebar-tool:hover,
+ .th-quick-toggle:hover{box-shadow:inherit;}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+ transition-duration:.01ms!important;scroll-behavior:auto!important;}
+}
