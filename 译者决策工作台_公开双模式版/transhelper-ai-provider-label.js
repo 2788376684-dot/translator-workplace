@@ -17,7 +17,7 @@ function positionDefaultAI(){
  // Preserve the original element and its content; never duplicate the status.
  let slot=D.getElementById('th-default-ai-slot');
  const candidates=[...main.querySelectorAll('span,small,label,button')];
- const badge=candidates.find(el=>/^默认\\s*AI$/i.test((el.textContent||'').trim()) && el.id!=='th-default-ai-slot');
+ const badge=candidates.find(el=>/^默认\s*AI$/i.test((el.textContent||'').trim()) && el.id!=='th-default-ai-slot');
  if(!badge)return;
  if(!slot){
   slot=D.createElement('div');
