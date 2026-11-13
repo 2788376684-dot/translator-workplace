@@ -14,7 +14,7 @@ const trigger=D.createElement('button');trigger.id='thQuickToggle';trigger.type=
 trigger.className='th-quick-toggle';trigger.setAttribute('aria-controls','thQuickMenu');
 trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-label','展开快捷操作');
 trigger.title='快捷操作';
-trigger.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+trigger.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="th-quick-toggle-label">快捷操作</span>';
 const message=D.createElement('div');message.className='th-quick-message';message.id='thQuickMessage';
 message.setAttribute('role','status');message.hidden=true;
 let messageHandle=0;
