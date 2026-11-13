@@ -25,7 +25,7 @@ function sync(){
  const title=D.getElementById('stageTitle');
  const step=D.querySelector('#th-top-flow .nav-step.active, #th-top-flow .nav-step[aria-current="step"]');
  const name=norm(caption?.textContent)||'当前项目';
- const stage=norm(title?.textContent)||norm(step?.textContent).replace(/^\\d+\s*/,'');
+ const stage=norm(title?.textContent)||norm(step?.textContent).replace(/^\d+\s*/,'');
  if(name!==project.textContent)project.textContent=name;
  if(stage!==phase.textContent)phase.textContent=stage;
  // Only hide the original labels after the rail has been populated.
@@ -34,6 +34,15 @@ function sync(){
  }
  const ai=D.getElementById('th-default-ai-slot');
  if(ai&&ai.parentElement!==context)context.append(ai);
+ const main=D.querySelector('.main');
+ if(main){
+  const progress=Array.from(main.querySelectorAll('span,small,div')).find(el=>
+   el.children.length===0 && /^\d+\s*\/\s*\d+\s*段完成$/.test(norm(el.textContent)));
+  if(progress&&progress.parentElement!==context){
+   progress.classList.add('th-sidebar-progress');
+   context.append(progress);
+  }
+ }
 }
 function schedule(){
  if(scheduled)return;
