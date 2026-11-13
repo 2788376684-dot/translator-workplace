@@ -11,24 +11,3 @@ body.th-native-header-compact .topbar > #th-top-flow{margin-bottom:0!important;}
  border-radius:9px;background:#fff;align-self:flex-start;white-space:normal;}
 #th-sidebar-tools #quickOCR[hidden]{display:none!important;}
 #th-sidebar-tools #quickOCR:not([hidden]){display:flex!important;}
-
-/* Native DOM: header.topbar contains .crumb and .top-right, both redundant
-   once workflow has been promoted. Remove their layout boxes entirely. */
-body.th-navigation-swapped.th-sidebar-context-integrated header.topbar > .crumb,
-body.th-navigation-swapped.th-sidebar-context-integrated header.topbar > .top-right{
- display:none!important;height:0!important;min-height:0!important;
- margin:0!important;padding:0!important;border:0!important;
-}
-body.th-navigation-swapped.th-sidebar-context-integrated header.topbar{
- padding-top:6px!important;padding-bottom:6px!important;
- row-gap:0!important;min-height:0!important;
-}
-body.th-navigation-swapped.th-sidebar-context-integrated header.topbar > #th-top-flow{
- padding-bottom:0!important;border-bottom:0!important;margin:0!important;
-}
-#th-sidebar-ai-status #modeTop{
- display:inline-flex!important;align-items:center;justify-content:center;
- max-width:100%!important;min-height:26px!important;
- position:static!important;margin:0!important;
-}
-#th-default-ai-slot[hidden]{display:none!important}
