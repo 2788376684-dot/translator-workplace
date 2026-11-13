@@ -122,6 +122,19 @@ function show(){
    progress.onerror=()=>console.warn('AI progress display unavailable; original AI actions remain operational.');
    d.head.appendChild(progress);
   }
+  if(!d.getElementById('th-draft-layout-style')){
+   const sheet=d.createElement('link');
+   sheet.id='th-draft-layout-style';sheet.rel='stylesheet';
+   sheet.href='/transhelper-draft-layout.css?v=1';
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-draft-layout-loader')){
+   const draftLayout=d.createElement('script');
+   draftLayout.id='th-draft-layout-loader';
+   draftLayout.src='/transhelper-draft-layout.js?v=1';
+   draftLayout.onerror=()=>console.warn('Draft prompt layout unavailable; native editor remains operational.');
+   d.head.appendChild(draftLayout);
+  }
   if(!d.getElementById('transhelper-quick-actions-style')){
    const sheet=d.createElement('link');
    sheet.id='transhelper-quick-actions-style';
