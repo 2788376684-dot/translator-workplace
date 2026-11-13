@@ -57,7 +57,10 @@ function mount(){
    }
    toolsBox.append(tool);
   }
-  for(const button of buttons)flowBox.append(button);
+  buttons.forEach((button,index)=>{
+   if(index){const connector=D.createElement('span');connector.className='th-flow-connector';connector.textContent='→';connector.setAttribute('aria-hidden','true');flowBox.append(connector);}
+   flowBox.append(button);
+  });
   // Place workflow on its own row; original context and cloud controls stay below.
   top.prepend(flowBox);
   const sectionLabel=[...sidebar.querySelectorAll('.workflow-label')].find(x=>norm(x.textContent)==='工作流程');
