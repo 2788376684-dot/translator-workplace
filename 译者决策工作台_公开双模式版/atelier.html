@@ -12,17 +12,35 @@ html,body{height:100%;margin:0;background:#f5f5f7}
 #account-entry{position:fixed;right:18px;top:68px;z-index:4;padding:7px 12px;border:1px solid #d6dfe7;border-radius:999px;background:#fffefef2;box-shadow:0 2px 9px #0000000b;color:#3e5770;text-decoration:none;font:12px -apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}
 #account-entry:focus-visible{outline:2px solid #2d70a8;outline-offset:2px}
 body.th-header-integrated #account-entry,body.th-header-integrated #tw-cloud-status{display:none!important}
+#th-account-panel[hidden]{display:none!important}
+#th-account-panel{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(20,34,54,.36)}
+#th-account-dialog{position:relative;width:min(820px,100%);height:min(760px,calc(100vh - 36px));background:#f5f6f8;border-radius:14px;box-shadow:0 20px 70px rgba(18,32,50,.25);overflow:hidden}
+#th-account-frame{display:block;width:100%;height:100%;border:0}
+#th-account-close{position:absolute;right:12px;top:10px;z-index:1;display:grid;place-items:center;width:32px;height:32px;border:1px solid #d5dee9;background:#fff;border-radius:8px;color:#405770;cursor:pointer;font-size:20px;line-height:1}
+#th-account-close:focus-visible{outline:2px solid #2868a6;outline-offset:2px}
+@media(max-width:650px){#th-account-panel{padding:0}#th-account-dialog{width:100%;height:100%;border-radius:0}}
 @media(max-width:650px){#account-entry{right:10px;top:57px;padding:6px 9px;font-size:11px}}
 #status p{margin:0 0 14px}
 #status a{color:#1266d6}
 </style>
 </head>
 <body>
-<a id="account-entry" href="/account.html" aria-label="登录或管理账户与云端数据">账户 · 云端</a>
+<a id="account-entry" href="/account.html" aria-label="打开账户与云端">账户与云端</a>
+<div id="th-account-panel" hidden><div id="th-account-dialog" role="dialog" aria-modal="true" aria-label="账户与云端"><button type="button" id="th-account-close" aria-label="关闭账户与云端">×</button><iframe id="th-account-frame" title="账户与云端"></iframe></div></div>
 <div id="status" role="status"><div><p id="message">正在打开 Transhelper…</p><p><a href="/atelier-core.html">直接进入工作台</a></p></div></div>
 <iframe id="app" title="Transhelper · Workspace" allow="clipboard-read; clipboard-write"></iframe>
 <script>
 (function(){
+const panel=document.getElementById("th-account-panel");
+const accountFrame=document.getElementById("th-account-frame");
+const accountClose=document.getElementById("th-account-close");
+let priorFocus=null;
+window.openAccountPanel=function(){priorFocus=document.activeElement;if(!accountFrame.getAttribute("src"))accountFrame.src="/account.html";panel.hidden=false;accountClose.focus();};
+window.closeAccountPanel=function(){panel.hidden=true;if(priorFocus&&typeof priorFocus.focus==="function")priorFocus.focus();};
+accountClose.addEventListener("click",window.closeAccountPanel);
+panel.addEventListener("click",e=>{if(e.target===panel)window.closeAccountPanel();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden)window.closeAccountPanel();});
+document.getElementById("account-entry").addEventListener("click",e=>{e.preventDefault();window.openAccountPanel();});
 'use strict';
 const app=document.getElementById('app');
 const status=document.getElementById('status');
