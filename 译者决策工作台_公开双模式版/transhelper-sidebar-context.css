@@ -11,3 +11,39 @@ body.th-native-header-compact .topbar > #th-top-flow{margin-bottom:0!important;}
  border-radius:9px;background:#fff;align-self:flex-start;white-space:normal;}
 #th-sidebar-tools #quickOCR[hidden]{display:none!important;}
 #th-sidebar-tools #quickOCR:not([hidden]){display:flex!important;}
+
+/* Native AI mode follows the project selector, before the Settings section. */
+.sidebar #th-ai-state-heading{
+ display:block;
+ box-sizing:border-box;
+ width:100%;
+ margin-top:17px;
+ margin-bottom:8px;
+}
+.sidebar #th-ai-state-row{
+ box-sizing:border-box;
+ width:100%;
+ min-width:0;
+ display:block;
+ margin:0 0 17px;
+ padding:0;
+}
+.sidebar #th-ai-state-row #modeTop.th-sidebar-mode{
+ display:flex!important;
+ align-items:center;
+ justify-content:flex-start;
+ width:100%!important;
+ max-width:100%!important;
+ min-width:0;
+ min-height:38px;
+ height:auto;
+ margin:0!important;
+ padding:8px 11px;
+ border-radius:10px;
+ box-sizing:border-box;
+ white-space:normal;
+ text-align:left;
+ font-size:12px;
+ font-weight:620;
+ line-height:1.45;
+}
