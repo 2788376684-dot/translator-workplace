@@ -215,6 +215,19 @@ function show(){
    layout.onerror=()=>console.warn('Optional header layout unavailable; original controls remain available.');
    d.head.appendChild(layout);
   }
+  if(!d.getElementById('th-sidebar-context-style')){
+   const sheet=d.createElement('link');sheet.rel='stylesheet';
+   sheet.id='th-sidebar-context-style';
+   sheet.href='/transhelper-sidebar-context.css?v=1';
+   d.head.appendChild(sheet);
+  }
+  if(!d.getElementById('th-sidebar-context-loader')){
+   const script=d.createElement('script');
+   script.id='th-sidebar-context-loader';
+   script.src='/transhelper-sidebar-context.js?v=1';
+   script.onerror=()=>console.warn('Sidebar context enhancement unavailable.');
+   d.head.appendChild(script);
+  }
   if(!d.getElementById('tw-week8-safety-loader')){
    const enhancement=d.createElement('script');
    enhancement.id='tw-week8-safety-loader';
