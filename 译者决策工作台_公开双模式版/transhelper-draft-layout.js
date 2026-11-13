@@ -18,8 +18,21 @@ function nearestPrompt(textarea){
  return /Prompt/i.test(top) && /恢复默认/.test(top) && /生成设置/.test(top) &&
   (/Prompt/i.test(context) || pane.querySelector('textarea')===textarea);
 }
+function removeRedundantSourceHint(){
+ // Remove only the standalone helper sentence above the source editor.
+ const matches=Array.from(stage.querySelectorAll('p,small,span,div'))
+  .filter(el=>{
+   const value=(el.textContent||'').replace(/\s+/g,' ').trim();
+   return value.startsWith('粘贴全文或直接输入') &&
+    value.includes('段落之间留一个空行') &&
+    value.length<220 && !el.querySelector('textarea,input,button,select');
+  }).sort((a,b)=>a.textContent.length-b.textContent.length);
+ const hint=matches[0];
+ if(hint)hint.remove();
+}
 function apply(){
  queued=false;
+ removeRedundantSourceHint();
  const active=Array.from(stage.querySelectorAll('textarea')).filter(nearestPrompt);
  for(const textarea of active){
   textarea.classList.add('th-generation-prompt');
