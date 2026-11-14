@@ -8,11 +8,11 @@ const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 test('both entrypoints load the same isolated visual layer',()=>{
  const index=read('index.html'),atelier=read('atelier.html');
  for(const page of [index,atelier]){
-  assert.match(page,/transhelper-experience\.css\?v=2/);
-  assert.match(page,/transhelper-shell-experience\.css\?v=2/);
+  assert.match(page,/transhelper-experience\.css\?v=3/);
+  assert.match(page,/transhelper-shell-experience\.css\?v=3/);
   assert.match(page,/app\.src='\/atelier-core\.html'/);
  }
- assert.match(read('account.html'),/transhelper-account-experience\.css\?v=2/);
+ assert.match(read('account.html'),/transhelper-account-experience\.css\?v=3/);
 });
 test('visual refinements respect accessibility and retain interaction geometry',()=>{
  const work=read('transhelper-experience.css');
