@@ -212,7 +212,7 @@ function show(){
   if(!d.getElementById('th-header-layout-loader')){
    const layout=d.createElement('script');
    layout.id='th-header-layout-loader';
-   layout.src='/transhelper-header-layout.js?v=2';
+   layout.src='/transhelper-header-layout.js?v=3';
    layout.onerror=()=>console.warn('Optional header layout unavailable; original controls remain available.');
    d.head.appendChild(layout);
   }

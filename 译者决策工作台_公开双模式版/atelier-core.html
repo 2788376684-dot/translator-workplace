@@ -19,6 +19,9 @@
 .stage-caption{display:none}.stagebar{min-height:47px;margin-bottom:15px}.stage-title h1{font-size:21px}.stage-title p{font-size:11px}.main{padding-top:20px}
 
 .source-ref{border-bottom:1px solid var(--stroke);padding:0 0 12px;margin-bottom:13px;font-size:12px;line-height:1.8;color:#4e5b69}.source-ref strong{display:block;font-size:11px;color:#7b8794;margin-bottom:5px}.source-ref div{font-family:"Songti SC","SimSun",Georgia,serif;max-height:136px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+
+.app.video-source .segments{display:none!important}
+.app.video-source #videoWorkspace{grid-column:1/-1;min-width:0}
 </style><style>
 /* Compact, content-first workspace */
 .editor-text,.stage-content:has(#sourceEditor) #sourceEditor,.stage-content:has(#draftEditor) .draft-layout textarea.editor-text,.review-layout .columns .editor-text,.final-layout .editor-text{min-height:88px!important;height:auto!important;max-height:390px!important;resize:vertical!important;line-height:1.65;padding:11px 14px}
@@ -121,7 +124,7 @@ function persist(){clearTimeout(saveTimer);$('saveIndicator').innerHTML='<i clas
 function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,3800);}
 function status(s){return s.final.trim()?'终稿':s.revision.trim()?'二稿':s.draft.trim()?'初稿':s.source.trim()?'原文':'空白';}
 const steps={source:['SOURCE','原文','输入 / 导入原文'],draft:['FIRST DRAFT','初稿','生成或粘贴初稿，确认后锁定'],revision:['AI REVISION','二稿','查看 AI 修改差异并确认二稿'],final:['FINAL TEXT','终稿','人工修订 · AI 追问 · 导出']};
-function draw(){normalizeState();$('addSegment').hidden=!!proj().localization;$('removeSegment').hidden=!!proj().localization;let p=proj(),s=seg();document.querySelector('.app').classList.toggle('parameter-view',p.kind==='parameter');$('projectSelect').innerHTML=state.projects.map(x=>`<option value="${E(x.id)}" ${x.id===p.id?'selected':''}>${E(x.title)}</option>`).join('');$('crumbProject').textContent=p.title;$('crumbStep').textContent=steps[state.step][1];$('stageCaption').textContent=steps[state.step][0];$('stageSub').textContent=steps[state.step][2];$('modeTop').textContent={local:'离线模式',default:'默认 AI',personal:'自主 AI'}[p.mode]||'● 本地';$('overallProgress').textContent=p.kind==='parameter'?`${p.segments.filter(t=>t.final.trim()).length} / 1 张表完成`:`${p.segments.filter(t=>t.final.trim()).length} / ${p.segments.length} 段完成`;
+function draw(){hideVideoWorkspace();normalizeState();document.querySelector('.app').classList.toggle('video-source',!!proj().videoMode&&state.step==='source'&&proj().kind!=='parameter'&&!proj().localization);$('addSegment').hidden=!!proj().localization;$('removeSegment').hidden=!!proj().localization;let p=proj(),s=seg();document.querySelector('.app').classList.toggle('parameter-view',p.kind==='parameter');$('projectSelect').innerHTML=state.projects.map(x=>`<option value="${E(x.id)}" ${x.id===p.id?'selected':''}>${E(x.title)}</option>`).join('');$('crumbProject').textContent=p.title;$('crumbStep').textContent=steps[state.step][1];$('stageCaption').textContent=steps[state.step][0];$('stageSub').textContent=steps[state.step][2];$('modeTop').textContent={local:'离线模式',default:'默认 AI',personal:'自主 AI'}[p.mode]||'● 本地';$('overallProgress').textContent=p.kind==='parameter'?`${p.segments.filter(t=>t.final.trim()).length} / 1 张表完成`:`${p.segments.filter(t=>t.final.trim()).length} / ${p.segments.length} 段完成`;
  document.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('active',b.dataset.step===state.step));for(const key of ['source','draft','revision','final']){let num={source:'source',draft:'draft',revision:'revision',final:'final'}[key];$('state-'+key).textContent= key==='source'?p.segments.some(x=>x.source.trim())?'✓':'·': key==='draft'?p.segments.some(x=>x.draft.trim())?'✓':'·':key==='revision'?p.segments.some(x=>x.revision.trim())?'✓':'·':p.segments.some(x=>x.final.trim())?'✓':'·';$('state-'+key).classList.toggle('done',$('state-'+key).textContent==='✓');}
  $('segmentCount').textContent=p.kind==='parameter'?'1 张参数表':p.segments.length+' 段';$('segmentList').innerHTML=p.segments.map((x,i)=>`<button class="segment-item ${x.id===s.id?'active':''}" data-sid="${E(x.id)}"><strong><span>段落 ${String(i+1).padStart(2,'0')}</span><span>${E(status(x))}</span></strong><small>${E(x.source.slice(0,80)||'输入原文…')}</small></button>`).join('');$('removeSegment').disabled=p.segments.length===1;
  if(p.localization&&window.TWLocalization){window.TWLocalization({p,s,step:state.step,$,E,newSeg,draw,persist,toast,api,withBusy,download,saveJSON,go,time,isCurrent:()=>proj()===p&&seg()===s});return;}if(state.step==='source')renderSource();else if(state.step==='draft')renderDraft();else if(state.step==='revision')renderRevision();else renderFinal();installStageAI();fitTextareas();}
@@ -154,8 +157,10 @@ function applyDocumentSource(content,quiet=false){
 function renderSource(){
  if(proj().kind==='parameter')return renderParamSource();
  const p=proj();const val=sourceBuffers[p.id]??documentText(p);
- action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn primary" id="toDraft">下一步：初稿 →</button>');
+ action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn" id="importVideo">导入视频</button><button class="btn primary" id="toDraft">下一步：初稿 →</button>');
  $('stageSub').textContent='在同一处输入或导入全文；段落之间留空行，保存后自动分段';
+ $('importVideo').onclick=selectVideoFile;
+ if(p.videoMode){renderVideoWorkspace(p);return;}
  $('stageContent').innerHTML=panel('原文 · 全文输入',`<div class="pane-content"><p class="panel-note" style="margin:0 0 9px">粘贴全文或直接输入。段落之间留一个空行；保存后自动更新左侧段落列表。点击左侧段落，再进入初稿即可逐段翻译。</p><textarea class="editor-text source-cn" id="sourceEditor" spellcheck="false" style="width:100%;min-height:240px!important;max-height:70vh!important;resize:vertical" placeholder="在此输入或粘贴完整原文，段落之间留一个空行">${E(val)}</textarea><div class="more-tools" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary" id="applySource">保存原文并识别段落</button><span id="sourceDocStatus" class="muted">${p.segments.length} 段 · 保存后同步左侧列表</span></div></div>`)+ '<div class="doc-footer"><span class="muted">已有译稿的段落发生原文修改时会二次确认。内容没有变化的段落保留所有翻译版本。</span></div>';
  const editor=$('sourceEditor'),msg=$('sourceDocStatus');
  editor.addEventListener('input',()=>{
@@ -171,6 +176,53 @@ function renderSource(){
  $('sourceOCR').onclick=()=>$('quickOCR').click();
  $('toDraft').onclick=()=>{if(!applyDocumentSource(editor.value))return;if(!seg().source.trim())return toast('请先输入原文');go('draft');};
 }
+
+// Video is a project-bound source tool, kept mounted while the workspace redraws.
+const videoEditors=new Map();
+function hideVideoWorkspace(){
+ const area=$('videoWorkspace');if(area)area.hidden=true;
+ for(const entry of videoEditors.values())if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_PAUSE'},location.origin);
+}
+function renderVideoWorkspace(p){
+ $('stageSub').textContent='导入视频，在当前项目内编辑字幕、调整时间并导出 SRT / VTT';
+ $('stageContent').innerHTML='<p class="panel-note">字幕工程随当前项目自动保存；重新打开工作台后，请选择原视频恢复播放。</p>';
+ $('toDraft').hidden=true;
+ const back=document.createElement('button');back.className='btn';back.textContent='返回文本原文';back.onclick=()=>{p.videoMode=false;persist();draw();};$('stageActions').append(back);
+ $('importText').onclick=()=>{p.videoMode=false;draw();chooseFile();};
+ $('sourceOCR').onclick=()=>$('quickOCR').click();
+ let area=$('videoWorkspace');if(!area){area=document.createElement('section');area.id='videoWorkspace';$('stageContent').after(area);}
+ area.hidden=false;
+ for(const entry of videoEditors.values())entry.frame.hidden=true;
+ let entry=videoEditors.get(p.id);
+ if(!entry){
+  const frame=document.createElement('iframe');frame.title='视频导入与字幕编辑';frame.style.cssText='width:100%;height:1120px;min-height:75vh;border:0';
+  entry={frame,ready:false,pending:null};videoEditors.set(p.id,entry);frame.src='/subtitles.html?embedded=1';area.append(frame);
+ }
+ entry.frame.hidden=false;
+ return entry;
+}
+function selectVideoFile(){
+ const input=document.createElement('input');input.type='file';input.accept='video/*,audio/*,.mp4,.webm,.mov,.m4v,.mp3,.wav,.m4a,.ogg';
+ const project=proj();
+ input.onchange=()=>{const file=input.files?.[0];if(!file||proj()!==project)return;
+  if(file.size>150*1024*1024)return toast('请选择150MB以内的音视频文件');
+  project.videoMode=true;draw();persist();const entry=videoEditors.get(project.id);
+  if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_FILE',file},location.origin);else entry.pending=file;
+ };input.click();
+}
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin)return;
+ const found=[...videoEditors].find(([,entry])=>entry.frame.contentWindow===event.source);if(!found)return;
+ const [key,entry]=found,project=state.projects.find(p=>p.id===key);if(!project)return;
+ if(event.data?.type==='TH_VIDEO_READY'){
+  entry.ready=true;event.source.postMessage({type:'TH_VIDEO_INIT',snapshot:project.subtitle||null,file:entry.pending},location.origin);entry.pending=null;
+ }else if(event.data?.type==='TH_VIDEO_SAVE'){
+  project.subtitle=event.data.snapshot;persist();
+ }else if(event.data?.type==='TH_VIDEO_HEIGHT'&&Number.isFinite(event.data.height)){
+  entry.frame.style.height=Math.max(400,Math.min(12000,event.data.height+12))+'px';
+ }else if(event.data?.type==='TH_VIDEO_ERROR')toast('视频编辑：'+event.data.message);
+});
+
 function splitSource(content){return applyDocumentSource(content);}
 function baseContext(s){let p=proj();return `源语言：${p.sourceLang}。目标语言：${p.targetLang}。文体：${p.tone||'根据原文判断'}。项目要求：${p.instructions||'准确且自然'}。\n术语：${p.terms.map(t=>t.source+' → '+t.targets.join(' / ')).join('；')||'未指定'}。\n原文：\n${s.source}`;}
 const defaultDraftPrompt='请根据原文、指定术语和项目要求完成翻译。准确传递信息，保留文体与语气，直接给出完整译文，不附解释。';

@@ -28,15 +28,7 @@ state.className='th-global-cloud-status';
 state.setAttribute('role','status');
 state.setAttribute('aria-live','polite');
 state.hidden=true;
-const subtitles=doc.createElement('a');
-subtitles.className='th-global-cloud-link';
-subtitles.href='/subtitles.html';
-subtitles.target='_blank';
-subtitles.rel='noopener';
-subtitles.textContent='字幕编辑器';
-subtitles.setAttribute('aria-label','在新标签页打开字幕编辑器');
 group.append(link,state);
-group.prepend(subtitles);
 function sync(){
  const source=parentDoc.getElementById('tw-cloud-status');
  const text=source?.textContent?.trim()||'';

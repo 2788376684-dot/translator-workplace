@@ -242,9 +242,9 @@ async function probeFile(file){
   try{const duration=await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('媒体读取超时。')),12000);probe.onloadedmetadata=()=>{clearTimeout(t);resolve(probe.duration)};probe.onerror=()=>{clearTimeout(t);reject(Error('浏览器无法解码该文件。'))};probe.src=url;probe.load()});if(!Number.isFinite(duration)||duration<=0||duration>86400)fail('媒体时长无效。');const buf=await file.arrayBuffer(),hash=crypto.subtle?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buf))).map(x=>x.toString(16).padStart(2,'0')).join(''):null;return {url,buf,media:{name:file.name,size:file.size,type,duration,...(hash?{sha256:hash}:{})}}}catch(e){URL.revokeObjectURL(url);throw e}finally{probe.removeAttribute('src');probe.load()}
 }
 async function extractPeaks(buffer,duration){if(duration>600||buffer.byteLength>35000000)return [];try{const ac=new OfflineAudioContext(1,1,44100),audio=await ac.decodeAudioData(buffer),ch=audio.getChannelData(0),stride=Math.max(1,Math.ceil(ch.length/600)),peaks=[];for(let i=0;i<ch.length;i+=stride){let high=0;for(let j=i;j<Math.min(i+stride,ch.length);j+=3)high=Math.max(high,Math.abs(ch[j]));peaks.push(Math.min(1,high))}return peaks}catch{return []}}
-async function openMedia(file){const intent=++pendingFile,old=clip(),pending=!old.base&&!mediaURL(old);if(pending&&(file.name!==old.media.name||file.size!==old.media.size))fail('请选择工程需用的原文件 '+old.media.name+'。');if(!pending&&state.clips.length>=20)fail('工程最多包含20个草稿。');const result=await probeFile(file);if(intent!==pendingFile||clip()!==old){URL.revokeObjectURL(result.url);return}
-  if(pending){if(Math.abs(result.media.duration-old.media.duration)>.15||(old.media.sha256&&old.media.sha256!==result.media.sha256)){URL.revokeObjectURL(result.url);fail('媒体内容与工程记录不匹配。')}mediaObjects.set(fileKey(old.media),{url:result.url});await loadMedia();renderSource();notify('已连接原文件，字幕与切点已恢复。');return}
-  const cue={id:'s1',start:0,end:Math.min(2,result.media.duration),source:'',target:''},c={id:id('media'),base:null,title:file.name,media:result.media,cues:[cue],initial:[copy(cue)],selected:0,position:0,applied:null,asr:null,peaks:[],source:'自选媒体 '+file.name};if(mediaObjects.has(fileKey(c.media)))URL.revokeObjectURL(result.url);else mediaObjects.set(fileKey(c.media),{url:result.url});state.clips.push(c);await switchClip(c.id);notify('新媒体已打开。可直接填写首条字幕，或导入 SRT、带时转写。');c.peaks=await extractPeaks(result.buf,c.media.duration);if(clip()===c)drawWave();
+async function openMedia(file,forceNew=false){const intent=++pendingFile,old=clip(),pending=!forceNew&&!old.id.startsWith('empty-')&&!old.base&&!mediaURL(old);if(pending&&(file.name!==old.media.name||file.size!==old.media.size))fail('请选择工程需用的原文件 '+old.media.name+'。');if(!pending&&state.clips.length>=20)fail('工程最多包含20个草稿。');const result=await probeFile(file);if(intent!==pendingFile||clip()!==old){URL.revokeObjectURL(result.url);return}
+  if(pending||(old.media.sha256&&old.media.sha256===result.media.sha256)){if(Math.abs(result.media.duration-old.media.duration)>.15||(old.media.sha256&&old.media.sha256!==result.media.sha256)){URL.revokeObjectURL(result.url);fail('媒体内容与工程记录不匹配。')}const previous=mediaObjects.get(fileKey(old.media));if(previous)URL.revokeObjectURL(previous.url);mediaObjects.set(fileKey(old.media),{url:result.url});await loadMedia();renderSource();notify('已连接原文件，字幕与切点已恢复。');return}
+  const cue={id:'s1',start:0,end:Math.min(2,result.media.duration),source:'',target:''},c={id:id('media'),base:null,title:file.name,media:result.media,cues:[cue],initial:[copy(cue)],selected:0,position:0,applied:null,asr:null,peaks:[],source:'自选媒体 '+file.name};if(mediaObjects.has(fileKey(c.media)))URL.revokeObjectURL(result.url);else mediaObjects.set(fileKey(c.media),{url:result.url});state.clips.push(c);await switchClip(c.id);if(old.id.startsWith('empty-'))state.clips=state.clips.filter(item=>item!==old);notify('新媒体已打开。可直接填写首条字幕，或导入 SRT、带时转写。');c.peaks=await extractPeaks(result.buf,c.media.duration);if(clip()===c)drawWave();
 }
 function connectFile(id,fn,report){byId(id).onchange=guard(async e=>{const f=e.target.files[0];e.target.value='';if(f)await fn(f)},report)}
 byId('clip-select').onchange=guard(e=>switchClip(e.target.value));connectFile('media-file',openMedia);connectFile('project-file',openProject);byId('save-project').onclick=guard(saveProject);byId('download-media').onclick=()=>{const c=clip(),url=mediaURL(c);if(!url)return;const a=document.createElement('a');a.href=url;a.download=c.media.name;a.click();notify('媒体文件已下载。将 SRT 和媒体放在同一文件夹，可在支持字幕的播放器中载入。')};
@@ -403,11 +403,33 @@ byId('export-vtt').onclick = guard(() => {
   notify('WebVTT 已导出。');
 });
 
-if (location.protocol === 'http:' || location.protocol === 'https:') {
+if (!new URLSearchParams(location.search).has('embedded') && (location.protocol === 'http:' || location.protocol === 'https:')) {
   byId('project-brand').hidden = true;
   byId('project-home').href = '/atelier.html';
   byId('project-home').hidden = false;
 }
 
-renderAll();loadMedia().catch(e=>notify(e.message,true));
+
+if(new URLSearchParams(location.search).has('embedded') && window.parent!==window){
+ document.body.classList.add('embedded');
+ const style=document.createElement('style');style.textContent='.embedded{background:transparent;font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;--teal:#174f70}.embedded button,.embedded .file{border-radius:8px;font-size:13px}.embedded .panelhead h2{font-size:16px}.embedded .cueform #cue-target{font-size:16px}.embedded #media-label{display:none}.embedded .top{background:transparent;color:var(--ink);padding:8px 0}.embedded .identity{display:none}.embedded .strip{padding:10px 0;background:transparent}.embedded .main{padding:10px 0}.embedded .footer{display:none}';document.head.append(style);
+ let initialized=false,lastSnapshot='';
+ function publish(){if(!initialized)return;try{if(available())clip().position=player.currentTime;const snapshot=cleanProject(state),serialized=JSON.stringify(snapshot);if(serialized===lastSnapshot)return;lastSnapshot=serialized;window.parent.postMessage({type:'TH_VIDEO_SAVE',snapshot},location.origin);}catch(e){window.parent.postMessage({type:'TH_VIDEO_ERROR',message:e.message},location.origin);}}
+ window.addEventListener('message',async event=>{
+  if(event.source!==window.parent||event.origin!==location.origin)return;
+  try{
+   if(event.data?.type==='TH_VIDEO_INIT'){
+    if(event.data.snapshot)state=cleanProject(event.data.snapshot);
+    else{const c=makeBuiltin('B');c.id=id('empty');c.base=null;c.title='待导入视频';c.media={name:'原视频',size:1,type:'video/mp4',duration:16};c.cues=[{id:'s1',start:0,end:2,source:'',target:''}];c.initial=copy(c.cues);c.applied=null;c.asr=null;c.position=0;c.selected=0;c.source='导入视频后，可填写字幕或导入 SRT / 转写。';state.clips=[c];state.active=c.id;}
+    renderAll();await loadMedia();initialized=true;
+    if(event.data.file)await openMedia(event.data.file,clip().media.name!==event.data.file.name||clip().media.size!==event.data.file.size);publish();
+   }else if(event.data?.type==='TH_VIDEO_FILE'&&initialized){await openMedia(event.data.file,clip().media.name!==event.data.file.name||clip().media.size!==event.data.file.size);publish();}
+   else if(event.data?.type==='TH_VIDEO_PAUSE'){player.pause();publish();}
+  }catch(e){notify(e.message,true);window.parent.postMessage({type:'TH_VIDEO_ERROR',message:e.message},location.origin);}
+ });
+ document.addEventListener('input',publish);document.addEventListener('change',()=>queueMicrotask(publish));document.addEventListener('click',()=>queueMicrotask(publish));player.addEventListener('pause',publish);window.setInterval(publish,1000);
+ new ResizeObserver(()=>window.parent.postMessage({type:'TH_VIDEO_HEIGHT',height:document.body.scrollHeight},location.origin)).observe(document.body);
+ window.parent.postMessage({type:'TH_VIDEO_READY'},location.origin);
+}else{renderAll();loadMedia().catch(e=>notify(e.message,true));}
+
 </script></body></html>
