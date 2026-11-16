@@ -7,7 +7,7 @@ const bridge=core.slice(core.indexOf("window.addEventListener('message',event=>{
 function harness(){
  const messages=[],source={postMessage:(...args)=>messages.push(args)},project={id:'p1'},entry={frame:{contentWindow:source,style:{}},ready:false,pending:{name:'video.mp4'}};
  let handler,saves=0;
- const context={window:{addEventListener:(type,fn)=>{handler=fn}},location:{origin:'https://workspace.test'},videoEditors:new Map([['p1',entry]]),state:{projects:[project]},persist:()=>saves++,toast:()=>{}};
+ const context={window:{addEventListener:(type,fn)=>{handler=fn}},location:{origin:'https://workspace.test'},videoEditors:new Map([['p1',entry]]),state:{projects:[project]},persist:()=>saves++,syncVideoProgress:()=>{},toast:()=>{}};
  vm.runInNewContext(bridge,context);
  return {project,entry,source,messages,context,get saves(){return saves},send(data,origin='https://workspace.test',sender=source){handler({data,origin,source:sender})}};
 }

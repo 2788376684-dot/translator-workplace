@@ -119,15 +119,16 @@ let siteAccessCode='';let lastTextProjectId='';let state={version:4,step:'source
 const proj=()=>state.projects.find(p=>p.id===state.active)||state.projects[0],seg=()=>proj().segments.find(s=>s.id===state.seg)||proj().segments[0],ix=()=>proj().segments.findIndex(s=>s.id===seg().id);
 function migrate(){try{let old=JSON.parse(localStorage.getItem('translator-workplace-v3-autosave')||'null');if(old?.version!==3||!old.projects?.length)return null;const projects=old.projects.map(p=>({id:p.id,title:p.title,tone:p.tone||'',sourceLang:p.sourceLanguage||'中文',targetLang:p.targetLanguage||'英语',instructions:p.instructions||'',terms:p.terms||[],created:p.created||time(),segments:p.segments.map(s=>({...newSeg(s.source||''),id:s.id,draftInput:s.draft||'',draft:s.draft||'',draftMeta:s.draft?{kind:'旧版初稿',at:s.draftDate||time()}:null,final:s.target||'',finalAt:s.target?time():'',history:(s.history||[]).map(h=>({text:h.text,at:h.time,why:h.reason})),chat:s.chat||[],legacy:!!s.target}))}));return {version:4,step:'source',active:old.activeId||projects[0].id,seg:old.selectedSegId||projects[0].segments[0].id,projects,settings:old.settings||{endpoint:'',model:''}};}catch{return null;}}
 function normalizeState(){if(!state.projects?.length)state.projects=[newProj()];state.projects.forEach(p=>{p.kind=p.localization?'localization':p.kind==='parameter'?'parameter':'text';p.mode=['local','default','personal'].includes(p.mode)?p.mode:'local';p.terms=Array.isArray(p.terms)?p.terms:[];p.segments=Array.isArray(p.segments)&&p.segments.length?p.segments:[newSeg()];p.segments.forEach(s=>{s.issues||=[];s.reviewDecisions||=[];s.history||=[];s.chat||=[];s.draftInput??=s.draft||'';s.revInput??=s.revision||'';s.final??='';s.source??='';});});if(!state.projects.some(p=>p.id===state.active))state.active=state.projects[0].id;if(!proj().segments.some(s=>s.id===state.seg))state.seg=proj().segments[0].id;}
-function boot(){try{let b=JSON.parse($('bootstrap-state').textContent);if(b?.version===4)state=b;else{let a=JSON.parse(localStorage.getItem(KEY)||'null');state=a?.version===4?a:(migrate()||state);}}catch{state=migrate()||state;}normalizeState();bind();draw();}
+function migrateVideoProjects(){for(const p of [...state.projects]){if(!p.videoMode||!p.segments?.some(s=>s.source||s.draft||s.revision||s.final))continue;const video=newProj((p.subtitle?.clips?.find(c=>c.id===p.subtitle.active)?.title||p.title)+' · 字幕');video.videoMode=true;video.videoOriginProjectId=p.id;video.subtitle=p.subtitle;video.sourceLang='英语';video.targetLang='中文';video.mode=p.mode;state.projects.push(video);p.videoMode=false;delete p.subtitle;if(state.active===p.id){state.active=video.id;state.seg=video.segments[0].id;state.step='source';}}}
+function boot(){try{let b=JSON.parse($('bootstrap-state').textContent);if(b?.version===4)state=b;else{let a=JSON.parse(localStorage.getItem(KEY)||'null');state=a?.version===4?a:(migrate()||state);}}catch{state=migrate()||state;}migrateVideoProjects();normalizeState();bind();draw();persist();}
 function persist(){clearTimeout(saveTimer);$('saveIndicator').innerHTML='<i class="status-dot"></i> 正在保存';saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(state));$('saveIndicator').innerHTML='<i class="status-dot"></i> 本地已保存';}catch{$('saveIndicator').textContent='空间不足，请导出备份';}},250);}
 function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,3800);}
 function status(s){return s.final.trim()?'终稿':s.revision.trim()?'二稿':s.draft.trim()?'初稿':s.source.trim()?'原文':'空白';}
 const steps={source:['SOURCE','原文','输入 / 导入原文'],draft:['FIRST DRAFT','初稿','生成或粘贴初稿，确认后锁定'],revision:['AI REVISION','二稿','查看 AI 修改差异并确认二稿'],final:['FINAL TEXT','终稿','人工修订 · AI 追问 · 导出']};
-function draw(){hideVideoWorkspace();normalizeState();document.querySelector('.app').classList.toggle('video-source',!!proj().videoMode&&state.step==='source'&&proj().kind!=='parameter'&&!proj().localization);$('addSegment').hidden=!!proj().localization;$('removeSegment').hidden=!!proj().localization;let p=proj(),s=seg();document.querySelector('.app').classList.toggle('parameter-view',p.kind==='parameter');$('projectSelect').innerHTML=state.projects.map(x=>`<option value="${E(x.id)}" ${x.id===p.id?'selected':''}>${E(x.title)}</option>`).join('');$('crumbProject').textContent=p.title;$('crumbStep').textContent=steps[state.step][1];$('stageCaption').textContent=steps[state.step][0];$('stageSub').textContent=steps[state.step][2];$('modeTop').textContent={local:'离线模式',default:'默认 AI',personal:'自主 AI'}[p.mode]||'● 本地';$('overallProgress').textContent=p.kind==='parameter'?`${p.segments.filter(t=>t.final.trim()).length} / 1 张表完成`:`${p.segments.filter(t=>t.final.trim()).length} / ${p.segments.length} 段完成`;
- document.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('active',b.dataset.step===state.step));for(const key of ['source','draft','revision','final']){let num={source:'source',draft:'draft',revision:'revision',final:'final'}[key];$('state-'+key).textContent= key==='source'?p.segments.some(x=>x.source.trim())?'✓':'·': key==='draft'?p.segments.some(x=>x.draft.trim())?'✓':'·':key==='revision'?p.segments.some(x=>x.revision.trim())?'✓':'·':p.segments.some(x=>x.final.trim())?'✓':'·';$('state-'+key).classList.toggle('done',$('state-'+key).textContent==='✓');}
+function draw(){hideVideoWorkspace();normalizeState();document.querySelector('.app').classList.toggle('video-source',!!proj().videoMode&&proj().kind!=='parameter'&&!proj().localization);$('addSegment').hidden=!!proj().localization;$('removeSegment').hidden=!!proj().localization;let p=proj(),s=seg();document.querySelector('.app').classList.toggle('parameter-view',p.kind==='parameter');$('projectSelect').innerHTML=state.projects.map(x=>`<option value="${E(x.id)}" ${x.id===p.id?'selected':''}>${E(x.title)}</option>`).join('');$('crumbProject').textContent=p.title;$('crumbStep').textContent=steps[state.step][1];$('stageCaption').textContent=steps[state.step][0];$('stageSub').textContent=steps[state.step][2];$('modeTop').textContent={local:'离线模式',default:'默认 AI',personal:'自主 AI'}[p.mode]||'● 本地';$('overallProgress').textContent=p.videoMode?`${['source','draft','revision','final'].filter(key=>videoStepDone(p,key)).length} / 4 阶段确认`:p.kind==='parameter'?`${p.segments.filter(t=>t.final.trim()).length} / 1 张表完成`:`${p.segments.filter(t=>t.final.trim()).length} / ${p.segments.length} 段完成`;
+ document.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('active',b.dataset.step===state.step));for(const key of ['source','draft','revision','final']){let num={source:'source',draft:'draft',revision:'revision',final:'final'}[key];$('state-'+key).textContent= p.videoMode?(videoStepDone(p,key)?'✓':'·'):key==='source'?p.segments.some(x=>x.source.trim())?'✓':'·': key==='draft'?p.segments.some(x=>x.draft.trim())?'✓':'·':key==='revision'?p.segments.some(x=>x.revision.trim())?'✓':'·':p.segments.some(x=>x.final.trim())?'✓':'·';$('state-'+key).classList.toggle('done',$('state-'+key).textContent==='✓');}
  $('segmentCount').textContent=p.kind==='parameter'?'1 张参数表':p.segments.length+' 段';$('segmentList').innerHTML=p.segments.map((x,i)=>`<button class="segment-item ${x.id===s.id?'active':''}" data-sid="${E(x.id)}"><strong><span>段落 ${String(i+1).padStart(2,'0')}</span><span>${E(status(x))}</span></strong><small>${E(x.source.slice(0,80)||'输入原文…')}</small></button>`).join('');$('removeSegment').disabled=p.segments.length===1;
- if(p.localization&&window.TWLocalization){window.TWLocalization({p,s,step:state.step,$,E,newSeg,draw,persist,toast,api,withBusy,download,saveJSON,go,time,isCurrent:()=>proj()===p&&seg()===s});return;}if(state.step==='source')renderSource();else if(state.step==='draft')renderDraft();else if(state.step==='revision')renderRevision();else renderFinal();installStageAI();fitTextareas();}
+ if(p.videoMode){renderVideoStage(p);return;}if(p.localization&&window.TWLocalization){window.TWLocalization({p,s,step:state.step,$,E,newSeg,draw,persist,toast,api,withBusy,download,saveJSON,go,time,isCurrent:()=>proj()===p&&seg()===s});return;}if(state.step==='source')renderSource();else if(state.step==='draft')renderDraft();else if(state.step==='revision')renderRevision();else renderFinal();installStageAI();fitTextareas();}
 async function go(step){if(proj().kind==='parameter'&&state.step==='source'&&step!=='source'&&$('paramFrame')){const ok=await paramCapture(true);if(!ok)return;}state.step=step;$('stageAI').hidden=true;draw();persist();}
 function action(html){$('stageActions').innerHTML=html;}
 function panel(title,content,meta='',footer=''){return `<section class="pane"><header class="pane-top"><strong>${title}</strong><span class="meta">${meta}</span></header>${content}${footer?`<footer class="pane-actions">${footer}</footer>`:''}</section>`;}
@@ -183,12 +184,18 @@ function hideVideoWorkspace(){
  const area=$('videoWorkspace');if(area)area.hidden=true;
  for(const entry of videoEditors.values())if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_PAUSE'},location.origin);
 }
+function videoStepDone(p,key){const snapshot=p.subtitle,c=snapshot?.clips?.find(c=>c.id===snapshot.active);return !!c?.workflow?.confirmed?.[key];}
+function syncVideoProgress(p){if(proj()!==p)return;for(const key of ['source','draft','revision','final']){const el=$('state-'+key),done=videoStepDone(p,key);el.textContent=done?'✓':'·';el.classList.toggle('done',done);}$('overallProgress').textContent=['source','draft','revision','final'].filter(key=>videoStepDone(p,key)).length+' / 4 阶段确认';}
+function renderVideoStage(p){
+ action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn" id="importVideo">导入视频</button><button class="btn" id="toDraft" hidden></button>');
+ $('importVideo').onclick=selectVideoFile;renderVideoWorkspace(p);syncVideoProgress(p);
+}
 function renderVideoWorkspace(p){
  $('stageSub').textContent='导入视频，在当前项目内编辑字幕、调整时间并导出 SRT / VTT';
  $('stageContent').innerHTML='<p class="panel-note">字幕工程随当前项目自动保存；重新打开工作台后，请选择原视频恢复播放。</p>';
  $('toDraft').hidden=true;
- const back=document.createElement('button');back.className='btn';back.textContent='返回文本原文';back.onclick=()=>{p.videoMode=false;persist();draw();};$('stageActions').append(back);
- $('importText').onclick=()=>{p.videoMode=false;draw();chooseFile();};
+ const back=document.createElement('button');back.className='btn';back.textContent='返回文本原文';back.onclick=()=>{const origin=state.projects.find(x=>x.id===p.videoOriginProjectId);if(origin){state.active=origin.id;state.seg=origin.segments[0].id;}else{const text=newProj();state.projects.push(text);state.active=text.id;state.seg=text.segments[0].id;}state.step='source';persist();draw();};$('stageActions').append(back);
+ $('importText').onclick=()=>{back.click();chooseFile();};
  $('sourceOCR').onclick=()=>$('quickOCR').click();
  let area=$('videoWorkspace');if(!area){area=document.createElement('section');area.id='videoWorkspace';$('stageContent').after(area);}
  area.hidden=false;
@@ -198,15 +205,19 @@ function renderVideoWorkspace(p){
   const frame=document.createElement('iframe');frame.title='视频导入与字幕编辑';frame.style.cssText='width:100%;height:1120px;min-height:75vh;border:0';
   entry={frame,ready:false,pending:null};videoEditors.set(p.id,entry);frame.src='/subtitles.html?embedded=1';area.append(frame);
  }
- entry.frame.hidden=false;
+ entry.frame.hidden=false;entry.stage=state.step;
+ if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_STAGE',stage:state.step,targetLang:p.targetLang},location.origin);
  return entry;
 }
 function selectVideoFile(){
  const input=document.createElement('input');input.type='file';input.accept='video/*,audio/*,.mp4,.webm,.mov,.m4v,.mp3,.wav,.m4a,.ogg';
- const project=proj();
- input.onchange=()=>{const file=input.files?.[0];if(!file||proj()!==project)return;
+ const original=proj();
+ input.onchange=()=>{const file=input.files?.[0];if(!file||proj()!==original)return;
   if(file.size>150*1024*1024)return toast('请选择150MB以内的音视频文件');
-  project.videoMode=true;draw();persist();const entry=videoEditors.get(project.id);
+  const snapshot=original.subtitle,current=snapshot?.clips?.find(c=>c.id===snapshot.active);
+  let project=original;
+  if(!original.videoMode||current?.media?.name!==file.name||current?.media?.size!==file.size){project=newProj(file.name+' · 字幕');project.videoMode=true;project.videoOriginProjectId=original.videoOriginProjectId||original.id;project.mode=original.mode;project.sourceLang='英语';project.targetLang='中文';project.instructions=original.instructions;project.terms=JSON.parse(JSON.stringify(original.terms));state.projects.push(project);}
+  state.active=project.id;state.seg=project.segments[0].id;state.step='source';project.videoMode=true;draw();persist();const entry=videoEditors.get(project.id);
   if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_FILE',file},location.origin);else entry.pending=file;
  };input.click();
 }
@@ -215,13 +226,36 @@ window.addEventListener('message',event=>{
  const found=[...videoEditors].find(([,entry])=>entry.frame.contentWindow===event.source);if(!found)return;
  const [key,entry]=found,project=state.projects.find(p=>p.id===key);if(!project)return;
  if(event.data?.type==='TH_VIDEO_READY'){
-  entry.ready=true;event.source.postMessage({type:'TH_VIDEO_INIT',snapshot:project.subtitle||null,file:entry.pending},location.origin);entry.pending=null;
+  entry.ready=true;event.source.postMessage({type:'TH_VIDEO_INIT',snapshot:project.subtitle||null,file:entry.pending,stage:entry.stage||'source',sourceLang:project.sourceLang,targetLang:project.targetLang},location.origin);entry.pending=null;
  }else if(event.data?.type==='TH_VIDEO_SAVE'){
-  project.subtitle=event.data.snapshot;persist();
+  project.subtitle=event.data.snapshot;persist();syncVideoProgress(project);
+ }else if(event.data?.type==='TH_VIDEO_SETTINGS'&&['中文','英语','日语','法语','德语'].includes(event.data.targetLang)){
+  project.targetLang=event.data.targetLang;persist();
+ }else if(event.data?.type==='TH_VIDEO_AI'){
+  handleVideoAI(project,entry,event.data);
+ }else if(event.data?.type==='TH_VIDEO_NAVIGATE'&&['source','draft','revision','final'].includes(event.data.stage)){
+  if(proj()===project){state.step=event.data.stage;persist();draw();}
  }else if(event.data?.type==='TH_VIDEO_HEIGHT'&&Number.isFinite(event.data.height)){
   entry.frame.style.height=Math.max(400,Math.min(12000,event.data.height+12))+'px';
  }else if(event.data?.type==='TH_VIDEO_ERROR')toast('视频编辑：'+event.data.message);
 });
+
+async function handleVideoAI(project,entry,message){
+ const reply=(data)=>entry.frame.contentWindow.postMessage({type:'TH_VIDEO_AI_RESULT',requestId:message.requestId,...data},location.origin);
+ if(proj()!==project)return reply({error:'已切换项目，请在原视频项目重新生成。'});
+ if(busy)return reply({error:'已有 AI 请求正在执行，请稍后重试。'});
+ const rows=message.rows,kind=message.kind;
+ if(!['draft','revision'].includes(kind)||!Array.isArray(rows)||!rows.length||rows.length>12||rows.some(r=>typeof r.id!=='string'||typeof r.source!=='string'||r.source.length>2500||typeof r.target!=='string'||r.target.length>2500))return reply({error:'字幕内容超出单批处理范围。'});
+ busy=true;const mode=project.mode;
+ try{
+  if(mode==='local'){project.mode='default';$('modeTop').textContent='默认 AI';persist();}
+  const system='你是专业字幕译员。仅输出 JSON 数组，每项含 id 和 target，逐条保留输入 id、条数和顺序。不要合并或遗漏字幕，不添加时间戳、说明或 Markdown。将原文译为'+project.targetLang+'，表达自然简洁，保留信息。'+(kind==='revision'?'对照原文审校已有译文，纠正错译、漏译和不自然表达。':'')+' 项目要求：'+(project.instructions||'准确自然')+' 术语：'+project.terms.map(t=>t.source+' → '+t.targets.join('/')).join('；');
+  const raw=await api([{role:'system',content:system.slice(0,3000)},{role:'user',content:JSON.stringify(rows)}]);
+  let result;try{result=JSON.parse(raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,''));}catch{throw Error('AI 返回格式异常，未覆盖已有字幕，请重试。');}
+  if(!Array.isArray(result)||result.length!==rows.length||result.some((r,i)=>r.id!==rows[i].id||typeof r.target!=='string'||!r.target.trim()||r.target.length>6000))throw Error('AI 返回的字幕条数或标识不匹配，已保留原稿。');
+  if(proj()!==project)throw Error('已切换项目，本次结果未写入。');reply({rows:result});
+ }catch(e){reply({error:e.message});}finally{busy=false;}
+}
 
 function splitSource(content){return applyDocumentSource(content);}
 function baseContext(s){let p=proj();return `源语言：${p.sourceLang}。目标语言：${p.targetLang}。文体：${p.tone||'根据原文判断'}。项目要求：${p.instructions||'准确且自然'}。\n术语：${p.terms.map(t=>t.source+' → '+t.targets.join(' / ')).join('；')||'未指定'}。\n原文：\n${s.source}`;}
