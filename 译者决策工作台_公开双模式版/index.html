@@ -301,6 +301,51 @@ function prepare(doc){
  const video=chooseVideo(doc);
  if(!picker||!video)return;
  seen.add(doc);
+
+ // Replace oversized native Safari video chrome only in the embedded editor.
+ const bar=doc.createElement('div');
+ bar.id='th-compact-player-controls';
+ const css=doc.createElement('style');css.id='th-compact-player-style';
+ css.textContent=[
+ '#player-crop{position:relative!important;overflow:hidden!important;min-width:0}',
+ '#player-crop #player{display:block!important;width:100%!important;height:auto!important;max-height:380px!important;min-height:0!important;aspect-ratio:16/9!important;object-fit:contain!important}',
+ '#th-compact-player-controls{position:absolute;bottom:9px;left:12px;right:12px;z-index:12;display:flex;align-items:center;gap:10px;min-height:44px;padding:5px 11px;border-radius:12px;background:rgba(15,29,40,.78);color:#fff;box-sizing:border-box;backdrop-filter:blur(12px);font:13px/1.2 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}',
+ '#th-compact-player-controls button{color:#fff;background:transparent;border:0;border-radius:7px;font:inherit;min-height:30px;min-width:30px;padding:3px 5px;cursor:pointer;white-space:nowrap}',
+ '#th-compact-player-controls button:hover,#th-compact-player-controls button:focus-visible{background:rgba(255,255,255,.17)}',
+ '#th-compact-player-controls input[type=range]{width:auto;flex:1 1 50px;min-width:30px;max-width:100%;margin:0;accent-color:#fff;height:18px;padding:0}',
+ '#th-compact-player-controls .th-volume{flex:0 1 66px;max-width:66px}',
+ '#th-compact-player-controls .th-time{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}',
+ '@media(max-width:560px){#th-compact-player-controls{gap:5px;left:5px;right:5px;padding:4px 6px}#th-compact-player-controls .th-volume{display:none}}',
+ '.embedded .desk{min-width:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}',
+ '.embedded .desk > .panel{min-width:0;overflow:hidden}',
+ '.embedded .panelhead{min-width:0;flex-wrap:wrap}',
+ '.embedded #media-info{overflow-wrap:anywhere;font-size:13px}',
+ '.embedded .video-workflow{min-width:0}',
+ '@media(max-width:1050px){.embedded .desk{grid-template-columns:minmax(0,1fr)}}'
+ ].join('\n');
+ doc.head.appendChild(css);
+ bar.innerHTML='<button type="button" class="th-play" aria-label="播放或暂停">▶</button><span class="th-time">00:00</span><input class="th-progress" type="range" min="0" max="1000" value="0" aria-label="视频播放位置"><span class="th-time th-total">00:00</span><button type="button" class="th-mute" aria-label="静音">◖))</button><input class="th-volume" type="range" min="0" max="1" step=".05" value="1" aria-label="音量"><button type="button" class="th-fullscreen" aria-label="全屏">⛶</button>';
+ const area=doc.querySelector('#player-crop')||video.parentElement;
+ area.appendChild(bar);
+ video.controls=false;video.removeAttribute('controls');
+ const play=bar.querySelector('.th-play'),progress=bar.querySelector('.th-progress'),elapsed=bar.querySelector('.th-time'),total=bar.querySelector('.th-total'),mute=bar.querySelector('.th-mute'),volume=bar.querySelector('.th-volume'),fullscreen=bar.querySelector('.th-fullscreen');
+ const fmt=n=>{if(!Number.isFinite(n)||n<0)return '00:00';const s=Math.floor(n);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
+ const update=()=>{
+  play.textContent=video.paused?'▶':'❚❚';
+  elapsed.textContent=fmt(video.currentTime);total.textContent=fmt(video.duration);
+  if(!progress.matches(':active'))progress.value=Number.isFinite(video.duration)&&video.duration>0?Math.round(video.currentTime/video.duration*1000):0;
+  mute.textContent=video.muted||video.volume===0?'◖×':'◖))';
+  volume.value=video.muted?0:video.volume;
+ };
+ play.onclick=()=>{if(video.paused)video.play().catch(()=>{});else video.pause();};
+ progress.oninput=()=>{if(Number.isFinite(video.duration)&&video.duration>0)video.currentTime=video.duration*Number(progress.value)/1000;};
+ mute.onclick=()=>{video.muted=!video.muted;update();};
+ volume.oninput=()=>{video.volume=Number(volume.value);video.muted=video.volume===0;update();};
+ fullscreen.onclick=()=>{if(doc.fullscreenElement)doc.exitFullscreen?.();else area.requestFullscreen?.();};
+ video.addEventListener('click',()=>{if(video.paused)video.play().catch(()=>{});else video.pause();});
+ for(const type of ['timeupdate','durationchange','loadedmetadata','play','pause','volumechange','emptied'])video.addEventListener(type,update);
+ update();
+
  const status=doc.createElement('div');
  status.id='th-playback-status';
  status.style.cssText='display:none;background:#fff2e5;color:#8b3d16;padding:10px 12px;margin:8px;border-radius:9px;font:13px/1.5 -apple-system,BlinkMacSystemFont,PingFang SC,sans-serif';
