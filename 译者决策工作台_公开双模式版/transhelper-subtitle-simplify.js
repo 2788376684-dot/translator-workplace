@@ -117,7 +117,20 @@ function setup(doc){
  // The original functional controls remain in the DOM for reliable event handlers,
  // but only the minimal controls are presented to the translator.
 }
+function tidySourceChoices(){
+ const app=document.querySelector('.app');
+ if(!app||app.classList.contains('video-source')||app.classList.contains('parameter-view'))return;
+ const source=document.getElementById('sourceEditor');
+ if(!source)return;
+ const extra=document.getElementById('openSubtitleProject');
+ if(extra)extra.style.display='none';
+ const ocr=document.getElementById('sourceOCR');
+ const video=document.getElementById('importVideo');
+ if(ocr)ocr.textContent='新建图片 OCR 项目';
+ if(video)video.textContent='新建字幕项目';
+}
 function scan(){
+ tidySourceChoices();
  for(const frame of document.querySelectorAll('#videoWorkspace iframe')){
   try{if(frame.contentDocument?.readyState==='complete')setup(frame.contentDocument);}catch(e){}
  }
