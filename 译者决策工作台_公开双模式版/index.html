@@ -359,42 +359,55 @@ function prepare(doc){
   return '视频文件未成功连接播放器。请点击「打开媒体」重新选择原视频。';
  }
  let serial=0;
+ // Bind the selected local File automatically. No manual relink is required.
  picker.addEventListener('change',()=>{
   const file=picker.files?.[0];
-  if(!file||!file.type.startsWith('video/')&&!file.type.startsWith('audio/'))return;
+  if(!file||(!file.type.startsWith('video/')&&!file.type.startsWith('audio/')))return;
   lastFile=file;
   const ticket=++serial;
   warn('');
-  setTimeout(()=>{
+  const connect=()=>{
    if(ticket!==serial)return;
    const v=current();
-   if(v.readyState>=1&&Number.isFinite(v.duration)&&v.duration>0){warn('');return;}
-   // Native import failed. Recover by binding the selected File in this same document.
-   const old=urls.get(v);
-   if(old){try{doc.defaultView.URL.revokeObjectURL(old)}catch(_){}}
+   if(!v)return;
+   if(v.readyState>=2&&Number.isFinite(v.duration)&&v.duration>0){warn('');return;}
+   const existing=urls.get(v);
+   if(existing&&v.src===existing&&v.networkState!==3)return;
+   if(existing){try{doc.defaultView.URL.revokeObjectURL(existing)}catch(_){}}
    const blob=doc.defaultView.URL.createObjectURL(file);
    urls.set(v,blob);
-   v.pause();
-   v.src=blob;
-   v.preload='auto';
-   v.muted=false;v.volume=1;
-   v.load();
-   warn('已重新连接视频，正在读取媒体信息…');
-   setTimeout(()=>{
+   v.pause();v.src=blob;v.preload='auto';v.muted=false;v.volume=1;v.load();
+  };
+  // Let the editor commit its text/metadata, then attach the same File directly
+  // to the actual visible player. A later pass catches late DOM/player replacement.
+  doc.defaultView.setTimeout(connect,0);
+  doc.defaultView.setTimeout(connect,400);
+  doc.defaultView.setTimeout(()=>{
+   if(ticket!==serial)return;
+   const v=current();
+   if(v&&v.readyState>=1&&Number.isFinite(v.duration)&&v.duration>0){warn('');return;}
+   connect();
+   doc.defaultView.setTimeout(()=>{
     if(ticket!==serial)return;
-    if(v.readyState>=1&&Number.isFinite(v.duration)&&v.duration>0){warn('');return;}
-    warn(diagnose(v));
-   },4000);
-  },800);
+    const now=current();
+    if(now&&now.readyState>=1&&Number.isFinite(now.duration)&&now.duration>0)warn('');
+    else warn(diagnose(now||video));
+   },3500);
+  },1200);
  },true);
  doc.addEventListener('loadedmetadata',e=>{if(e.target.tagName==='VIDEO'&&Number.isFinite(e.target.duration)&&e.target.duration>0)warn('');},true);
  doc.addEventListener('error',e=>{if(e.target.tagName==='VIDEO')warn(diagnose(e.target));},true);
- // Provides an explicit local re-link for projects restored without their File object.
- const action=doc.createElement('button');
- action.type='button';action.textContent='重新连接原视频';
- action.style.cssText='margin:8px;padding:7px 11px;border:1px solid #94a7b5;border-radius:8px;background:white;color:#25445a;cursor:pointer';
- action.addEventListener('click',()=>picker.click());
- (video.parentElement||doc.body).appendChild(action);
+ // Keep the existing file picker for restored projects with no browser File handle.
+ // Put destructive cleanup in the subtitle editor's quick actions, not the player.
+ const reset=doc.createElement('button');
+ reset.type='button';reset.id='th-clear-subtitle-all';
+ reset.textContent='清空全部内容';
+ reset.style.cssText='padding:7px 11px;border:1px solid #d6a3a3;border-radius:8px;background:#fff;color:#a12727;cursor:pointer';
+ reset.addEventListener('click',()=>doc.defaultView.THVideoFlow?.clearAll?.());
+ const quick=[...doc.querySelectorAll('section,aside,.panel,.toolbar,.bar')].find(el=>
+   [...el.children].some(child=>/^快捷操作$/.test((child.textContent||'').trim())));
+ const target=quick||doc.getElementById('video-history')?.parentElement||doc.querySelector('.video-workflow .bar');
+ if(target)target.appendChild(reset);
 }
 function walk(frame,depth){
  if(depth>5)return;
