@@ -63,6 +63,34 @@ function show(){
     if(source)source.click();
    }
   };
+  // Prefer the embedded player's native media picker for same-origin playback.
+  // A direct File selection in that frame avoids cross-frame File transfer issues.
+  if(!d.getElementById('th-native-video-import-bridge')){
+   const bridge=d.createElement('script');
+   bridge.id='th-native-video-import-bridge';
+   bridge.textContent=`(function(){
+     document.addEventListener('click',function(event){
+       const button=event.target.closest&&event.target.closest('#importVideo');
+       if(!button)return;
+       event.preventDefault();event.stopImmediatePropagation();
+       const original=proj();
+       if(!original.videoMode){
+         const project=openNewSubtitleProject(original,'字幕项目');
+         const entry=videoEditors.get(project.id);
+         toast('字幕工作台已打开，请点击播放器顶部「打开媒体」选择视频');
+         entry?.frame.scrollIntoView({behavior:'smooth',block:'start'});
+         return;
+       }
+       const entry=videoEditors.get(original.id);
+       let picker=null;
+       try{picker=entry?.frame.contentDocument?.getElementById('media-file')}catch(error){}
+       if(picker){picker.click();return;}
+       toast('请在下方字幕编辑器中点击「打开媒体」选择视频');
+       entry?.frame.scrollIntoView({behavior:'smooth',block:'start'});
+     },true);
+   })();`;
+   d.head.appendChild(bridge);
+  }
   // Install the persistence guard BEFORE the source step creates the OCR iframe.
   // Invalid old IndexedDB snapshots remain stored and are never forwarded to TW_RESTORE.
   if(!d.getElementById('tw-week8-restore-safety-loader')){
