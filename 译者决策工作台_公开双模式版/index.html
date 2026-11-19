@@ -97,6 +97,14 @@ function show(){
    d.head.appendChild(bridge);
   }
 
+  // Focused subtitle editing layout: hide text-only controls in video/OCR modes.
+  if(!d.getElementById('th-focused-subtitles-loader')){
+   const simplified=d.createElement('script');
+   simplified.id='th-focused-subtitles-loader';
+   simplified.src='/transhelper-subtitle-simplify.js?v=1';
+   simplified.onerror=()=>console.warn('Focused subtitle layout unavailable; original editor remains accessible.');
+   d.head.appendChild(simplified);
+  }
   // Install the persistence guard BEFORE the source step creates the OCR iframe.
   // Invalid old IndexedDB snapshots remain stored and are never forwarded to TW_RESTORE.
   if(!d.getElementById('tw-week8-restore-safety-loader')){
