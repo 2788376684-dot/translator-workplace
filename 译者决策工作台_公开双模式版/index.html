@@ -97,10 +97,6 @@ function show(){
    d.head.appendChild(bridge);
   }
 
-  // Same-frame media recovery for Safari and other browsers; does not modify saved subtitle data.
-  if(!d.getElementById('th-video-playback-repair')){
-   const repair=d.createElement('script');repair.id='th-video-playback-repair';repair.textContent="(function(){\n'use strict';\nconst attached=new WeakSet();\nlet lastURL=new WeakMap();\nfunction attach(frame){\n let w,doc;\n try{w=frame.contentWindow;doc=frame.contentDocument;}catch(e){return;}\n if(!w||!doc||!doc.getElementById('media-file')||attached.has(doc))return;\n attached.add(doc);\n const picker=doc.getElementById('media-file');\n let status=doc.getElementById('th-video-diagnostic');\n if(!status){\n   status=doc.createElement('div');status.id='th-video-diagnostic';\n   status.setAttribute('role','status');\n   status.style.cssText='display:none;margin:8px 0;padding:9px 12px;border-radius:8px;background:#fff5ec;color:#8a4013;font:13px/1.5 -apple-system,BlinkMacSystemFont,PingFang SC,sans-serif';\n   const video=doc.querySelector('video');(video?.parentElement||picker.parentElement||doc.body).appendChild(status);\n }\n const message=s=>{status.textContent=s;status.style.display=s?'block':'none';};\n const explain=video=>{\n   const e=video.error;\n   const code=e?.code;\n   if(code===4)return '该视频格式或编码无法由当前浏览器解码。建议使用 H.264 视频 + AAC 音频的 MP4 文件。';\n   if(code===3)return '浏览器无法解码该视频。请检查文件是否损坏，或转换为 H.264/AAC MP4。';\n   if(code===2)return '视频加载中断，请重新选择本地视频文件。';\n   return '视频尚未成功加载。请点击「打开媒体」重新选择本地文件。';\n };\n let selected=null,serial=0;\n function monitor(file){\n   const ticket=++serial;\n   const v=doc.querySelector('video');\n   if(!v){message('未找到视频播放器，请重新进入字幕工作台。');return;}\n   const old=lastURL.get(v);if(old){try{w.URL.revokeObjectURL(old);}catch(e){}lastURL.delete(v);}\n   message('');\n   // Give the native subtitle editor its normal chance to bind its local media.\n   w.setTimeout(()=>{\n     if(ticket!==serial||!doc.contains(v))return;\n     if(v.readyState>=1 && v.videoWidth>0)return;\n     const url=w.URL.createObjectURL(file);\n     lastURL.set(v,url);\n     v.pause();\n     v.src=url;\n     v.preload='metadata';\n     v.load();\n     v.muted=false;\n     v.volume=1;\n     message('已重新连接本地视频，正在读取画面和声音…');\n     w.setTimeout(()=>{\n       if(ticket!==serial)return;\n       if(v.readyState>=1&&v.videoWidth>0){message('');return;}\n       message(explain(v));\n     },4500);\n   },1000);\n }\n picker.addEventListener('change',()=>{const file=picker.files&&picker.files[0];if(file){selected=file;monitor(file);}},false);\n doc.addEventListener('error',e=>{if(e.target?.tagName==='VIDEO')message(explain(e.target));},true);\n doc.addEventListener('loadedmetadata',e=>{if(e.target?.tagName==='VIDEO'&&e.target.videoWidth>0)message('');},true);\n doc.addEventListener('click',e=>{\n   if(!e.target?.closest?.('video,button'))return;\n   const v=doc.querySelector('video');\n   if(v&&v.src&&v.muted){v.muted=false;v.volume=1;}\n },true);\n}\nfunction watch(){\n try{\n   for(const entry of videoEditors.values()){\n     const frame=entry?.frame;\n     if(!frame)continue;\n     attach(frame);\n     if(!frame.dataset.thPlaybackWatch){\n       frame.dataset.thPlaybackWatch='1';\n       frame.addEventListener('load',()=>attach(frame));\n     }\n   }\n }catch(e){}\n}\nwatch();\nsetInterval(watch,750);\n})();";d.head.appendChild(repair);
-  }
   // Install the persistence guard BEFORE the source step creates the OCR iframe.
   // Invalid old IndexedDB snapshots remain stored and are never forwarded to TW_RESTORE.
   if(!d.getElementById('tw-week8-restore-safety-loader')){
@@ -288,6 +284,84 @@ app.addEventListener('error',()=>{
  message.textContent='页面加载失败，请点击下方链接直接进入工作台。';
  status.style.display='grid';
 });
+
+// Outer-frame observer: independent of internal workspace lexical variables.
+(function(){
+'use strict';
+const seen=new WeakSet();
+const urls=new WeakMap();
+let lastFile=null;
+function chooseVideo(doc){
+ const videos=Array.from(doc.querySelectorAll('video'));
+ return videos.sort((a,b)=>((b.clientWidth||b.width||0)*(b.clientHeight||b.height||0))-((a.clientWidth||a.width||0)*(a.clientHeight||a.height||0)))[0];
+}
+function prepare(doc){
+ if(seen.has(doc))return;
+ const picker=doc.querySelector('#media-file');
+ const video=chooseVideo(doc);
+ if(!picker||!video)return;
+ seen.add(doc);
+ const status=doc.createElement('div');
+ status.id='th-playback-status';
+ status.style.cssText='display:none;background:#fff2e5;color:#8b3d16;padding:10px 12px;margin:8px;border-radius:9px;font:13px/1.5 -apple-system,BlinkMacSystemFont,PingFang SC,sans-serif';
+ status.setAttribute('role','status');
+ (video.parentElement||doc.body).appendChild(status);
+ const warn=msg=>{status.textContent=msg;status.style.display=msg?'block':'none';};
+ const current=()=>chooseVideo(doc)||video;
+ function diagnose(v){
+  const code=v.error?.code;
+  if(code===3||code===4)return '当前浏览器无法解码该文件。请检查编码格式：建议 H.264 视频及 AAC 音频的 MP4。';
+  return '视频文件未成功连接播放器。请点击「打开媒体」重新选择原视频。';
+ }
+ let serial=0;
+ picker.addEventListener('change',()=>{
+  const file=picker.files?.[0];
+  if(!file||!file.type.startsWith('video/')&&!file.type.startsWith('audio/'))return;
+  lastFile=file;
+  const ticket=++serial;
+  warn('');
+  setTimeout(()=>{
+   if(ticket!==serial)return;
+   const v=current();
+   if(v.readyState>=1&&Number.isFinite(v.duration)&&v.duration>0){warn('');return;}
+   // Native import failed. Recover by binding the selected File in this same document.
+   const old=urls.get(v);
+   if(old){try{doc.defaultView.URL.revokeObjectURL(old)}catch(_){}}
+   const blob=doc.defaultView.URL.createObjectURL(file);
+   urls.set(v,blob);
+   v.pause();
+   v.src=blob;
+   v.preload='auto';
+   v.muted=false;v.volume=1;
+   v.load();
+   warn('已重新连接视频，正在读取媒体信息…');
+   setTimeout(()=>{
+    if(ticket!==serial)return;
+    if(v.readyState>=1&&Number.isFinite(v.duration)&&v.duration>0){warn('');return;}
+    warn(diagnose(v));
+   },4000);
+  },800);
+ },true);
+ doc.addEventListener('loadedmetadata',e=>{if(e.target.tagName==='VIDEO'&&Number.isFinite(e.target.duration)&&e.target.duration>0)warn('');},true);
+ doc.addEventListener('error',e=>{if(e.target.tagName==='VIDEO')warn(diagnose(e.target));},true);
+ // Provides an explicit local re-link for projects restored without their File object.
+ const action=doc.createElement('button');
+ action.type='button';action.textContent='重新连接原视频';
+ action.style.cssText='margin:8px;padding:7px 11px;border:1px solid #94a7b5;border-radius:8px;background:white;color:#25445a;cursor:pointer';
+ action.addEventListener('click',()=>picker.click());
+ (video.parentElement||doc.body).appendChild(action);
+}
+function walk(frame,depth){
+ if(depth>5)return;
+ let doc;
+ try{doc=frame.contentDocument;}catch(_){return;}
+ if(!doc)return;
+ prepare(doc);
+ for(const child of doc.querySelectorAll('iframe'))walk(child,depth+1);
+}
+setInterval(()=>{try{walk(document.getElementById('app'),0)}catch(_){}},800);
+})();
+
 const auto=document.createElement('script');auto.src='/tw-cloud-auto-backup.js?v=1';auto.defer=true;auto.onerror=()=>console.warn('Cloud auto-backup helper unavailable; manual backup remains accessible.');document.head.appendChild(auto);
 app.src='/atelier-core.html';
 setTimeout(()=>{
