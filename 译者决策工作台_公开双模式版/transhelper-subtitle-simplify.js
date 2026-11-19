@@ -87,7 +87,7 @@ function setup(doc){
  const main=doc.getElementById('subtitle-main');
  const toolbar=doc.createElement('div');
  toolbar.id='th-focused-toolbar';
- toolbar.innerHTML='<span class="th-title">字幕编辑</span><button type="button" id="th-open-video">导入视频 / 音频</button><button type="button" id="th-import-cues">导入字幕</button><span class="th-media-name" id="th-current-media"></span><span class="th-spacer"></span><button type="button" id="th-export-main">导出 SRT</button><details id="th-quick-menu"><summary>快捷操作 ···</summary><div class="th-menu"><button type="button" id="th-export-vtt">导出 VTT</button><button type="button" id="th-split-current">拆分当前字幕</button><button type="button" id="th-merge-current">合并下一条</button><button type="button" id="th-save-json">导出字幕工程备份</button><button type="button" id="th-simple-clear">清空全部内容</button></div></details>';
+ toolbar.innerHTML='<span class="th-title">字幕编辑</span><button type="button" id="th-open-video">导入视频 / 音频</button><button type="button" id="th-import-cues">导入字幕</button><span class="th-media-name" id="th-current-media"></span><span class="th-spacer"></span><button type="button" id="th-export-main">导出 SRT</button><details id="th-quick-menu"><summary>快捷操作 ···</summary><div class="th-menu"><button type="button" id="th-export-vtt">导出 VTT</button><button type="button" id="th-split-current">拆分当前字幕</button><button type="button" id="th-merge-current">合并下一条</button><button type="button" id="th-transcribe-now">自动识别原文与时间点</button><button type="button" id="th-save-json">导出字幕工程备份</button><button type="button" id="th-simple-clear">清空全部内容</button></div></details>';
  main.before(toolbar);
  const el=id=>doc.getElementById(id);
  const forward=(button,target)=>{el(button).addEventListener('click',()=>{el('th-quick-menu').open=false;el(target)?.click();});};
@@ -98,6 +98,7 @@ function setup(doc){
  forward('th-split-current','split-cue');
  forward('th-merge-current','merge-cue');
  forward('th-save-json','save-project');
+ forward('th-transcribe-now','video-transcribe');
  el('th-simple-clear').addEventListener('click',()=>{
    el('th-quick-menu').open=false;
    if(doc.defaultView.THVideoFlow?.clearAll)doc.defaultView.THVideoFlow.clearAll();
