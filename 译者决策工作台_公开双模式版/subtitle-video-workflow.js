@@ -164,10 +164,15 @@ function clearAll(){
  if(working){notify('请先取消正在进行的任务，再清空内容。',true);return false;}
  if(!confirm('确定清空当前字幕项目的全部字幕、译文和版本记录？此操作无法撤销，其他翻译项目不会受到影响。'))return false;
  const c=clip();
- runCueEdit(()=>{c.cues=[];});
+ const duration=Number(c.media?.duration)||2;
+ const first=c.cues[0];
+ // The subtitle editor requires at least one cue for its selected-row controls.
+ // Keep a blank structural row while removing all actual subtitle content.
+ runCueEdit(()=>{c.cues=[{id:first?.id||id('cue'),start:0,end:Math.min(2,duration),source:'',target:''}];c.selected=0;c.asr=null;c.source='';});
  c.workflow={stage:'source',sourceSignature:sourceSignature(c),versions:{},confirmed:{source:false,draft:false,revision:false,final:false},history:[]};
  stage='source';textEdit=null;comparing=false;livePreview=true;
- renderAll();renderProgress();publish();
+ const history=getHistory();history.undo.length=0;history.redo.length=0;
+ renderAll();renderHistory();renderProgress();publish();
  taskStatus('当前字幕项目内容已清空。');
  window.parent.postMessage({type:'TH_VIDEO_NAVIGATE',stage:'source'},location.origin);
  return true;
