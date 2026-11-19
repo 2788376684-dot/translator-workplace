@@ -10,39 +10,72 @@ function workflow(c=clip()){
 function capture(){
  const c=clip(),w=workflow(c),signature=sourceSignature(c);
  if(w.sourceSignature!==signature){w.confirmed.source=false;invalidateAfter('source');w.sourceSignature=signature;}
- if(stage!=='source'){if(w.confirmed[stage]&&JSON.stringify(w.versions[stage])!==JSON.stringify(c.cues)){w.confirmed[stage]=false;invalidateAfter(stage);}w.versions[stage]=copy(c.cues);}
+ const old=w.versions[stage],changed=!old||JSON.stringify(old)!==JSON.stringify(c.cues);
+ if(changed){
+  if(stage!=='source'&&old){
+   w.confirmed[stage]=false;
+   invalidateAfter(stage);
+  }
+  w.versions[stage]=copy(c.cues);
+ }
  w.stage=stage;
  renderProgress();
 }
 function publish(){window.THVideoPublish?.();}
 function renderProgress(){
- const el=byId('video-stage-status');if(!el)return;
- const w=workflow();el.textContent=stageNames[stage]+' · '+(w.confirmed[stage]?'已确认':'待确认');
+ const w=workflow(),empty=clip().id.startsWith('empty-');
+ panel.hidden=empty;
+ byId('video-stage-status').textContent=stageNames[stage]+' · '+(w.confirmed[stage]?'已确认':'待确认');
  byId('video-confirm').textContent='确认'+stageNames[stage];
- byId('video-ai-review').hidden=!['revision','final'].includes(stage);
- byId('video-ai-translate').hidden=stage==='final';
- byId('video-confirm').disabled=working;
+ byId('video-ai-review').hidden=stage!=='revision';
+ byId('video-ai-translate').hidden=stage!=='draft';
+ byId('video-confirm').disabled=working||w.confirmed[stage];
+ byId('video-transcribe').hidden=stage!=='source'||!mediaURL(clip());
+ byId('asr-language-label').hidden=byId('video-transcribe').hidden;
+ byId('video-history').disabled=!w.history?.length;
  document.body.dataset.videoStage=stage;
 }
 function setStage(next){
  if(!Object.hasOwn(stageNames,next))return;
- const c=clip();if(c.workflow)capture();stage=next;const w=workflow(c);w.stage=stage;
- if(stage!=='source'){
-  const saved=w.versions[stage]||(stage==='revision'?w.versions.draft:stage==='final'?(w.versions.revision||w.versions.draft):null);
-  const targets=new Map((saved||[]).map(r=>[r.id,r.target]));
-  c.cues=c.cues.map(r=>({...r,target:targets.has(r.id)?targets.get(r.id):r.target}));
+ const c=clip(),w=workflow();
+ if(next!==stage){
+  capture();stage=next;
+  const saved=w.versions[stage]||(stage==='revision'?w.versions.draft:stage==='final'?(w.versions.revision||w.versions.draft):w.versions.source);
+  const targets=new Map((saved||[]).map(row=>[row.id,row.target]));
+  c.cues=c.cues.map(row=>({...row,target:targets.has(row.id)?targets.get(row.id):''}));
+  w.stage=stage;textEdit=null;comparing=false;livePreview=true;
+  renderAll();
  }
- renderAll();renderProgress();publish();
+ renderProgress();publish();
+}
+function restoreStage(next){
+ stage=clip().workflow?.stage||'source';
+ setStage(next);
+}
+function switchClip(next){
+ // The current cues in a restored draft already belong to its saved stage.
+ stage=clip().workflow?.stage||next||'source';
+ renderProgress();
+ window.parent.postMessage({type:'TH_VIDEO_NAVIGATE',stage},location.origin);
+}
+function acceptImportedTargets(next, rows){
+ const c=clip(),w=workflow();
+ setStage(next);
+ runCueEdit(()=>{c.cues=rows;});
+ w.confirmed[next]=false;
+ invalidateAfter(next);w.versions[next]=copy(c.cues);
+ renderProgress();publish();
+ window.parent.postMessage({type:'TH_VIDEO_NAVIGATE',stage},location.origin);
 }
 function navigate(next){setStage(next);window.parent.postMessage({type:'TH_VIDEO_NAVIGATE',stage:next},location.origin);}
 function invalidateAfter(key){const order=Object.keys(stageNames),w=workflow(),laterKeys=order.slice(order.indexOf(key)+1);const retired={};for(const later of laterKeys){w.confirmed[later]=false;if(w.versions[later]){retired[later]=w.versions[later];delete w.versions[later];}}if(Object.keys(retired).length){w.history||=[];w.history.push({at:new Date().toISOString(),versions:copy(retired)});w.history=w.history.slice(-3);}}
 function confirmStage(){
  const c=clip(),w=workflow();capture();
  if(!c.cues.every(r=>r.source.trim()))return notify('请先自动识别或补全每条原文。',true);
- validateCues(c.cues,c.media.duration,stage!=='source',state.profile);
+ validateCues(c.cues,c.media.duration,stage!=='source',{trackMode:'bilingual'});
  const prior={draft:'source',revision:'draft',final:'revision'}[stage];
  if(prior&&!w.confirmed[prior])return notify('请先确认'+stageNames[prior]+'，再确认当前版本。',true);
- const wasConfirmed=w.confirmed[stage];w.confirmed[stage]=true;if(!wasConfirmed)invalidateAfter(stage);if(stage!=='source')w.versions[stage]=copy(c.cues);
+ w.confirmed[stage]=true;w.versions[stage]=copy(c.cues);
  publish();renderProgress();notify(stageNames[stage]+'已确认。');
  if(stage==='source')navigate('draft');else if(stage==='draft')navigate('revision');else if(stage==='revision')navigate('final');
 }
@@ -62,8 +95,8 @@ async function audioSamples(c){
 }
 async function transcribe(automatic=false){
  if(working)return;
- const c=clip();if(c.id.startsWith('empty-'))return notify('请先导入视频。',true);
- if(c.cues.some(r=>r.source.trim()||r.target.trim())&&!automatic&&!confirm('重新识别会替换当前原文和时间轴。现有字幕会保留为可切回的草稿，继续？'))return;
+ const c=clip(),jobStage=stage;if(c.id.startsWith('empty-'))return notify('请先导入音视频。',true);
+ if(!automatic&&c.cues.some(r=>r.source.trim()||r.target.trim())&&!confirm('重新识别会替换当前原文和时间轴。现有字幕会保留为可切回的草稿，继续？'))return;
  const signature=JSON.stringify(c.cues),cancel={cancelled:false};asrCancel=cancel;
  setWorking(true,'正在读取视频声音…');
  try{
@@ -76,7 +109,7 @@ async function transcribe(automatic=false){
    worker.postMessage({audio,language:byId('video-asr-language').value},[audio.buffer]);
   });
   if(cancel.cancelled||clip()!==c)return;
-  if(JSON.stringify(c.cues)!==signature)throw Error('识别期间字幕已修改，结果未覆盖当前编辑，请重新识别。');
+  if(stage!==jobStage||JSON.stringify(c.cues)!==signature)throw Error('识别期间已修改字幕或切换阶段，现有编辑已保留。');
   if(!Array.isArray(result.chunks)||!result.chunks.length)throw Error('未识别到带时间点的语音，请检查视频声音或手动导入字幕。');
   let previous=0;
   const rows=result.chunks.filter(chunk=>chunk.text?.trim()).map((chunk,index)=>{
@@ -87,7 +120,7 @@ async function transcribe(automatic=false){
   if(c.cues.some(r=>r.source.trim()||r.target.trim())){if(state.clips.length>=20)throw Error('草稿已达20份，请先保存工程。');const backup=copy(c);backup.id=id('backup');backup.title=(c.title+' · 识别前备份').slice(0,180);state.clips.push(backup);}
   c.cues=rows;c.initial=copy(rows);c.selected=0;c.applied=null;c.workflow=null;
   c.asr={tool:'Whisper tiny · 浏览器本地识别',date:new Date().toISOString().slice(0,10),segments:rows.map(r=>({start:r.start,end:r.end,text:r.source,words:[]}))};
-  c.source='浏览器本地识别，原文和时间点需人工复核。';stage='source';workflow(c);renderAll();renderProgress();publish();taskStatus('已识别 '+rows.length+' 条原文及入点、出点。核对后确认原文，或直接生成 AI 初稿。');
+  c.source='浏览器本地识别，原文和时间点需人工复核。';stage='source';workflow(c);renderAll();renderProgress();publish();taskStatus('已识别 '+rows.length+' 条字幕。请核对原文和时间点。');window.parent.postMessage({type:'TH_VIDEO_NAVIGATE',stage:'source'},location.origin);
  }catch(error){if(!cancel.cancelled){taskStatus('自动识别未完成：'+error.message);notify('自动识别未完成：'+error.message,true);}}
  finally{worker?.terminate();worker=null;asrCancel=null;setWorking(false);}
 }
@@ -99,7 +132,7 @@ function askAI(kind,rows){
  });
 }
 async function generate(kind){
- if(working)return;const c=clip();
+ if(working)return;const c=clip(),jobStage=stage;
  if(!c.cues.every(r=>r.source.trim()))return notify('请先自动识别或填写原文，再生成译文。',true);
  if(kind==='revision'&&!workflow(c).confirmed.draft)return notify('请先在初稿阶段确认初稿，再进行 AI 审校。',true);
  if(c.cues.some(r=>r.target.trim())&&!confirm('AI 将生成新的'+stageNames[kind]+'，原有版本会保留在阶段记录中。继续？'))return;
@@ -113,27 +146,64 @@ async function generate(kind){
    while(start<c.cues.length&&batch.length<8){const r=c.cues[start],size=r.source.length+(kind==='revision'?r.target.length:0);if(batch.length&&chars+size>3500)break;batch.push({id:r.id,source:r.source,target:kind==='revision'?r.target:''});chars+=size;start++;}
    taskStatus('AI '+stageNames[kind]+'：'+start+' / '+c.cues.length+' 条');output.push(...await askAI(kind,batch));
    if(job.cancelled)throw Error('已取消生成，原稿保留。');
-   if(clip()!==c||JSON.stringify(c.cues)!==signature)throw Error('字幕或媒体已切换，本次结果未覆盖当前编辑。');
+   if(clip()!==c||stage!==jobStage||JSON.stringify(c.cues)!==signature)throw Error('字幕或阶段已切换，本次结果未覆盖当前编辑。');
   }
   const translated=new Map(output.map(r=>[r.id,r.target]));if(translated.size!==c.cues.length||c.cues.some(r=>!translated.get(r.id)))throw Error('AI 返回不完整，已保留原稿。');
-  const w=workflow(c);if(w.versions[kind]){w.history||=[];w.history.push({at:new Date().toISOString(),versions:{[kind]:copy(w.versions[kind])}});w.history=w.history.slice(-3);}
-  c.cues=c.cues.map(r=>({...r,target:translated.get(r.id)}));stage=kind;w.stage=kind;w.versions[kind]=copy(c.cues);w.confirmed[kind]=false;invalidateAfter(kind);
+  const w=workflow(c);if(w.versions[kind]?.some(row=>row.target.trim())){w.history||=[];w.history.push({at:new Date().toISOString(),versions:{[kind]:copy(w.versions[kind])}});w.history=w.history.slice(-3);}
+  runCueEdit(()=>{c.cues=c.cues.map(r=>({...r,target:translated.get(r.id)}));});stage=kind;w.stage=kind;w.versions[kind]=copy(c.cues);w.confirmed[kind]=false;invalidateAfter(kind);
   renderAll();renderProgress();publish();taskStatus(stageNames[kind]+'已生成，请检查后点击确认。');window.parent.postMessage({type:'TH_VIDEO_NAVIGATE',stage:kind},location.origin);
  }catch(error){taskStatus(error.message);notify(error.message,true);}finally{aiJob=null;setWorking(false);}
 }
 function cancelTask(){if(aiJob)aiJob.cancelled=true;if(asrCancel){asrCancel.cancelled=true;asrCancel.reject?.(Error('已取消'));worker?.terminate();}activeAI?.reject(Error('已取消生成，原稿保留。'));taskStatus('已取消，原有字幕保留。');}
 function setConfig(config){const select=byId('video-target-language');if(config.targetLang&&[...select.options].some(o=>o.value===config.targetLang))select.value=config.targetLang;}
-function mediaOpened(c){setStage('source');if(!c.cues.some(r=>r.source.trim()||r.target.trim()))transcribe(true);}
-window.THVideoFlow={capture,setStage,setConfig,mediaOpened,mediaReconnected:c=>{if(!c.cues.some(r=>r.source.trim()||r.target.trim()))transcribe(true);}};
+function mediaOpened(c){
+ renderProgress();publish();
+ if(stage==='source'&&!c.cues.some(row=>row.source.trim()||row.target.trim()))transcribe(true);
+}
+window.THVideoFlow={capture,setStage,restoreStage,switchClip,setConfig,mediaOpened,mediaReconnected:mediaOpened,
+ currentStage:()=>stage,
+ comparisonRows:()=>workflow().versions.draft,
+ previousTarget:cue=>{
+  const previous={revision:'draft',final:'revision'}[stage];
+  return previous ? workflow().versions[previous]?.find(row=>row.id===cue.id)?.target : undefined;
+ },
+ acceptImportedTargets};
 window.addEventListener('message',event=>{
  if(event.source!==window.parent||event.origin!==location.origin)return;
  if(event.data?.type==='TH_VIDEO_AI_RESULT'&&activeAI?.requestId===event.data.requestId){if(event.data.error)activeAI.reject(Error(event.data.error));else activeAI.resolve(event.data.rows);}
 });
-const panel=document.createElement('section');panel.className='video-workflow';panel.innerHTML=`<div class="bar space"><strong id="video-stage-status">原文与时间点 · 待确认</strong><button id="video-confirm" class="primary">确认原文与时间点</button></div><div class="bar"><label>语音语言 <select id="video-asr-language"><option value="">自动识别</option><option value="english">英语</option><option value="chinese">中文</option><option value="japanese">日语</option><option value="french">法语</option><option value="german">德语</option></select></label><label>译文语言 <select id="video-target-language"><option>中文</option><option>英语</option><option>日语</option><option>法语</option><option>德语</option></select></label><button id="video-transcribe">自动识别原文与时间点</button><button id="video-ai-translate">AI 生成初稿</button><button id="video-ai-review" hidden>AI 审校生成二稿</button><button id="video-cancel" hidden>取消任务</button></div><p id="video-task-status" role="status" aria-live="polite">导入新视频后自动识别原文与时间点。首次使用需下载语音模型，识别在本机完成，视频不会上传。</p><p class="hint">AI 翻译使用当前项目的 AI 设置；本地模式点击生成后启用默认 AI。原文、初稿、二稿、终稿分别确认，不会自动标记完成。</p>`;
+const panel=document.createElement('section');
+panel.className='video-workflow';
+panel.innerHTML=`<div class="bar space">
+ <strong id="video-stage-status"></strong>
+ <div class="bar"><button id="video-history">版本记录</button><button id="video-confirm" class="primary">确认原文与时间点</button></div>
+ </div><div class="bar">
+ <label id="asr-language-label">语音语言 <select id="video-asr-language"><option value="">自动识别</option><option value="english">英语</option><option value="chinese">中文</option><option value="japanese">日语</option><option value="french">法语</option><option value="german">德语</option></select></label>
+ <label>译文语言 <select id="video-target-language"><option>中文</option><option>英语</option><option>日语</option><option>法语</option><option>德语</option></select></label>
+ <button id="video-transcribe">自动识别原文与时间点</button>
+ <button id="video-ai-translate" hidden>AI 生成初稿</button>
+ <button id="video-ai-review" hidden>AI 审校生成二稿</button>
+ <button id="video-cancel" hidden>取消任务</button>
+ </div><p id="video-task-status" role="status" aria-live="polite"></p>
+ <dialog class="form" id="version-dialog"><div class="panelhead"><h2>版本记录</h2><button id="close-versions">关闭</button></div><div class="body"><p>可回看最近三次替换或失效的译稿。</p><div id="version-list"></div></div></dialog>`;
 document.querySelector('.strip').after(panel);
-const style=document.createElement('style');style.textContent='.video-workflow{padding:12px 0;border-bottom:1px solid var(--line)}.video-workflow .bar{margin-bottom:10px}.video-workflow p{margin:6px 0;font-size:13px}.video-workflow label{font-size:13px}';document.head.append(style);
+byId('close-versions').onclick=()=>byId('version-dialog').close();
+byId('video-history').onclick=()=>{
+ const list=byId('version-list');list.replaceChildren();
+ for(const item of [...(workflow().history||[])].reverse()){
+  for(const [key,rows] of Object.entries(item.versions)){
+   const view=node('details');
+   view.append(node('summary',stageNames[key]+' · '+new Date(item.at).toLocaleString('zh-CN')));
+   view.append(node('pre',rows.map(row=>clock(row.start)+' – '+clock(row.end)+'\n'+row.source+'\n'+row.target).join('\n\n')));
+   list.append(view);
+  }
+ }
+ showDialog('version-dialog');
+};
 byId('video-target-language').onchange=event=>{invalidateAfter('source');publish();window.parent.postMessage({type:'TH_VIDEO_SETTINGS',targetLang:event.target.value},location.origin);taskStatus('译文语言已更新，请重新生成并确认译稿。');};
 byId('video-transcribe').onclick=()=>transcribe();byId('video-ai-translate').onclick=()=>generate('draft');byId('video-ai-review').onclick=()=>generate('revision');byId('video-confirm').onclick=guard(confirmStage);byId('video-cancel').onclick=cancelTask;
-// Text input invalidates only this video's downstream confirmations.
-document.addEventListener('input',event=>{if(!['cue-source','cue-target','cue-start','cue-end','cut-value'].includes(event.target.id))return;const w=workflow();if(['cue-source','cue-start','cue-end','cut-value'].includes(event.target.id)){for(const key of Object.keys(stageNames))w.confirmed[key]=false;}else{w.confirmed[stage]=false;invalidateAfter(stage);}capture();publish();});
+// Revalidate after a committed edit. An uncommitted time field cannot invalidate stages.
+document.addEventListener('input',event=>{
+ if(['cue-source','cue-target'].includes(event.target.id))capture();
+});
 })();

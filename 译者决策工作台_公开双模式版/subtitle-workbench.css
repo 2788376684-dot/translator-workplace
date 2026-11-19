@@ -1,0 +1,64 @@
+body.embedded {
+  --ink: #193347;
+  --soft: #526677;
+  --line: #ccd8dd;
+  --bg: #e9eff0;
+  --tint: #e6f0f6;
+  --teal: #134f77;
+}
+.strip, .top, .main, .video-workflow {max-width: 1520px; margin-inline: auto}
+.embedded .strip {gap: 8px 12px}
+.video-workflow {background: #f8fbfc; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px}
+.video-workflow .bar {margin-block: 0 6px}
+.video-workflow .bar:last-child {margin-bottom: 0}
+.video-workflow label, .video-workflow p {font-size: 14px}
+.video-workflow p {margin: 5px 0 0}
+.embedded .main {padding: 10px 0}
+.embedded .playerwrap {background: #142737}
+.embedded .playerwrap video {height: clamp(196px, 28vw, 360px); min-height: 0; object-fit: contain}
+.embedded .desk {grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)}
+.embedded .panel {min-width: 0; border-radius: 12px}
+.embedded .cueform textarea {min-height: 76px}
+.sub-playback {justify-content: space-between; margin-top: 6px}
+.sub-playback label {display: inline-flex; align-items: center; gap: 6px}
+.sub-playback select {padding: 4px 6px; min-height: 30px}
+.sub-rule-grid {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px}
+.sub-rule-grid input, .sub-rule-grid select {width: 100%}
+.sub-ready {padding: 20px; margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbfc}
+.sub-ready h2 {font-size: 18px; margin: 0 0 6px}
+.sub-ready p {margin: 0 0 12px; color: var(--soft)}
+.sub-stage-hidden {display: none !important}
+.sub-checklist {padding: 0; list-style: none}
+.sub-checklist button {text-align: left}
+.cue-issue {color: #79450d}
+tbody tr.selected {background: #e4f0f8}
+tbody td {overflow-wrap: anywhere}
+.sub-toolbar-divider {align-self: stretch; width: 1px; background: var(--line); margin-inline: 1px}
+.embedded button, .embedded .file {transition: background-color .14s ease, border-color .14s ease}
+.video-workflow select:focus-visible, .embedded :focus-visible {outline: 2px solid #287ea8; outline-offset: 2px}
+@media(max-width: 760px) {
+  .embedded .desk {grid-template-columns: minmax(0, 1fr)}
+  .embedded .playerwrap video {height: clamp(176px, 45vw, 320px)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .embedded button, .embedded .file {transition: none}
+}
+.no-media #player-crop, .no-media #replay-current, .no-media #replay-pair,
+.no-media .sub-playback > label:last-child {display: none}
+.no-media .pending {background: #edf5fa; color: #385b72}
+.no-media .wave {border-top: 0}
+.embedded.empty-subtitles .strip {display: none}
+.embedded dialog {scroll-margin-block-start: 84px}
+.sub-checklist {display: grid; gap: 5px}
+#version-list details {margin: 8px 0}
+#version-list pre {white-space: pre-wrap; overflow-wrap: anywhere}
+
+.prior-cue {
+  background: #edf5fa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.prior-cue .bar {margin-bottom: 4px}

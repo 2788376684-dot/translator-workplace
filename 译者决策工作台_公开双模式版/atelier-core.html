@@ -20,7 +20,7 @@
 
 .source-ref{border-bottom:1px solid var(--stroke);padding:0 0 12px;margin-bottom:13px;font-size:12px;line-height:1.8;color:#4e5b69}.source-ref strong{display:block;font-size:11px;color:#7b8794;margin-bottom:5px}.source-ref div{font-family:"Songti SC","SimSun",Georgia,serif;max-height:136px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 
-.app.video-source .segments{display:none!important}
+.app.video-source .segments,.app.video-source #addSegment,.app.video-source #removeSegment{display:none!important}
 .app.video-source #videoWorkspace{grid-column:1/-1;min-width:0}
 </style><style>
 /* Compact, content-first workspace */
@@ -158,9 +158,10 @@ function applyDocumentSource(content,quiet=false){
 function renderSource(){
  if(proj().kind==='parameter')return renderParamSource();
  const p=proj();const val=sourceBuffers[p.id]??documentText(p);
- action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn" id="importVideo">导入视频</button><button class="btn primary" id="toDraft">下一步：初稿 →</button>');
+ action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn" id="importVideo">导入音视频</button><button class="btn" id="openSubtitleProject">字幕工作台</button><button class="btn primary" id="toDraft">下一步：初稿 →</button>');
  $('stageSub').textContent='在同一处输入或导入全文；段落之间留空行，保存后自动分段';
  $('importVideo').onclick=selectVideoFile;
+ $('openSubtitleProject').onclick=()=>openNewSubtitleProject(p);
  if(p.videoMode){renderVideoWorkspace(p);return;}
  $('stageContent').innerHTML=panel('原文 · 全文输入',`<div class="pane-content"><p class="panel-note" style="margin:0 0 9px">粘贴全文或直接输入。段落之间留一个空行；保存后自动更新左侧段落列表。点击左侧段落，再进入初稿即可逐段翻译。</p><textarea class="editor-text source-cn" id="sourceEditor" spellcheck="false" style="width:100%;min-height:240px!important;max-height:70vh!important;resize:vertical" placeholder="在此输入或粘贴完整原文，段落之间留一个空行">${E(val)}</textarea><div class="more-tools" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary" id="applySource">保存原文并识别段落</button><span id="sourceDocStatus" class="muted">${p.segments.length} 段 · 保存后同步左侧列表</span></div></div>`)+ '<div class="doc-footer"><span class="muted">已有译稿的段落发生原文修改时会二次确认。内容没有变化的段落保留所有翻译版本。</span></div>';
  const editor=$('sourceEditor'),msg=$('sourceDocStatus');
@@ -182,17 +183,20 @@ function renderSource(){
 const videoEditors=new Map();
 function hideVideoWorkspace(){
  const area=$('videoWorkspace');if(area)area.hidden=true;
- for(const entry of videoEditors.values())if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_PAUSE'},location.origin);
+ for(const [key,entry] of videoEditors){
+  if(!state.projects.some(p=>p.id===key)){entry.frame.remove();videoEditors.delete(key);continue;}
+  if(key!==state.active&&entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_PAUSE'},location.origin);
+ }
 }
 function videoStepDone(p,key){const snapshot=p.subtitle,c=snapshot?.clips?.find(c=>c.id===snapshot.active);return !!c?.workflow?.confirmed?.[key];}
 function syncVideoProgress(p){if(proj()!==p)return;for(const key of ['source','draft','revision','final']){const el=$('state-'+key),done=videoStepDone(p,key);el.textContent=done?'✓':'·';el.classList.toggle('done',done);}$('overallProgress').textContent=['source','draft','revision','final'].filter(key=>videoStepDone(p,key)).length+' / 4 阶段确认';}
 function renderVideoStage(p){
- action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn" id="importVideo">导入视频</button><button class="btn" id="toDraft" hidden></button>');
+ action('<button class="btn" id="importText">导入 TXT / Word</button><button class="btn" id="sourceOCR">导入图片 · OCR</button><button class="btn" id="importVideo">连接音视频</button><button class="btn" id="toDraft" hidden></button>');
  $('importVideo').onclick=selectVideoFile;renderVideoWorkspace(p);syncVideoProgress(p);
 }
 function renderVideoWorkspace(p){
- $('stageSub').textContent='导入视频，在当前项目内编辑字幕、调整时间并导出 SRT / VTT';
- $('stageContent').innerHTML='<p class="panel-note">字幕工程随当前项目自动保存；重新打开工作台后，请选择原视频恢复播放。</p>';
+ $('stageSub').textContent='导入字幕或连接音视频，完成翻译、审校与交付';
+ $('stageContent').innerHTML='<p class="panel-note">字幕随当前项目保存。重新打开后，可重新连接原音视频。</p>';
  $('toDraft').hidden=true;
  const back=document.createElement('button');back.className='btn';back.textContent='返回文本原文';back.onclick=()=>{const origin=state.projects.find(x=>x.id===p.videoOriginProjectId);if(origin){state.active=origin.id;state.seg=origin.segments[0].id;}else{const text=newProj();state.projects.push(text);state.active=text.id;state.seg=text.segments[0].id;}state.step='source';persist();draw();};$('stageActions').append(back);
  $('importText').onclick=()=>{back.click();chooseFile();};
@@ -209,15 +213,22 @@ function renderVideoWorkspace(p){
  if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_STAGE',stage:state.step,targetLang:p.targetLang},location.origin);
  return entry;
 }
+function openNewSubtitleProject(origin, title='字幕项目'){
+ const p=newProj(title);
+ Object.assign(p,{videoMode:true,videoOriginProjectId:origin.videoOriginProjectId||origin.id,mode:origin.mode,
+  sourceLang:'英语',targetLang:'中文',instructions:origin.instructions,terms:JSON.parse(JSON.stringify(origin.terms))});
+ state.projects.push(p);state.active=p.id;state.seg=p.segments[0].id;state.step='source';draw();persist();
+ return p;
+}
 function selectVideoFile(){
  const input=document.createElement('input');input.type='file';input.accept='video/*,audio/*,.mp4,.webm,.mov,.m4v,.mp3,.wav,.m4a,.ogg';
  const original=proj();
  input.onchange=()=>{const file=input.files?.[0];if(!file||proj()!==original)return;
   if(file.size>150*1024*1024)return toast('请选择150MB以内的音视频文件');
   const snapshot=original.subtitle,current=snapshot?.clips?.find(c=>c.id===snapshot.active);
-  let project=original;
-  if(!original.videoMode||current?.media?.name!==file.name||current?.media?.size!==file.size){project=newProj(file.name+' · 字幕');project.videoMode=true;project.videoOriginProjectId=original.videoOriginProjectId||original.id;project.mode=original.mode;project.sourceLang='英语';project.targetLang='中文';project.instructions=original.instructions;project.terms=JSON.parse(JSON.stringify(original.terms));state.projects.push(project);}
-  state.active=project.id;state.seg=project.segments[0].id;state.step='source';project.videoMode=true;draw();persist();const entry=videoEditors.get(project.id);
+  const reusing=original.videoMode&&(!current||current.media?.virtual||(current.media?.name===file.name&&current.media.size===file.size));
+  const project=reusing?original:openNewSubtitleProject(original,file.name+' · 字幕');
+  const entry=videoEditors.get(project.id);
   if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_FILE',file},location.origin);else entry.pending=file;
  };input.click();
 }
@@ -228,13 +239,13 @@ window.addEventListener('message',event=>{
  if(event.data?.type==='TH_VIDEO_READY'){
   entry.ready=true;event.source.postMessage({type:'TH_VIDEO_INIT',snapshot:project.subtitle||null,file:entry.pending,stage:entry.stage||'source',sourceLang:project.sourceLang,targetLang:project.targetLang},location.origin);entry.pending=null;
  }else if(event.data?.type==='TH_VIDEO_SAVE'){
-  project.subtitle=event.data.snapshot;persist();syncVideoProgress(project);
+  project.subtitle=event.data.snapshot;const current=project.subtitle?.clips?.find(c=>c.id===project.subtitle.active);if(current&&!current.id.startsWith('empty-')&&project.title==='字幕项目'){project.title=current.title;if(proj()===project){$('crumbProject').textContent=project.title;$('projectSelect').selectedOptions[0].textContent=project.title;}}persist();syncVideoProgress(project);
  }else if(event.data?.type==='TH_VIDEO_SETTINGS'&&['中文','英语','日语','法语','德语'].includes(event.data.targetLang)){
   project.targetLang=event.data.targetLang;persist();
  }else if(event.data?.type==='TH_VIDEO_AI'){
   handleVideoAI(project,entry,event.data);
  }else if(event.data?.type==='TH_VIDEO_NAVIGATE'&&['source','draft','revision','final'].includes(event.data.stage)){
-  if(proj()===project){state.step=event.data.stage;persist();draw();}
+  if(proj()===project&&state.step!==event.data.stage){state.step=event.data.stage;persist();draw();}
  }else if(event.data?.type==='TH_VIDEO_HEIGHT'&&Number.isFinite(event.data.height)){
   entry.frame.style.height=Math.max(400,Math.min(12000,event.data.height+12))+'px';
  }else if(event.data?.type==='TH_VIDEO_ERROR')toast('视频编辑：'+event.data.message);
