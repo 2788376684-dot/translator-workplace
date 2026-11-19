@@ -181,6 +181,11 @@ function renderSource(){
 
 // Video is a project-bound source tool, kept mounted while the workspace redraws.
 const videoEditors=new Map();
+const videoFileInput=document.createElement('input');
+videoFileInput.type='file';
+videoFileInput.accept='video/*,audio/*,.mp4,.webm,.mov,.m4v,.mp3,.wav,.m4a,.ogg';
+videoFileInput.hidden=true;
+document.body.append(videoFileInput);
 function hideVideoWorkspace(){
  const area=$('videoWorkspace');if(area)area.hidden=true;
  for(const [key,entry] of videoEditors){
@@ -221,16 +226,15 @@ function openNewSubtitleProject(origin, title='字幕项目'){
  return p;
 }
 function selectVideoFile(){
- const input=document.createElement('input');input.type='file';input.accept='video/*,audio/*,.mp4,.webm,.mov,.m4v,.mp3,.wav,.m4a,.ogg';
  const original=proj();
- input.onchange=()=>{const file=input.files?.[0];if(!file||proj()!==original)return;
+ videoFileInput.onchange=()=>{const file=videoFileInput.files?.[0];videoFileInput.value='';if(!file||proj()!==original)return;
   if(file.size>150*1024*1024)return toast('请选择150MB以内的音视频文件');
   const snapshot=original.subtitle,current=snapshot?.clips?.find(c=>c.id===snapshot.active);
   const reusing=original.videoMode&&(!current||current.media?.virtual||(current.media?.name===file.name&&current.media.size===file.size));
   const project=reusing?original:openNewSubtitleProject(original,file.name+' · 字幕');
   const entry=videoEditors.get(project.id);
   if(entry.ready)entry.frame.contentWindow.postMessage({type:'TH_VIDEO_FILE',file},location.origin);else entry.pending=file;
- };input.click();
+ };videoFileInput.click();
 }
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin)return;
