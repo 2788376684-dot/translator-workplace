@@ -158,7 +158,7 @@ function cancelTask(){if(aiJob)aiJob.cancelled=true;if(asrCancel){asrCancel.canc
 function setConfig(config){const select=byId('video-target-language');if(config.targetLang&&[...select.options].some(o=>o.value===config.targetLang))select.value=config.targetLang;}
 function mediaOpened(c){
  renderProgress();publish();
- if(stage==='source'&&!c.cues.some(row=>row.source.trim()||row.target.trim()))transcribe(true);
+ if(stage==='source'&&!c.cues.some(row=>row.source.trim()||row.target.trim()))taskStatus('视频已就绪。需要生成原文和时间点时，点击「自动识别原文与时间点」。');
 }
 window.THVideoFlow={capture,setStage,restoreStage,switchClip,setConfig,mediaOpened,mediaReconnected:mediaOpened,
  currentStage:()=>stage,
