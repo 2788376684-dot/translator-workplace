@@ -5,7 +5,7 @@
 .media-stage{position:relative;overflow:hidden;border-radius:12px;background:#101821}
 .media-stage video{display:block;width:100%;border-radius:12px}
 .media-stage video:not([src]){display:none}
-.subtitle-overlay{position:absolute;left:4%;right:4%;bottom:14%;pointer-events:none;z-index:2;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;color:#fff;text-shadow:0 2px 3px #000,0 1px 8px #000,0 0 4px #000;font-size:clamp(14px,1.7vw,22px);font-weight:600;line-height:1.4;white-space:pre-line;overflow-wrap:anywhere}
+.subtitle-overlay{position:absolute;left:4%;right:4%;bottom:var(--caption-bottom,9%);pointer-events:none;z-index:2;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;color:#fff;text-shadow:0 2px 3px #000,0 1px 8px #000,0 0 4px #000;font-size:var(--caption-size,16px);font-weight:600;line-height:1.4;white-space:pre-line;overflow-wrap:anywhere}
 .subtitle-overlay[hidden]{display:none}
 .subtitle-overlay .subtitle-line{max-width:100%;padding:2px 7px;border-radius:4px;background:#0008}
 .subtitle-overlay .subtitle-line.secondary{font-size:.93em}
@@ -13,7 +13,21 @@
 .preview-mode select{padding:7px;border:1px solid #ccd8e4;background:white;border-radius:8px;color:#274663}
 .audio-caption{margin-top:10px;min-height:70px;padding:12px;border-radius:10px;background:#101821}
 .audio-caption .subtitle-overlay{position:static}
-.audio-caption[hidden]{display:none}.placeholder{height:230px;border:1px dashed #bbcbd9;border-radius:12px;display:grid;place-items:center;color:#75869a;background:#fff}.player-info{font-size:13px;color:#607489;margin-top:12px}.timeline{margin-top:20px}.timeline input{width:100%}.editor{display:flex;flex-direction:column;min-height:0}.editor-head{padding:16px 20px;border-bottom:1px solid #dae3ed;display:flex;align-items:center;justify-content:space-between;gap:12px}.editor-head strong{font-size:15px}.cues{flex:1;overflow:auto;padding:10px 18px 20px}.cue{display:grid;grid-template-columns:64px 1fr;gap:10px;background:white;border:1px solid #dfe6ef;border-radius:12px;margin:9px 0;padding:14px}.cue.active{border-color:#3a78b7;box-shadow:0 0 0 1px #3a78b7}.num{font-size:13px;color:#667b90;padding-top:8px}.fields{display:grid;gap:9px}.times{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.times input{width:116px;padding:7px;border:1px solid #d1dce7;border-radius:7px}.fields label{font-size:12px;color:#62788c;display:block}.fields textarea{display:block;margin-top:4px;width:100%;min-height:57px;resize:vertical;padding:9px;border:1px solid #d1dce7;border-radius:8px;background:#fbfdff;line-height:1.55}.rowbtn{display:flex;gap:8px;flex-wrap:wrap}.rowbtn button{font-size:12px;padding:5px 9px}.status{margin-left:auto;color:#647b8c;font-size:12px}.empty{text-align:center;padding:65px 20px;color:#7a8998}footer{padding:9px 22px;background:white;border-top:1px solid #dfe6ef;color:#63798b;font-size:12px}@media(max-width:850px){header{padding:0 12px}.tools{padding:10px 12px}.wrap{display:block;height:auto}.preview{border-right:0;border-bottom:1px solid #dae3ed}.editor{height:70vh}.status{width:100%;margin-left:0}}
+.audio-caption[hidden]{display:none}
+.subtitle-settings{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 12px;font-size:13px;color:#405a75}
+.subtitle-settings label{display:inline-flex;align-items:center;gap:7px}
+.subtitle-settings input[type=range]{width:96px;accent-color:#2868a6}
+.subtitle-settings output{min-width:43px;font-variant-numeric:tabular-nums}
+.media-stage{--caption-size:16px;--caption-bottom:9%}
+.media-stage:fullscreen,.media-stage:-webkit-full-screen{height:100%;width:100%;border-radius:0;display:flex;align-items:center;justify-content:center;background:#000}
+.media-stage:fullscreen video,.media-stage:-webkit-full-screen video{max-height:100%!important;max-width:100%;height:100%;width:100%;object-fit:contain;border-radius:0}
+.media-stage:fullscreen .subtitle-overlay,.media-stage:-webkit-full-screen .subtitle-overlay{font-size:calc(var(--caption-size,16px) * 1.4);bottom:var(--caption-bottom,9%)}
+.media-stage:fullscreen .fullscreen-stage-button,.media-stage:-webkit-full-screen .fullscreen-stage-button{z-index:8;right:18px;top:18px;bottom:auto}
+.fullscreen-stage-button{position:absolute;z-index:6;top:9px;right:9px;background:#131b29c9;color:#fff;border:1px solid #ffffff66;font-size:12px;padding:7px 10px}
+.fullscreen-stage-button:hover{background:#263e5acc}
+#video::-webkit-media-controls-fullscreen-button{display:none!important}
+@media(max-width:850px){.subtitle-settings input[type=range]{width:78px}}
+.placeholder{height:230px;border:1px dashed #bbcbd9;border-radius:12px;display:grid;place-items:center;color:#75869a;background:#fff}.player-info{font-size:13px;color:#607489;margin-top:12px}.timeline{margin-top:20px}.timeline input{width:100%}.editor{display:flex;flex-direction:column;min-height:0}.editor-head{padding:16px 20px;border-bottom:1px solid #dae3ed;display:flex;align-items:center;justify-content:space-between;gap:12px}.editor-head strong{font-size:15px}.cues{flex:1;overflow:auto;padding:10px 18px 20px}.cue{display:grid;grid-template-columns:64px 1fr;gap:10px;background:white;border:1px solid #dfe6ef;border-radius:12px;margin:9px 0;padding:14px}.cue.active{border-color:#3a78b7;box-shadow:0 0 0 1px #3a78b7}.num{font-size:13px;color:#667b90;padding-top:8px}.fields{display:grid;gap:9px}.times{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.times input{width:116px;padding:7px;border:1px solid #d1dce7;border-radius:7px}.fields label{font-size:12px;color:#62788c;display:block}.fields textarea{display:block;margin-top:4px;width:100%;min-height:57px;resize:vertical;padding:9px;border:1px solid #d1dce7;border-radius:8px;background:#fbfdff;line-height:1.55}.rowbtn{display:flex;gap:8px;flex-wrap:wrap}.rowbtn button{font-size:12px;padding:5px 9px}.status{margin-left:auto;color:#647b8c;font-size:12px}.empty{text-align:center;padding:65px 20px;color:#7a8998}footer{padding:9px 22px;background:white;border-top:1px solid #dfe6ef;color:#63798b;font-size:12px}@media(max-width:850px){header{padding:0 12px}.tools{padding:10px 12px}.wrap{display:block;height:auto}.preview{border-right:0;border-bottom:1px solid #dae3ed}.editor{height:70vh}.status{width:100%;margin-left:0}}
 </style></head><body>
 <header><div><h1>Transhelper · 字幕编辑器</h1></div><a href="/atelier.html">← 返回翻译工作台</a></header>
 <div class="tools">
@@ -22,7 +36,7 @@
 <select id="speechLanguage" title="原文语音语言" aria-label="原文语音语言"><option value="">自动检测语言</option><option value="english">英语语音</option><option value="chinese">中文语音</option><option value="japanese">日语语音</option><option value="french">法语语音</option><option value="german">德语语音</option></select><select id="targetLanguage" title="字幕翻译方向" aria-label="字幕翻译方向"><option value="zh-CN">译为中文</option><option value="en">译为英文</option><option value="ja">译为日文</option><option value="fr">译为法文</option></select><button id="recognize">自动识别原文与出入点</button><button id="translateAI" class="primary">AI 翻译字幕</button><button id="autoAll" class="primary">一键识别并翻译</button><button id="cancelAI" hidden>取消任务</button><button id="add">＋ 添加字幕</button><button id="exportSrt">导出 SRT</button><button id="exportVtt">导出 VTT</button><button id="backup">备份工程</button><button id="restoreBtn">恢复工程</button><input id="restore" type="file" accept=".json,application/json">
 <button id="clear">清空内容</button><span class="status" id="status">已就绪</span>
 </div>
-<main class="wrap"><section class="preview"><div class="placeholder" id="placeholder">导入本地视频或音频后可直接播放</div><div class="media-stage"><video id="video" controls playsinline preload="metadata"></video><div class="subtitle-overlay" id="subtitleOverlay" aria-live="off" hidden><div class="subtitle-line" id="subtitleFirst"></div><div class="subtitle-line secondary" id="subtitleSecond"></div></div></div><audio id="audio" controls preload="metadata"></audio><div id="audioCaption" class="audio-caption" hidden><div class="subtitle-overlay"><div class="subtitle-line" id="audioFirst"></div><div class="subtitle-line secondary" id="audioSecond"></div></div></div><div class="preview-mode"><label for="previewMode">字幕预览</label><select id="previewMode"><option value="both">双语（原文在上）</option><option value="source">仅原文</option><option value="target">仅译文</option></select><span id="previewHint">播放或拖动进度条即可预览</span></div><div class="player-info" id="mediaInfo">媒体文件只在本机浏览器中使用，不上传服务器。</div><div class="timeline"><label for="seek">播放位置</label><input type="range" id="seek" min="0" max="1000" value="0"><div class="player-info" id="clock">00:00.000 / 00:00.000</div></div></section><section class="editor"><div class="editor-head"><strong>原文 / 译文对照</strong><span id="count">0 条字幕</span></div><div id="cues" class="cues"></div></section></main><footer>自动保存字幕文本和时间轴到本机浏览器。媒体文件受浏览器安全限制，刷新后需要重新选择；字幕与译文不会因此丢失。</footer>
+<main class="wrap"><section class="preview"><div class="placeholder" id="placeholder">导入本地视频或音频后可直接播放</div><div class="media-stage" id="mediaStage"><button type="button" class="fullscreen-stage-button" id="stageFullscreen" title="视频与字幕一起全屏">⛶ 字幕全屏</button><video id="video" controls playsinline preload="metadata"></video><div class="subtitle-overlay" id="subtitleOverlay" aria-live="off" hidden><div class="subtitle-line" id="subtitleFirst"></div><div class="subtitle-line secondary" id="subtitleSecond"></div></div></div><audio id="audio" controls preload="metadata"></audio><div id="audioCaption" class="audio-caption" hidden><div class="subtitle-overlay"><div class="subtitle-line" id="audioFirst"></div><div class="subtitle-line secondary" id="audioSecond"></div></div></div><div class="preview-mode"><label for="previewMode">字幕预览</label><select id="previewMode"><option value="both">双语（原文在上）</option><option value="source">仅原文</option><option value="target">仅译文</option></select><span id="previewHint">播放或拖动进度条即可预览</span></div><div class="subtitle-settings" aria-label="字幕显示设置"><label for="captionSize">字号 <input id="captionSize" type="range" min="12" max="32" step="1" value="16"><output id="captionSizeValue" for="captionSize">16 px</output></label><label for="captionPosition">距底部 <input id="captionPosition" type="range" min="4" max="45" step="1" value="9"><output id="captionPositionValue" for="captionPosition">9%</output></label><button type="button" id="resetCaptionStyle">恢复默认</button></div><div class="player-info" id="mediaInfo">媒体文件只在本机浏览器中使用，不上传服务器。</div><div class="timeline"><label for="seek">播放位置</label><input type="range" id="seek" min="0" max="1000" value="0"><div class="player-info" id="clock">00:00.000 / 00:00.000</div></div></section><section class="editor"><div class="editor-head"><strong>原文 / 译文对照</strong><span id="count">0 条字幕</span></div><div id="cues" class="cues"></div></section></main><footer>自动保存字幕文本和时间轴到本机浏览器。媒体文件受浏览器安全限制，刷新后需要重新选择；字幕与译文不会因此丢失。</footer>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),key='transhelper-standalone-subtitle-v1';let rows=[],active=-1,mediaURL=null,player=null,duration=0,dirtyTimer=null;
@@ -111,6 +125,44 @@ $('add').onclick=()=>{let start=player?player.currentTime:rows.length?rows[rows.
 $('exportSrt').onclick=()=>download(emit('srt'),'transhelper-subtitles.srt');$('exportVtt').onclick=()=>download(emit('vtt'),'transhelper-subtitles.vtt');$('backup').onclick=()=>download(JSON.stringify({format:'transhelper-subtitle-v1',cues:rows},null,2),'transhelper-subtitles.json','application/json');
 $('restoreBtn').onclick=()=>$('restore').click();$('restore').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.cues))throw Error('文件缺少字幕记录');if(rows.length&&!confirm('恢复备份将覆盖当前字幕文本，继续？'))return;rows=x.cues.map(clean);save();render();setStatus('已恢复 '+rows.length+' 条字幕')}catch(err){setStatus('备份读取失败：'+err.message)}e.target.value=''};
 $('clear').onclick=()=>{if(!confirm('清空全部字幕及本地保存的内容？媒体连接也将解除，此操作不可撤销。'))return;rows=[];active=-1;if(player){player.pause();player.removeAttribute('src');player.load()}if(mediaURL)URL.revokeObjectURL(mediaURL);mediaURL=null;player=null;$('placeholder').hidden=false;$('video').style.display='none';$('audio').style.display='none';$('mediaInfo').textContent='媒体文件只在本机浏览器中使用，不上传服务器。';save();render();setStatus('已清空');updateSubtitlePreview()};
+
+function setupSubtitleDisplay(){
+ const stage=$('mediaStage'),size=$('captionSize'),position=$('captionPosition'),full=$('stageFullscreen');
+ const safeNumber=(raw,min,max,fallback)=>{let n=Number(raw);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback};
+ let prefs={size:16,position:9};
+ try{const saved=JSON.parse(localStorage.getItem('transhelper-subtitle-display-v1')||'{}');prefs.size=safeNumber(saved.size,12,32,16);prefs.position=safeNumber(saved.position,4,45,9)}catch(_){}
+ function apply(){
+  size.value=prefs.size;position.value=prefs.position;
+  $('captionSizeValue').textContent=prefs.size+' px';
+  $('captionPositionValue').textContent=prefs.position+'%';
+  stage.style.setProperty('--caption-size',prefs.size+'px');
+  stage.style.setProperty('--caption-bottom',prefs.position+'%');
+  $('audioCaption').style.setProperty('--caption-size',prefs.size+'px');
+  try{localStorage.setItem('transhelper-subtitle-display-v1',JSON.stringify(prefs))}catch(_){}
+ }
+ size.addEventListener('input',()=>{prefs.size=safeNumber(size.value,12,32,16);apply()});
+ position.addEventListener('input',()=>{prefs.position=safeNumber(position.value,4,45,9);apply()});
+ $('resetCaptionStyle').addEventListener('click',()=>{prefs={size:16,position:9};apply()});
+ function updateFullscreenButton(){const fullscreen=document.fullscreenElement===stage||document.webkitFullscreenElement===stage;full.textContent=fullscreen?'⤢ 退出全屏':'⛶ 字幕全屏';full.setAttribute('aria-label',fullscreen?'退出字幕全屏':'视频与字幕一起全屏')}
+ full.addEventListener('click',async()=>{
+  try{
+   if(document.fullscreenElement===stage||document.webkitFullscreenElement===stage){
+    if(document.exitFullscreen)await document.exitFullscreen();else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+   }else if(stage.requestFullscreen){await stage.requestFullscreen()}
+   else if(stage.webkitRequestFullscreen){stage.webkitRequestFullscreen()}
+   else{$('status').textContent='此浏览器不支持带字幕容器全屏，请使用普通预览模式';}
+  }catch(e){$('status').textContent='无法打开字幕全屏：'+e.message}
+  updateFullscreenButton();
+ });
+ document.addEventListener('fullscreenchange',updateFullscreenButton);
+ document.addEventListener('webkitfullscreenchange',updateFullscreenButton);
+ $('video').addEventListener('webkitbeginfullscreen',()=>{
+  $('status').textContent='Safari 原生视频全屏会隐藏网页字幕，请退出全屏并点击播放器右上角「字幕全屏」';
+ });
+ apply();
+}
+setupSubtitleDisplay();
+
 try{let restored=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(restored))rows=restored.map(clean)}catch(e){setStatus('读取本地字幕失败，可导入备份恢复')}render();
 })();
 </script>
