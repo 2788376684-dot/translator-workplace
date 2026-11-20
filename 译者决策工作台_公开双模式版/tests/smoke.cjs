@@ -43,3 +43,10 @@ test('continuity is isolated from original editor and can fail open',()=>{
   assert.ok(script.includes(text),'recovery boundary missing: '+text);
  assert.ok(!script.includes('removeItem(KEY)'),'recovery must not erase working data');
 });
+
+test('core HTML is complete and has not been replaced by truncated tool output',()=>{
+ assert.ok(Buffer.byteLength(core,'utf8')>3_000_000,'core HTML unexpectedly shrank: investigate before deployment');
+ assert.match(core.slice(0,256),/^\s*<!doctype html>/i,'core must start with an HTML doctype');
+ assert.ok(!core.slice(0,1024).includes('Warning: truncated output'),'tool truncation warning must never enter production HTML');
+ assert.ok(core.trimEnd().endsWith('</html>'),'core HTML must have its closing tag');
+});
