@@ -45,14 +45,14 @@ async function refresh(){
 }
 $('form').addEventListener('submit',async e=>{
  e.preventDefault();if(busy)return;disable(true);
- try{const r=await request('login','POST',{email:$('email').value.trim(),password:$('password').value});$('password').value='';session(true,r.email);note('登录成功。');}
+ try{const r=await request('login','POST',{email:$('email').value.trim(),password:$('password').value});$('password').value='';session(true,r.email);window.thWorkspaceGate(r.email);note('登录成功。');window.top.location.reload();}
  catch(e){note(e.message,true)}finally{disable(false)}
 });
 $('signup').onclick=async()=>{
  if(busy||!$('form').reportValidity())return;
  if(!confirm('确认用此邮箱注册 Translator Workplace 账户？'))return;
  disable(true);
- try{const r=await request('signup','POST',{email:$('email').value.trim(),password:$('password').value});$('password').value='';session(!!r.authenticated,r.email);note(r.authenticated?'注册并登录成功。':r.message||'请检查邮箱完成验证。');}
+ try{const r=await request('signup','POST',{email:$('email').value.trim(),password:$('password').value});$('password').value='';session(!!r.authenticated,r.email);if(r.authenticated){window.thWorkspaceGate(r.email);window.top.location.reload();}note(r.authenticated?'注册并登录成功。':r.message||'请检查邮箱完成验证。');}
  catch(e){note(e.message,true)}finally{disable(false)}
 };
 $('upload').onclick=async()=>{
@@ -85,7 +85,7 @@ $('autobackup').addEventListener('change',()=>{const pref=autoPrefs();const emai
 window.addEventListener('storage',e=>{if(e.key===AUTO_KEY)showAuto();});
 $('logout').onclick=async()=>{
  if(busy)return;disable(true);
- try{await request('logout','POST',{});session(false);note('已退出云端账户。本机项目仍保存在此浏览器中。');}
+ try{await request('logout','POST',{});window.thWorkspaceGate(null);session(false);note('已退出账户，私人项目已从访客工作台隐藏，本地备份保留。');window.top.location.reload();}
  catch(e){note(e.message,true)}finally{disable(false)}
 };
 (async()=>{try{await request('status');await refresh()}catch(e){session(false);$('auth').hidden=true;note((e.message||'账户服务连接失败')+' 本地工作台仍可使用。',true)}})();
