@@ -615,6 +615,15 @@ if (!new URLSearchParams(location.search).has('embedded') && (location.protocol 
 if(new URLSearchParams(location.search).has('embedded') && window.parent!==window){
  document.body.classList.add('embedded');
  const style=document.createElement('style');style.textContent='.embedded{background:transparent;font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;--teal:#174f70}.embedded button,.embedded .file{border-radius:8px;font-size:13px}.embedded .panelhead h2{font-size:16px}.embedded .cueform #cue-target{font-size:16px}.embedded #media-label{display:none}.embedded .top{background:transparent;color:var(--ink);padding:8px 0}.embedded .identity{display:none}.embedded .strip{padding:10px 0;background:transparent}.embedded .main{padding:10px 0}.embedded .footer{display:none}';document.head.append(style);
+ function embeddedMediaFile(data){
+   if(data.file instanceof File)return data.file;
+   if(!data.fileBytes)return null;
+   const bytes=data.fileBytes;
+   if(!(bytes instanceof ArrayBuffer)&&!ArrayBuffer.isView(bytes))throw Error('音视频数据无效，请重新导入。');
+   const name=typeof data.fileName==='string'&&data.fileName?data.fileName:'imported-media.mp4';
+   const type=typeof data.fileType==='string'?data.fileType:'';
+   return new File([bytes],name,{type,lastModified:Number(data.fileLastModified)||Date.now()});
+ }
  let initialized=false,lastSnapshot='';
  function publish(){if(!initialized)return;try{window.THVideoFlow?.capture();if(available())clip().position=player.currentTime;const snapshot=cleanProject(state),serialized=JSON.stringify(snapshot);if(serialized===lastSnapshot)return;lastSnapshot=serialized;window.parent.postMessage({type:'TH_VIDEO_SAVE',snapshot},location.origin);}catch(e){window.parent.postMessage({type:'TH_VIDEO_ERROR',message:e.message},location.origin);}}
  window.addEventListener('message',async event=>{
@@ -624,8 +633,12 @@ if(new URLSearchParams(location.search).has('embedded') && window.parent!==windo
     if(event.data.snapshot)state=cleanProject(event.data.snapshot);
     else{const c=makeBuiltin('B');c.id=id('empty');c.base=null;c.title='待导入字幕';c.media={name:'待连接的媒体',size:1,type:'video/mp4',duration:16,virtual:true};c.cues=[{id:'s1',start:0,end:2,source:'',target:''}];c.initial=copy(c.cues);c.applied=null;c.asr=null;c.position=0;c.selected=0;c.source='导入视频后，可填写字幕或导入 SRT / 转写。';state.clips=[c];state.active=c.id;}
     window.THVideoFlow?.setConfig(event.data);window.THVideoFlow?.restoreStage(event.data.stage||'source');renderAll();await loadMedia();initialized=true;
-    if(event.data.file)await openMedia(event.data.file,clip().media.name!==event.data.file.name||clip().media.size!==event.data.file.size);publish();
-   }else if(event.data?.type==='TH_VIDEO_FILE'&&initialized){await openMedia(event.data.file,clip().media.name!==event.data.file.name||clip().media.size!==event.data.file.size);publish();}
+    const incoming=embeddedMediaFile(event.data);
+    if(incoming)await openMedia(incoming,clip().media.name!==incoming.name||clip().media.size!==incoming.size);publish();
+   }else if(event.data?.type==='TH_VIDEO_FILE'&&initialized){
+    const incoming=embeddedMediaFile(event.data);
+    if(!incoming)throw Error('未收到音视频文件。请重新选择文件。');
+    await openMedia(incoming,clip().media.name!==incoming.name||clip().media.size!==incoming.size);publish();}
    else if(event.data?.type==='TH_VIDEO_STAGE'){window.THVideoFlow?.setConfig(event.data);window.THVideoFlow?.setStage(event.data.stage);}
    else if(event.data?.type==='TH_VIDEO_PAUSE'){player.pause();publish();}
   }catch(e){notify(e.message,true);window.parent.postMessage({type:'TH_VIDEO_ERROR',message:e.message},location.origin);}
