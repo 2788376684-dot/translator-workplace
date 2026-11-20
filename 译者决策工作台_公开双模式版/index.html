@@ -35,6 +35,7 @@ body.th-header-integrated #account-entry,body.th-header-integrated #tw-cloud-sta
 <div id="th-account-panel" hidden><div id="th-account-dialog" role="dialog" aria-modal="true" aria-label="账户与云端"><button type="button" id="th-account-close" aria-label="关闭账户与云端">×</button><iframe id="th-account-frame" title="账户与云端"></iframe></div></div>
 <div id="status" role="status"><div><p id="message">正在打开 Transhelper…</p><p><a href="/atelier-core.html">直接进入工作台</a></p></div></div>
 <iframe id="app" title="Transhelper · Workspace" allow="clipboard-read; clipboard-write"></iframe>
+<script src="/tw-account-workspace.js?v=1"></script>
 <script>
 (function(){
 const panel=document.getElementById("th-account-panel");
@@ -429,7 +430,7 @@ setInterval(()=>{try{walk(document.getElementById('app'),0)}catch(_){}},800);
 })();
 
 const auto=document.createElement('script');auto.src='/tw-cloud-auto-backup.js?v=1';auto.defer=true;auto.onerror=()=>console.warn('Cloud auto-backup helper unavailable; manual backup remains accessible.');document.head.appendChild(auto);
-app.src='/atelier-core.html';
+window.thWorkspaceOpen().catch(e=>{console.error('Workspace identity guard:',e);message.textContent='项目保护检查失败，请刷新重试';status.style.display='grid';throw e}).then(()=>{app.src='/atelier-core.html';});
 setTimeout(()=>{
  if(!finished){
   message.textContent='工作台加载时间较长。可以点击下方链接直接进入工作台。';
