@@ -305,23 +305,24 @@ setTimeout(()=>{
   },true);
  }
  function reconcileEntry(doc){
+  // Reuse the original media-import control: it inherits the exact styling of
+  // the TXT/Word and OCR buttons. Do not introduce an extra styled button.
   const video=doc.getElementById('importVideo');
   const native=doc.getElementById('openSubtitleProject');
-  let link=doc.getElementById('th-standalone-subtitle-link');
-  if(!link){
-   const anchor=video||native;
-   if(!anchor||!anchor.parentElement)return;
-   link=doc.createElement('button');
-   link.id='th-standalone-subtitle-link';link.type='button';
-   link.addEventListener('click',()=>window.location.assign(URL));
-   anchor.insertAdjacentElement('afterend',link);
+  const redundant=doc.getElementById('th-standalone-subtitle-link');
+  if(redundant)redundant.remove();
+  if(video){
+   video.style.removeProperty('display');
+   video.style.removeProperty('visibility');
+   video.removeAttribute('aria-hidden');
+   video.removeAttribute('tabindex');
+   video.textContent='导入视频';
+   video.title='进入字幕编辑器，导入视频或音频';
   }
-  link.textContent='字幕工作台';
-  link.title='进入独立字幕工作台，导入视频或音频并编辑字幕';
-  link.style.cssText='display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border:1px solid #cfdeec;border-radius:12px;background:#fff;color:#315b80;cursor:pointer;font-size:14px;';
-  for(const duplicate of [video,native])if(duplicate&&duplicate!==link){
-   duplicate.style.setProperty('display','none','important');
-   duplicate.setAttribute('aria-hidden','true');duplicate.tabIndex=-1;
+  if(native&&native!==video){
+   native.style.setProperty('display','none','important');
+   native.setAttribute('aria-hidden','true');
+   native.tabIndex=-1;
   }
  }
  function walk(doc,depth){
