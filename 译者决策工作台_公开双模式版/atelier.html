@@ -338,8 +338,8 @@ setTimeout(()=>{
    video.style.removeProperty('visibility');
    video.removeAttribute('aria-hidden');
    video.removeAttribute('tabindex');
-   video.textContent='导入视频';
-   video.title='进入字幕编辑器，导入视频或音频';
+   if(video.textContent.trim()!=='导入视频')video.textContent='导入视频';
+   if(video.title!=='进入字幕编辑器，导入视频或音频')video.title='进入字幕编辑器，导入视频或音频';
   }
   if(native&&native!==video){
    native.style.setProperty('display','none','important');
