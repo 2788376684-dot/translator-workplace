@@ -127,7 +127,7 @@ function tidySourceChoices(){
  const ocr=document.getElementById('sourceOCR');
  const video=document.getElementById('importVideo');
  if(ocr)ocr.textContent='新建图片 OCR 项目';
- if(video)video.textContent='新建字幕项目';
+ if(video&&video.textContent.trim()!=='导入视频')video.textContent='导入视频';
 }
 function scan(){
  tidySourceChoices();
