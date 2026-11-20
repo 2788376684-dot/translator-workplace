@@ -77,7 +77,7 @@ async function decodeAudio(file,job){
   if(job!==token)throw Error('已取消');
   if(sound.duration>1200)throw Error('当前本地识别支持最长20分钟音频，请分段处理');
   if(sound.duration<=0)throw Error('媒体中没有可读取的音频');
-  const offline=new OfflineAudioContext(1,Math.ceil(sound.duration*16000),16000);
+  const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!Offline)throw Error('此浏览器不支持离线音频处理');const offline=new Offline(1,Math.ceil(sound.duration*16000),16000);
   const node=offline.createBufferSource();node.buffer=sound;node.connect(offline.destination);node.start();
   return (await offline.startRendering()).getChannelData(0).slice();
  }finally{ctx.close().catch(()=>{});}
@@ -108,7 +108,7 @@ async function recognize(job){
   final.push({start:Math.max(previous,a),end:b,source:part.text.trim(),target:''});previous=b;
  }
  final=final.filter(r=>r.end>r.start);
- if(!final.length)throw Error('语音模型未生成有效的字幕区间');
+ if(!final.length)throw Error('语音模型未生成有效的字幕区间');if(final.length>500)throw Error('识别生成超过500条字幕，请分段处理');
  if(job!==token)throw Error('已取消');
  const frame=document.querySelector('#cues'),oldCount=frame.querySelectorAll('.cue').length;
  // Use the editor's existing Add and Delete operations, so its save and export remain authoritative.
