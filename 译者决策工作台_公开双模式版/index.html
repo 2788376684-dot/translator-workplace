@@ -78,21 +78,17 @@ function show(){
      document.addEventListener('click',function(event){
        const button=event.target.closest&&event.target.closest('#importVideo');
        if(!button)return;
-       event.preventDefault();event.stopImmediatePropagation();
-       const original=proj();
-       if(!original.videoMode){
-         const project=openNewSubtitleProject(original,'字幕项目');
-         const entry=videoEditors.get(project.id);
-         toast('字幕工作台已打开，请点击播放器顶部「打开媒体」选择视频');
-         entry?.frame.scrollIntoView({behavior:'smooth',block:'start'});
-         return;
-       }
-       const entry=videoEditors.get(original.id);
-       let picker=null;
-       try{picker=entry?.frame.contentDocument?.getElementById('media-file')}catch(error){}
-       if(picker){picker.click();return;}
-       toast('请在下方字幕编辑器中点击「打开媒体」选择视频');
-       entry?.frame.scrollIntoView({behavior:'smooth',block:'start'});
+       // In text projects the hidden native command is the authoritative
+       // subtitle-project creator. Keep all its native state/persistence logic.
+       const nativeCreate=document.getElementById('openSubtitleProject');
+       if(!nativeCreate)return; // Existing subtitle project: native media picker.
+       event.preventDefault();
+       event.stopImmediatePropagation();
+       nativeCreate.click();
+       requestAnimationFrame(function(){
+         const frame=document.querySelector('#videoWorkspace iframe');
+         if(frame)frame.scrollIntoView({block:'start',behavior:'smooth'});
+       });
      },true);
    })();`;
    d.head.appendChild(bridge);
