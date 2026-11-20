@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>字幕编辑器 · Transhelper</title>
 <style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#213347;background:#f5f7fa}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button{cursor:pointer;border:1px solid #ccd8e4;background:#fff;color:#274663;border-radius:9px;padding:9px 13px}button:hover{background:#eef5fc}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #377fca;outline-offset:1px}button.primary{background:#245b94;color:white;border-color:#245b94}header{height:66px;background:white;border-bottom:1px solid #e1e6ed;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:15px}h1{font-size:19px;margin:0}header a{color:#426783;text-decoration:none}.tools{display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:white;padding:12px 24px;border-bottom:1px solid #e4eaf0}input[type=file]{display:none}.wrap{display:grid;grid-template-columns:minmax(290px,42%) minmax(390px,58%);height:calc(100vh - 126px);min-height:470px}.preview{padding:20px;border-right:1px solid #dae3ed;overflow:auto}video,audio{width:100%;max-height:45vh;background:#101821;border-radius:12px}video:not([src]),audio:not([src]){display:none}.placeholder{height:230px;border:1px dashed #bbcbd9;border-radius:12px;display:grid;place-items:center;color:#75869a;background:#fff}.player-info{font-size:13px;color:#607489;margin-top:12px}.timeline{margin-top:20px}.timeline input{width:100%}.editor{display:flex;flex-direction:column;min-height:0}.editor-head{padding:16px 20px;border-bottom:1px solid #dae3ed;display:flex;align-items:center;justify-content:space-between;gap:12px}.editor-head strong{font-size:15px}.cues{flex:1;overflow:auto;padding:10px 18px 20px}.cue{display:grid;grid-template-columns:64px 1fr;gap:10px;background:white;border:1px solid #dfe6ef;border-radius:12px;margin:9px 0;padding:14px}.cue.active{border-color:#3a78b7;box-shadow:0 0 0 1px #3a78b7}.num{font-size:13px;color:#667b90;padding-top:8px}.fields{display:grid;gap:9px}.times{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.times input{width:116px;padding:7px;border:1px solid #d1dce7;border-radius:7px}.fields label{font-size:12px;color:#62788c;display:block}.fields textarea{display:block;margin-top:4px;width:100%;min-height:57px;resize:vertical;padding:9px;border:1px solid #d1dce7;border-radius:8px;background:#fbfdff;line-height:1.55}.rowbtn{display:flex;gap:8px;flex-wrap:wrap}.rowbtn button{font-size:12px;padding:5px 9px}.status{margin-left:auto;color:#647b8c;font-size:12px}.empty{text-align:center;padding:65px 20px;color:#7a8998}footer{padding:9px 22px;background:white;border-top:1px solid #dfe6ef;color:#63798b;font-size:12px}@media(max-width:850px){header{padding:0 12px}.tools{padding:10px 12px}.wrap{display:block;height:auto}.preview{border-right:0;border-bottom:1px solid #dae3ed}.editor{height:70vh}.status{width:100%;margin-left:0}}
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#213347;background:#f5f7fa}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button{cursor:pointer;border:1px solid #ccd8e4;background:#fff;color:#274663;border-radius:9px;padding:9px 13px}button:hover{background:#eef5fc}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #377fca;outline-offset:1px}button.primary{background:#245b94;color:white;border-color:#245b94}header{height:66px;background:white;border-bottom:1px solid #e1e6ed;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:15px}h1{font-size:19px;margin:0}header a{color:#426783;text-decoration:none}.tools{display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:white;padding:12px 24px;border-bottom:1px solid #e4eaf0}input[type=file]{display:none}.tools select{padding:9px 10px;border:1px solid #ccd8e4;border-radius:9px;background:#fff;color:#274663}.tools button:disabled{opacity:.5;cursor:not-allowed}.wrap{display:grid;grid-template-columns:minmax(290px,42%) minmax(390px,58%);height:calc(100vh - 126px);min-height:470px}.preview{padding:20px;border-right:1px solid #dae3ed;overflow:auto}video,audio{width:100%;max-height:45vh;background:#101821;border-radius:12px}video:not([src]),audio:not([src]){display:none}.placeholder{height:230px;border:1px dashed #bbcbd9;border-radius:12px;display:grid;place-items:center;color:#75869a;background:#fff}.player-info{font-size:13px;color:#607489;margin-top:12px}.timeline{margin-top:20px}.timeline input{width:100%}.editor{display:flex;flex-direction:column;min-height:0}.editor-head{padding:16px 20px;border-bottom:1px solid #dae3ed;display:flex;align-items:center;justify-content:space-between;gap:12px}.editor-head strong{font-size:15px}.cues{flex:1;overflow:auto;padding:10px 18px 20px}.cue{display:grid;grid-template-columns:64px 1fr;gap:10px;background:white;border:1px solid #dfe6ef;border-radius:12px;margin:9px 0;padding:14px}.cue.active{border-color:#3a78b7;box-shadow:0 0 0 1px #3a78b7}.num{font-size:13px;color:#667b90;padding-top:8px}.fields{display:grid;gap:9px}.times{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.times input{width:116px;padding:7px;border:1px solid #d1dce7;border-radius:7px}.fields label{font-size:12px;color:#62788c;display:block}.fields textarea{display:block;margin-top:4px;width:100%;min-height:57px;resize:vertical;padding:9px;border:1px solid #d1dce7;border-radius:8px;background:#fbfdff;line-height:1.55}.rowbtn{display:flex;gap:8px;flex-wrap:wrap}.rowbtn button{font-size:12px;padding:5px 9px}.status{margin-left:auto;color:#647b8c;font-size:12px}.empty{text-align:center;padding:65px 20px;color:#7a8998}footer{padding:9px 22px;background:white;border-top:1px solid #dfe6ef;color:#63798b;font-size:12px}@media(max-width:850px){header{padding:0 12px}.tools{padding:10px 12px}.wrap{display:block;height:auto}.preview{border-right:0;border-bottom:1px solid #dae3ed}.editor{height:70vh}.status{width:100%;margin-left:0}}
 </style></head><body>
 <header><div><h1>Transhelper · 字幕编辑器</h1></div><a href="/atelier.html">← 返回翻译工作台</a></header>
 <div class="tools">
 <button id="mediaBtn" class="primary">导入视频 / 音频</button><input id="media" type="file" accept="video/*,audio/*,.mp4,.mov,.m4v,.webm,.mp3,.wav,.m4a">
 <button id="subsBtn">导入 SRT / VTT</button><input id="subs" type="file" accept=".srt,.vtt,text/plain">
-<button id="add">＋ 添加字幕</button><button id="exportSrt">导出 SRT</button><button id="exportVtt">导出 VTT</button><button id="backup">备份工程</button><button id="restoreBtn">恢复工程</button><input id="restore" type="file" accept=".json,application/json">
+<select id="speechLanguage" title="原文语音语言" aria-label="原文语音语言"><option value="">自动检测语言</option><option value="english">英语语音</option><option value="chinese">中文语音</option><option value="japanese">日语语音</option><option value="french">法语语音</option><option value="german">德语语音</option></select><select id="targetLanguage" title="字幕翻译方向" aria-label="字幕翻译方向"><option value="zh-CN">译为中文</option><option value="en">译为英文</option><option value="ja">译为日文</option><option value="fr">译为法文</option></select><button id="recognize">自动识别原文与出入点</button><button id="translateAI" class="primary">AI 翻译字幕</button><button id="autoAll" class="primary">一键识别并翻译</button><button id="cancelAI" hidden>取消任务</button><button id="add">＋ 添加字幕</button><button id="exportSrt">导出 SRT</button><button id="exportVtt">导出 VTT</button><button id="backup">备份工程</button><button id="restoreBtn">恢复工程</button><input id="restore" type="file" accept=".json,application/json">
 <button id="clear">清空内容</button><span class="status" id="status">已就绪</span>
 </div>
 <main class="wrap"><section class="preview"><div class="placeholder" id="placeholder">导入本地视频或音频后可直接播放</div><video id="video" controls playsinline preload="metadata"></video><audio id="audio" controls preload="metadata"></audio><div class="player-info" id="mediaInfo">媒体文件只在本机浏览器中使用，不上传服务器。</div><div class="timeline"><label for="seek">播放位置</label><input type="range" id="seek" min="0" max="1000" value="0"><div class="player-info" id="clock">00:00.000 / 00:00.000</div></div></section><section class="editor"><div class="editor-head"><strong>原文 / 译文对照</strong><span id="count">0 条字幕</span></div><div id="cues" class="cues"></div></section></main><footer>自动保存字幕文本和时间轴到本机浏览器。媒体文件受浏览器安全限制，刷新后需要重新选择；字幕与译文不会因此丢失。</footer>
@@ -39,4 +39,135 @@ $('restoreBtn').onclick=()=>$('restore').click();$('restore').onchange=async e=>
 $('clear').onclick=()=>{if(!confirm('清空全部字幕及本地保存的内容？媒体连接也将解除，此操作不可撤销。'))return;rows=[];active=-1;if(player){player.pause();player.removeAttribute('src');player.load()}if(mediaURL)URL.revokeObjectURL(mediaURL);mediaURL=null;player=null;$('placeholder').hidden=false;$('video').style.display='none';$('audio').style.display='none';$('mediaInfo').textContent='媒体文件只在本机浏览器中使用，不上传服务器。';save();render();setStatus('已清空')};
 try{let restored=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(restored))rows=restored.map(clean)}catch(e){setStatus('读取本地字幕失败，可导入备份恢复')}render();
 })();
-</script></body></html>
+</script>
+<script>
+/* ASR and translation are optional enhancements, separate from local editing.
+   Never replace existing cues until a recognition result has been validated. */
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+let busy=false,token=0,worker=null;
+const status=s=>{$('status').textContent=s;};
+function setBusy(v){
+ busy=v;for(const id of ['recognize','translateAI','autoAll'])$(id).disabled=v;
+ $('cancelAI').hidden=!v;
+}
+function snapshot(){return [...document.querySelectorAll('.cue')].map(el=>{const inputs=el.querySelectorAll('.times input');const text=el.querySelectorAll('textarea');return {start:seconds(inputs[0]?.value),end:seconds(inputs[1]?.value),source:text[0]?.value||'',target:text[1]?.value||''}})}
+function seconds(value){const m=String(value||'').match(/^(?:(\d+):)?(\d{1,2}):(\d{2})(?:[.,](\d{1,3}))?$/);return m?Number(m[1]||0)*3600+Number(m[2])*60+Number(m[3])+Number(String(m[4]||'0').padEnd(3,'0'))/1000:0}
+function timestamp(n){n=Math.max(0,Number(n)||0);const h=Math.floor(n/3600),m=Math.floor(n%3600/60),sec=Math.floor(n%60),ms=Math.floor((n-Math.floor(n))*1000);return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':')+'.'+String(ms).padStart(3,'0')}
+function editCue(i,prop,value){
+ const card=document.querySelectorAll('.cue')[i];if(!card)return;
+ const inputs=card.querySelectorAll('.times input'),texts=card.querySelectorAll('textarea');
+ const element=prop==='start'?inputs[0]:prop==='end'?inputs[1]:prop==='source'?texts[0]:texts[1];
+ if(!element)return;
+ const proto=element.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+ const setter=Object.getOwnPropertyDescriptor(proto,'value')?.set;setter?.call(element,prop==='start'||prop==='end'?timestamp(value):value);
+ element.dispatchEvent(new Event(prop==='start'||prop==='end'?'change':'input',{bubbles:true}));
+}
+async function decodeAudio(file,job){
+ const Context=window.AudioContext||window.webkitAudioContext;
+ if(!Context)throw Error('此浏览器不支持 Web Audio 音频解码');
+ status('正在提取音频…');
+ const bytes=await file.arrayBuffer();
+ if(job!==token)throw Error('已取消');
+ const ctx=new Context();
+ try{
+  let sound;
+  try{sound=await ctx.decodeAudioData(bytes)}catch(e){throw Error('Safari 无法解码此媒体文件的音轨，请转为 AAC 编码 MP4、M4A、WAV 或 MP3')}
+  if(job!==token)throw Error('已取消');
+  if(sound.duration>1200)throw Error('当前本地识别支持最长20分钟音频，请分段处理');
+  if(sound.duration<=0)throw Error('媒体中没有可读取的音频');
+  const offline=new OfflineAudioContext(1,Math.ceil(sound.duration*16000),16000);
+  const node=offline.createBufferSource();node.buffer=sound;node.connect(offline.destination);node.start();
+  return (await offline.startRendering()).getChannelData(0).slice();
+ }finally{ctx.close().catch(()=>{});}
+}
+async function recognize(job){
+ const file=$('media').files[0];
+ if(!file)throw Error('请先在当前页面选择本地音视频文件');
+ const existing=snapshot();
+ if(existing.some(r=>r.source.trim()||r.target.trim())&&!confirm('重新识别将覆盖现有字幕及时间轴。建议先导出工程备份。继续吗？'))throw Error('已取消识别');
+ const samples=await decodeAudio(file,job);
+ if(job!==token)throw Error('已取消');
+ status('正在加载本地语音识别模型…首次运行需要从网络下载模型');
+ const result=await new Promise((resolve,reject)=>{
+  worker=new Worker('/subtitle-asr-worker.js',{type:'module'});
+  worker.onmessage=e=>{const data=e.data;if(data.type==='progress')status(data.message);if(data.type==='result')resolve(data.result);if(data.type==='error')reject(Error(data.message||'识别失败'));};
+  worker.onerror=()=>reject(Error('语音识别模型加载失败，请检查网络连接，或导入 SRT/VTT 字幕'));
+  worker.postMessage({audio:samples,language:$('speechLanguage').value},[samples.buffer]);
+ });
+ if(job!==token)throw Error('已取消');
+ if(!Array.isArray(result?.chunks)||!result.chunks.length)throw Error('识别未返回带时间戳的字幕');
+ let final=[],previous=0;
+ for(const part of result.chunks){
+  if(!part.text?.trim())continue;
+  const [start,end]=part.timestamp||[];
+  if(!Number.isFinite(start))throw Error('语音识别返回无效时间点');
+  const a=Math.max(0,Number(start)),b=end===null?Math.max(a+1,Number(result.duration)||a+2):Number(end);
+  if(!Number.isFinite(b)||b<=a)continue;
+  final.push({start:Math.max(previous,a),end:b,source:part.text.trim(),target:''});previous=b;
+ }
+ final=final.filter(r=>r.end>r.start);
+ if(!final.length)throw Error('语音模型未生成有效的字幕区间');
+ if(job!==token)throw Error('已取消');
+ const frame=document.querySelector('#cues'),oldCount=frame.querySelectorAll('.cue').length;
+ // Use the editor's existing Add and Delete operations, so its save and export remain authoritative.
+ for(let i=oldCount-1;i>=0;i--){frame.querySelectorAll('.cue')[i]?.querySelector('.rowbtn button:last-child')?.click();}
+ for(let i=0;i<final.length;i++){
+  $('add').click();
+  editCue(i,'start',final[i].start);editCue(i,'end',final[i].end);editCue(i,'source',final[i].source);
+ }
+ status('已识别 '+final.length+' 条字幕和对应出入点；请人工复核');
+ return final.length;
+}
+function parseJSON(content){
+ let trimmed=content.trim().replace(/^\x60\x60\x60(?:json)?\s*/i,'').replace(/\x60\x60\x60\s*$/,'');
+ let match=trimmed.match(/\{[\s\S]*\}/);
+ try{return JSON.parse(trimmed)}catch(e){if(match){return JSON.parse(match[0])}throw Error('AI 返回了无法解析的翻译数据')}
+}
+async function aiBatch(batch,lang,job){
+ const messages=[
+  {role:'system',content:'你是一名专业影视字幕译者。翻译每条原文字幕，语言自然、准确、简洁，保持说话者语气和术语一致。保留每个字幕的编号，严格返回纯 JSON 对象，格式为 {"translations":[{"id":0,"text":"译文"}]}。每个输入 id 恰有一条对应翻译。不要加入旁白、解释、时间轴或额外字段。不得合并或遗漏字幕。'},
+  {role:'user',content:'目标语言：'+lang+'。请依次翻译下面的字幕原文，保证 id 原样返回：\n'+JSON.stringify(batch)}
+ ];
+ const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'default',messages})});
+ const data=await response.json().catch(()=>({}));
+ if(job!==token)throw Error('已取消');
+ if(!response.ok)throw Error(data.error||'AI 接口请求失败（HTTP '+response.status+'）');
+ const result=parseJSON(data.content||'');
+ if(!Array.isArray(result.translations))throw Error('AI 没有返回有效字幕译文');
+ const mapping=new Map();
+ for(const t of result.translations){if(Number.isInteger(t.id)&&typeof t.text==='string'&&t.text.trim())mapping.set(t.id,t.text.trim());}
+ if(batch.some(x=>!mapping.has(x.id)))throw Error('AI 遗漏了一些字幕，未将这一批译文写入');
+ return mapping;
+}
+async function translate(job){
+ const original=snapshot(),untranslated=original.map((r,id)=>({id,text:r.source.trim()})).filter(r=>r.text);
+ if(!untranslated.length)throw Error('当前没有原文字幕。请先识别音视频或导入 SRT/VTT');
+ const target={ 'zh-CN':'简体中文',en:'英语',ja:'日语',fr:'法语' }[$('targetLanguage').value]||'简体中文';
+ let done=0;
+ for(let i=0;i<untranslated.length;i+=10){
+  if(job!==token)throw Error('已取消');
+  const group=untranslated.slice(i,i+10);
+  status('AI 翻译字幕中：'+done+'/'+untranslated.length);
+  const mapping=await aiBatch(group,target,job);
+  const now=snapshot();
+  for(const item of group)if(now[item.id]?.source.trim()!==item.text)throw Error('翻译期间原文已被修改，已停止自动写入以防覆盖');
+  for(const item of group)editCue(item.id,'target',mapping.get(item.id));
+  done+=group.length;status('AI 翻译字幕中：'+done+'/'+untranslated.length);
+ }
+ status('已完成 '+done+' 条字幕翻译。出入点与原文一一对应，请人工校对');
+}
+async function task(kind){
+ if(busy)return;const job=++token;setBusy(true);
+ try{
+  if(kind==='recognize'||kind==='all')await recognize(job);
+  if(job===token&&(kind==='translate'||kind==='all'))await translate(job);
+ }catch(e){if(job===token)status('操作未完成：'+e.message)}
+ finally{if(worker){worker.terminate();worker=null}if(job===token)setBusy(false)}
+}
+$('recognize').onclick=()=>task('recognize');$('translateAI').onclick=()=>task('translate');$('autoAll').onclick=()=>task('all');
+$('cancelAI').onclick=()=>{token++;worker?.terminate();worker=null;setBusy(false);status('已取消。已生成的内容保留，可继续编辑或备份。')};
+})();
+</script>
+</body></html>
