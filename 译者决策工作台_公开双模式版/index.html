@@ -6,8 +6,8 @@
 <title>Transhelper · Workspace</title>
 <style>
 html,body{height:100%;margin:0;background:#f5f5f7}
-#app{display:block;width:100%;height:100%;border:0}
-#status{position:fixed;inset:0;display:none;place-items:center;background:#f5f5f7;color:#607083;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;z-index:2}
+#app{display:block;width:100%;height:100%;border:0;visibility:hidden}
+#status{position:fixed;inset:0;display:grid;place-items:center;background:#f5f5f7;color:#607083;font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;z-index:2}
 #status[hidden]{display:none}
 #account-entry{display:none;position:fixed;right:18px;top:12px;z-index:4;padding:7px 12px;border:1px solid #d6dfe7;border-radius:999px;background:#fffefef2;box-shadow:0 2px 9px #0000000b;color:#3e5770;text-decoration:none;font:12px -apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}
 #account-entry:focus-visible{outline:2px solid #2d70a8;outline-offset:2px}
@@ -56,8 +56,9 @@ let finished=false;
 function show(){
  if(finished)return;
  finished=true;
- status.hidden=true;
- status.style.display='none';
+ // Keep the original editor invisible until the final navigation layout is mounted.
+ // This prevents the old left-side 4-step layout flashing on screen.
+ message.textContent='正在准备翻译工作台…';
  try{
   const d=app.contentDocument;
   if(!d)return;
@@ -283,6 +284,20 @@ function show(){
    d.head.appendChild(enhancement);
   }
  }catch(e){console.warn('Atelier enhancement unavailable:',e);}
+ const started=Date.now();
+ (function reveal(){
+  let doc;try{doc=app.contentDocument}catch(_){}
+  if(doc?.body?.classList.contains('th-navigation-swapped')){
+   app.style.visibility='visible';
+   status.hidden=true;status.style.display='none';
+   return;
+  }
+  if(Date.now()-started>6500){
+   message.textContent='工作台界面未完成初始化。请刷新重试，或点击下方链接直接进入。';
+   status.style.display='grid';return;
+  }
+  setTimeout(reveal,60);
+ })();
 }
 app.addEventListener('load',show);
 app.addEventListener('error',()=>{
