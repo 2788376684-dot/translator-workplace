@@ -290,5 +290,38 @@ setTimeout(()=>{
 },6000);
 })();
 </script>
+<script>
+/* Isolated subtitle route: only intercept subtitle launch, leave translation workflow intact. */
+(function(){
+ const URL='/subtitle-editor.html';
+ function install(doc){
+  if(!doc||doc.__thSubtitleRouteInstalled)return;
+  doc.__thSubtitleRouteInstalled=true;
+  doc.addEventListener('click',function(e){
+   const btn=e.target.closest&&e.target.closest('#openSubtitleProject,#importVideo,[data-open-subtitle-editor]');
+   if(!btn)return;
+   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+   window.location.assign(URL);
+  },true);
+  const attach=()=>{
+   if(doc.getElementById('th-standalone-subtitle-link'))return;
+   const anchor=doc.getElementById('openSubtitleProject')||doc.getElementById('importVideo');
+   if(!anchor)return;
+   const button=doc.createElement('button');
+   button.id='th-standalone-subtitle-link';button.type='button';
+   button.textContent='字幕编辑器 ↗';button.title='在单独页面打开字幕编辑器';
+   button.style.cssText='margin:8px 0;padding:8px 12px;border:1px solid #cfdeec;border-radius:9px;background:#fff;color:#315b80;cursor:pointer;font-size:13px;';
+   button.addEventListener('click',()=>window.location.assign(URL));
+   anchor.parentElement?.appendChild(button);
+  };
+  attach();
+ }
+ function walk(doc,depth){
+  if(!doc||depth>4)return;install(doc);
+  for(const frame of doc.querySelectorAll('iframe')){try{if(frame.contentDocument)walk(frame.contentDocument,depth+1)}catch(_){}}
+ }
+ setInterval(()=>{try{walk(document,0)}catch(_){}},600);
+})();
+</script>
 </body>
 </html>
