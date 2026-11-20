@@ -62,6 +62,13 @@ function show(){
  try{
   const d=app.contentDocument;
   if(!d)return;
+  // Settings copy runs inside the editor document, including dialogs created later.
+  if(!d.getElementById('th-default-ai-copy')){
+   const copy=d.createElement('script');copy.id='th-default-ai-copy';
+   copy.src='/transhelper-default-ai-copy.js?v=1';
+   copy.onerror=()=>console.warn('Default AI copy refinement unavailable.');
+   d.head.appendChild(copy);
+  }
   const packed=d.getElementById('week8-packed');
   const paramFrame=d.getElementById('paramFrame');
   const openSource=()=>{
