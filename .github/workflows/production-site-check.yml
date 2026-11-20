@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/production-site-check.yml'
+      - '译者决策工作台_公开双模式版/atelier-core.html'
+      - '译者决策工作台_公开双模式版/atelier.html'
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +22,9 @@ jobs:
             echo "$name bytes $(wc -c </tmp/$name)"
             test -s "/tmp/$name"
           done
+          test "$(wc -c </tmp/atelier-core.html)" -gt 3000000
+          head -c 100 /tmp/atelier-core.html | grep -qi '<!doctype html>'
+          if head -c 1024 /tmp/atelier-core.html | grep -q 'Warning: truncated output'; then echo 'Core HTML is corrupted'; exit 1; fi
           grep -q 'atelier-core.html' /tmp/atelier.html
           grep -q 'sentenceAskInput' /tmp/atelier-core.html
           grep -q '标为疑问' /tmp/atelier-core.html
